@@ -1,87 +1,145 @@
 """
 geometry - pythagorean_theorem (medium)
-Generated: 2026-02-11T21:43:52.895228
+Generated: 2026-02-22T04:17:38.809654
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
+from svg_utils import Diagram
 
-def generate_pythagorean_problem():
-    problem_type = random.choice(['find_hypotenuse', 'find_leg', 'word_problem_basic', 'word_problem_multi'])
+def generate():
+    problem_type = choice(['find_hypotenuse', 'find_leg', 'find_leg_word', 'find_hypotenuse_word'])
     
     if problem_type == 'find_hypotenuse':
-        # ELO: 1300-1350 (two-step: square two numbers, add, take square root)
-        # Pick clean Pythagorean triple or clean result
-        triples = [(3,4,5), (5,12,13), (8,15,17), (7,24,25), (6,8,10), (9,12,15), (12,16,20)]
-        a, b, c = random.choice(triples)
+        # Generate a Pythagorean triple or near-triple
+        use_triple = choice([True, False])
+        if use_triple:
+            triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25)]
+            base_triple = choice(triples)
+            multiplier = randint(1, 3)
+            leg1 = base_triple[0] * multiplier
+            leg2 = base_triple[1] * multiplier
+            hyp = base_triple[2] * multiplier
+        else:
+            leg1 = randint(3, 12)
+            leg2 = randint(3, 12)
+            hyp = sqrt(leg1**2 + leg2**2)
         
-        question_latex = f"A right triangle has legs of length {a} and {b}. Find the length of the hypotenuse."
-        answer_key = str(c)
-        difficulty = 1320
+        d = Diagram(width=300, height=250, padding=40)
+        d.polygon([(0, 0), (leg1, 0), (leg1, leg2)], labels=['C', 'B', 'A'])
+        d.right_angle((leg1, 0), (0, 0), (leg1, leg2))
+        d.segment_label((0, 0), (leg1, 0), str(leg1))
+        d.segment_label((leg1, 0), (leg1, leg2), str(leg2))
+        d.segment_label((0, 0), (leg1, leg2), 'c')
         
+        return problem(
+            question=f"Find the length of the hypotenuse $c$ in the right triangle with legs of length ${leg1}$ and ${leg2}$.",
+            answer=hyp,
+            difficulty=(1300, 1400),
+            topic="geometry/pythagorean_theorem",
+            solution=steps(
+                f"Use the Pythagorean theorem: $a^2 + b^2 = c^2$",
+                f"${leg1}^2 + {leg2}^2 = c^2$",
+                f"${leg1**2} + {leg2**2} = c^2$",
+                f"${leg1**2 + leg2**2} = c^2$",
+                f"$c = \\sqrt{{{leg1**2 + leg2**2}}} = {latex(hyp)}$"
+            ),
+            image=d.render(),
+            calculator="scientific"
+        )
+    
     elif problem_type == 'find_leg':
-        # ELO: 1350-1400 (requires rearranging formula, then calculation)
-        triples = [(3,4,5), (5,12,13), (8,15,17), (7,24,25), (6,8,10), (9,12,15), (12,16,20)]
-        a, b, c = random.choice(triples)
-        
-        # Ask for one of the legs
-        if random.choice([True, False]):
-            question_latex = f"A right triangle has a hypotenuse of length {c} and one leg of length {a}. Find the length of the other leg."
-            answer_key = str(b)
+        # Find a leg given hypotenuse and other leg
+        use_triple = choice([True, False])
+        if use_triple:
+            triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25)]
+            base_triple = choice(triples)
+            multiplier = randint(1, 3)
+            leg1 = base_triple[0] * multiplier
+            leg2 = base_triple[1] * multiplier
+            hyp = base_triple[2] * multiplier
         else:
-            question_latex = f"A right triangle has a hypotenuse of length {c} and one leg of length {b}. Find the length of the other leg."
-            answer_key = str(a)
+            leg1 = randint(3, 10)
+            hyp = randint(leg1 + 1, leg1 + 8)
+            leg2 = sqrt(hyp**2 - leg1**2)
         
-        difficulty = 1380
+        d = Diagram(width=300, height=250, padding=40)
+        # Estimate leg2 for diagram purposes
+        leg2_approx = float(leg2) if not leg2.is_Integer else leg2
+        d.polygon([(0, 0), (leg1, 0), (leg1, leg2_approx)], labels=['C', 'B', 'A'])
+        d.right_angle((leg1, 0), (0, 0), (leg1, leg2_approx))
+        d.segment_label((0, 0), (leg1, 0), str(leg1))
+        d.segment_label((leg1, 0), (leg1, leg2_approx), 'b')
+        d.segment_label((0, 0), (leg1, leg2_approx), str(hyp))
         
-    elif problem_type == 'word_problem_basic':
-        # ELO: 1450-1500 (requires translating word problem to equation, then solving)
-        triples = [(3,4,5), (5,12,13), (8,15,17), (6,8,10), (9,12,15)]
-        a, b, c = random.choice(triples)
+        return problem(
+            question=f"Find the length of leg $b$ in a right triangle with hypotenuse ${hyp}$ and one leg of length ${leg1}$.",
+            answer=leg2,
+            difficulty=(1400, 1500),
+            topic="geometry/pythagorean_theorem",
+            solution=steps(
+                f"Use the Pythagorean theorem: $a^2 + b^2 = c^2$",
+                f"${leg1}^2 + b^2 = {hyp}^2$",
+                f"${leg1**2} + b^2 = {hyp**2}$",
+                f"$b^2 = {hyp**2} - {leg1**2} = {hyp**2 - leg1**2}$",
+                f"$b = \\sqrt{{{hyp**2 - leg1**2}}} = {latex(leg2)}$"
+            ),
+            image=d.render(),
+            calculator="scientific"
+        )
+    
+    elif problem_type == 'find_leg_word':
+        # Word problem: ladder against wall
+        triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17)]
+        base_triple = choice(triples)
+        multiplier = randint(1, 2)
+        ground = base_triple[0] * multiplier
+        ladder = base_triple[2] * multiplier
+        height = base_triple[1] * multiplier
         
-        scenarios = [
-            (f"A ladder is leaning against a wall. The base of the ladder is {a} feet from the wall, and the top of the ladder reaches {b} feet up the wall. How long is the ladder (in feet)?", c),
-            (f"A rectangular field is {a} meters long and {b} meters wide. What is the length of the diagonal across the field (in meters)?", c),
-            (f"A television screen is {a} inches wide and {b} inches tall. What is the diagonal measurement of the screen (in inches)?", c)
-        ]
+        return problem(
+            question=f"A ${ladder}$-foot ladder is leaning against a wall. The base of the ladder is ${ground}$ feet from the wall. How high up the wall does the ladder reach?",
+            answer=height,
+            difficulty=(1500, 1600),
+            topic="geometry/pythagorean_theorem",
+            solution=steps(
+                f"This forms a right triangle with hypotenuse ${ladder}$ ft (ladder) and one leg ${ground}$ ft (ground distance)",
+                f"Let $h$ be the height on the wall",
+                f"${ground}^2 + h^2 = {ladder}^2$",
+                f"${ground**2} + h^2 = {ladder**2}$",
+                f"$h^2 = {ladder**2} - {ground**2} = {ladder**2 - ground**2}$",
+                f"$h = {height}$ feet"
+            ),
+            calculator="scientific"
+        )
+    
+    else:  # find_hypotenuse_word
+        # Word problem: diagonal distance
+        triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17)]
+        base_triple = choice(triples)
+        multiplier = randint(1, 2)
+        width = base_triple[0] * multiplier
+        length = base_triple[1] * multiplier
+        diagonal = base_triple[2] * multiplier
         
-        scenario, ans = random.choice(scenarios)
-        question_latex = scenario
-        answer_key = str(ans)
-        difficulty = 1470
+        context = choice([
+            ('rectangular field', 'corner', 'opposite corner'),
+            ('rectangular room', 'corner', 'opposite corner'),
+            ('city block', 'corner', 'opposite corner')
+        ])
         
-    else:  # word_problem_multi
-        # ELO: 1500-1550 (multi-step: extract information, set up equation, solve)
-        triples = [(3,4,5), (5,12,13), (8,15,17), (6,8,10)]
-        a, b, c = random.choice(triples)
-        
-        # Problem requiring finding one leg when given hypotenuse and other leg in context
-        scenarios = [
-            (f"A 13-foot ladder is leaning against a building. If the base of the ladder is 5 feet from the building, how high up the building does the ladder reach (in feet)?", 12),
-            (f"A baseball diamond is a square with sides of 90 feet. What is the distance from home plate to second base (in feet)?", int(90 * sp.sqrt(2))),
-        ]
-        
-        # Use specific values that work cleanly
-        if random.choice([True, False]):
-            question_latex = f"A {c}-foot ladder is leaning against a building. If the base of the ladder is {a} feet from the building, how high up the building does the ladder reach (in feet)?"
-            answer_key = str(b)
-            difficulty = 1520
-        else:
-            side = random.choice([6, 8, 9, 10, 12])
-            diagonal = int(side * sp.sqrt(2))
-            question_latex = f"A square has sides of length {side} units. Find the length of the diagonal. Express your answer in simplest radical form."
-            answer_key = str(side * sp.sqrt(2))
-            difficulty = 1550
+        return problem(
+            question=f"A {context[0]} measures ${width}$ meters by ${length}$ meters. What is the straight-line distance from one {context[1]} to the {context[2]}?",
+            answer=diagonal,
+            difficulty=(1400, 1500),
+            topic="geometry/pythagorean_theorem",
+            solution=steps(
+                f"The diagonal forms the hypotenuse of a right triangle with legs ${width}$ m and ${length}$ m",
+                f"Use the Pythagorean theorem: $d^2 = {width}^2 + {length}^2$",
+                f"$d^2 = {width**2} + {length**2}$",
+                f"$d^2 = {width**2 + length**2}$",
+                f"$d = {diagonal}$ meters"
+            ),
+            calculator="scientific"
+        )
 
-    return {
-        "question_latex": question_latex,
-        "answer_key": answer_key,
-        "difficulty": difficulty,
-        "main_topic": "geometry",
-        "subtopic": "pythagorean_theorem",
-        "grading_mode": "equivalent"
-    }
-
-problem = generate_pythagorean_problem()
-print(json.dumps(problem))
+emit(generate())

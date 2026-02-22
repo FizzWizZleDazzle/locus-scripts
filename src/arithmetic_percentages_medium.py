@@ -1,67 +1,121 @@
 """
 arithmetic - percentages (medium)
-Generated: 2026-02-11T21:25:30.900121
+Generated: 2026-02-22T03:43:44.551959
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_percentage_problem():
-    problem_type = random.choice(['find_percentage', 'find_whole', 'find_percent_value', 'percent_change', 'successive_percentages'])
+def generate():
+    problem_type = randint(1, 5)
     
-    if problem_type == 'find_percentage':
-        whole = random.choice([50, 80, 120, 150, 200, 250, 300, 400, 500])
-        percent = random.choice([10, 15, 20, 25, 30, 40, 50, 60, 75, 80])
-        answer = sp.Rational(percent * whole, 100)
-        question = f"What is ${percent}\\%$ of ${whole}$?"
-        difficulty = 1300
+    if problem_type == 1:
+        # Find percentage of a number (1200-1400)
+        percent = choice([10, 15, 20, 25, 30, 40, 50, 60, 75, 80])
+        number = choice([20, 25, 40, 50, 60, 80, 100, 120, 150, 200])
+        ans = Rational(percent * number, 100)
         
-    elif problem_type == 'find_whole':
-        answer = random.choice([40, 50, 60, 80, 100, 120, 150, 200])
-        percent = random.choice([20, 25, 40, 50, 60, 75, 80])
-        part = sp.Rational(percent * answer, 100)
-        question = f"${part}$ is ${percent}\\%$ of what number?"
-        difficulty = 1400
+        return problem(
+            question=f"What is ${percent}\\%$ of ${number}$?",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="arithmetic/percentages",
+            solution=steps(
+                f"Convert ${percent}\\%$ to decimal: ${Rational(percent, 100)}$",
+                f"Multiply: ${Rational(percent, 100)} \\times {number} = {ans}$"
+            ),
+            calculator="scientific"
+        )
+    
+    elif problem_type == 2:
+        # What percent is X of Y (1300-1400)
+        divisor = choice([4, 5, 10, 20, 25, 50])
+        multiplier = randint(1, divisor - 1)
+        total = divisor * choice([4, 5, 8, 10, 20])
+        part = multiplier * choice([4, 5, 8, 10, 20])
         
-    elif problem_type == 'find_percent_value':
-        whole = random.choice([80, 100, 120, 150, 200, 250, 300, 400])
-        part = random.choice([i for i in range(10, whole, 5) if i < whole])
-        answer = sp.Rational(part * 100, whole)
-        question = f"${part}$ is what percent of ${whole}$?"
-        difficulty = 1350
+        ans = Rational(part * 100, total)
         
-    elif problem_type == 'percent_change':
-        original = random.choice([50, 80, 100, 120, 150, 200, 250])
-        change_percent = random.choice([10, 15, 20, 25, 30, 40, 50])
-        direction = random.choice(['increase', 'decrease'])
+        return problem(
+            question=f"${part}$ is what percent of ${total}$?",
+            answer=ans,
+            difficulty=(1300, 1400),
+            topic="arithmetic/percentages",
+            solution=steps(
+                f"Set up ratio: $\\frac{{{part}}}{{{total}}}$",
+                f"Multiply by $100$ to get percentage: $\\frac{{{part}}}{{{total}}} \\times 100 = {ans}\\%$"
+            ),
+            calculator="scientific"
+        )
+    
+    elif problem_type == 3:
+        # Percent increase/decrease (1400-1500)
+        original = choice([50, 80, 100, 120, 150, 200, 250])
+        percent_change = choice([10, 15, 20, 25, 30, 40, 50])
+        increase = choice([True, False])
         
-        if direction == 'increase':
-            answer = sp.Rational(original * (100 + change_percent), 100)
-            question = f"A quantity increases from ${original}$ by ${change_percent}\\%$. What is the new value?"
+        if increase:
+            ans = original * (1 + Rational(percent_change, 100))
+            action = "increase"
         else:
-            answer = sp.Rational(original * (100 - change_percent), 100)
-            question = f"A quantity decreases from ${original}$ by ${change_percent}\\%$. What is the new value?"
-        difficulty = 1450
+            ans = original * (1 - Rational(percent_change, 100))
+            action = "decrease"
         
-    elif problem_type == 'successive_percentages':
-        original = random.choice([100, 200, 500, 1000])
-        percent1 = random.choice([10, 20, 25, 50])
-        percent2 = random.choice([10, 20, 25, 50])
-        
-        after_first = sp.Rational(original * (100 + percent1), 100)
-        answer = sp.Rational(after_first * (100 + percent2), 100)
-        question = f"A value of $${original}$ increases by ${percent1}\\%$ and then increases by another ${percent2}\\%$. What is the final value?"
-        difficulty = 1550
+        return problem(
+            question=f"A quantity is initially ${original}$. After a ${percent_change}\\%$ {action}, what is the new value?",
+            answer=ans,
+            difficulty=(1400, 1500),
+            topic="arithmetic/percentages",
+            solution=steps(
+                f"Calculate the change: ${original} \\times {Rational(percent_change, 100)} = {original * Rational(percent_change, 100)}$",
+                f"{'Add' if increase else 'Subtract'} from original: ${original} {'+' if increase else '-'} {original * Rational(percent_change, 100)} = {ans}$"
+            ),
+            calculator="scientific"
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": str(answer),
-        "difficulty": difficulty,
-        "main_topic": "arithmetic",
-        "subtopic": "percentages",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 4:
+        # Find original price before discount (1400-1600)
+        discount_percent = choice([10, 20, 25, 30, 40, 50])
+        final_price = choice([45, 60, 72, 80, 90, 120, 150, 180])
+        
+        # Work backwards: final = original * (1 - discount/100)
+        ans = Rational(final_price * 100, 100 - discount_percent)
+        
+        return problem(
+            question=f"After a ${discount_percent}\\%$ discount, an item costs $\\${final_price}$. What was the original price?",
+            answer=ans,
+            difficulty=(1500, 1600),
+            topic="arithmetic/percentages",
+            solution=steps(
+                f"If the discount is ${discount_percent}\\%$, then ${100 - discount_percent}\\%$ of the original price equals $\\${final_price}$",
+                f"Set up equation: ${Rational(100 - discount_percent, 100)} \\times \\text{{original}} = {final_price}$",
+                f"Solve: $\\text{{original}} = \\frac{{{final_price}}}{{{Rational(100 - discount_percent, 100)}}} = \\${ans}$"
+            ),
+            calculator="scientific"
+        )
+    
+    else:
+        # Percent change calculation (1400-1500)
+        old_value = choice([40, 50, 60, 80, 100, 120, 150, 200])
+        increase = choice([True, False])
+        
+        if increase:
+            change = choice([10, 12, 15, 20, 24, 25, 30, 40, 50])
+        else:
+            change = choice([8, 10, 12, 15, 20, 24, 25, 30])
+        
+        new_value = old_value + change if increase else old_value - change
+        ans = Rational(abs(change) * 100, old_value)
+        
+        return problem(
+            question=f"A value changes from ${old_value}$ to ${new_value}$. What is the percent {'increase' if increase else 'decrease'}?",
+            answer=ans,
+            difficulty=(1400, 1500),
+            topic="arithmetic/percentages",
+            solution=steps(
+                f"Find the change: ${new_value} - {old_value} = {change if increase else -change}$",
+                f"Divide by original and multiply by $100$: $\\frac{{{abs(change)}}}{{{old_value}}} \\times 100 = {ans}\\%$"
+            ),
+            calculator="scientific"
+        )
 
-problem = generate_percentage_problem()
-print(json.dumps(problem))
+emit(generate())

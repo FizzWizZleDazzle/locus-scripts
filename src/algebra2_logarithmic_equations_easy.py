@@ -1,0 +1,116 @@
+"""
+algebra2 - logarithmic_equations (easy)
+Generated: 2026-02-22T04:32:12.548868
+"""
+
+from problem_utils import *
+
+def generate():
+    problem_type = randint(1, 4)
+    
+    if problem_type == 1:
+        # Type 1: log_b(b^x) = x  (ELO 1000-1100)
+        base = choice([2, 3, 5, 10])
+        exponent = randint(2, 5)
+        
+        if base == 10:
+            question = f"\\log\\left({base**exponent}\\right)"
+        else:
+            question = f"\\log_{{{base}}}\\left({base**exponent}\\right)"
+        
+        ans = exponent
+        
+        solution = steps(
+            f"Recognize that ${base**exponent} = {base}^{{{exponent}}}$",
+            f"Using the property $\\log_b(b^x) = x$",
+            f"$\\log_{{{base}}}({base}^{{{exponent}}}) = {exponent}$"
+        )
+        
+        return problem(
+            question=f"Evaluate: ${question}$",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="algebra2/logarithmic_equations",
+            solution=solution,
+            calculator="scientific"
+        )
+    
+    elif problem_type == 2:
+        # Type 2: Simple log equation log_b(x) = c where x = b^c (ELO 1100-1200)
+        base = choice([2, 3, 4, 5])
+        result = randint(2, 4)
+        ans = base**result
+        
+        question = f"\\log_{{{base}}}(x) = {result}"
+        
+        solution = steps(
+            f"Given $\\log_{{{base}}}(x) = {result}$",
+            f"Convert to exponential form: $x = {base}^{{{result}}}$",
+            f"$x = {ans}$"
+        )
+        
+        return problem(
+            question=f"Solve for $x$: ${question}$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="algebra2/logarithmic_equations",
+            solution=solution,
+            calculator="scientific"
+        )
+    
+    elif problem_type == 3:
+        # Type 3: log_b(number) = x, where number is a small power of b (ELO 1100-1200)
+        base = choice([2, 3, 5])
+        exponent = randint(2, 4)
+        value = base**exponent
+        
+        question = f"\\log_{{{base}}}({value}) = x"
+        ans = exponent
+        
+        solution = steps(
+            f"Recognize that ${value} = {base}^{{{exponent}}}$",
+            f"So $\\log_{{{base}}}({base}^{{{exponent}}}) = x$",
+            f"Using the property $\\log_b(b^x) = x$, we get $x = {exponent}$"
+        )
+        
+        return problem(
+            question=f"Solve for $x$: ${question}$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="algebra2/logarithmic_equations",
+            solution=solution,
+            calculator="scientific"
+        )
+    
+    else:
+        # Type 4: log(x) + constant = constant (one-step, ELO 1200-1300)
+        base = choice([2, 3, 10])
+        const1 = randint(1, 3)
+        const2 = randint(4, 6)
+        log_result = const2 - const1
+        ans = base**log_result
+        
+        if base == 10:
+            log_notation = "\\log"
+        else:
+            log_notation = f"\\log_{{{base}}}"
+        
+        question = f"{log_notation}(x) + {const1} = {const2}"
+        
+        solution = steps(
+            f"Subtract ${const1}$ from both sides:",
+            f"${log_notation}(x) = {log_result}$",
+            f"Convert to exponential form: $x = {base}^{{{log_result}}}$",
+            f"$x = {ans}$"
+        )
+        
+        return problem(
+            question=f"Solve for $x$: ${question}$",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="algebra2/logarithmic_equations",
+            solution=solution,
+            calculator="scientific"
+        )
+
+emit(generate())

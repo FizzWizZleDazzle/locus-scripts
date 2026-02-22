@@ -1,140 +1,190 @@
 """
 algebra2 - rational_expressions (hard)
-Generated: 2026-02-11T21:47:11.403953
+Generated: 2026-02-22T04:24:03.925909
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-x = sp.Symbol('x')
+def generate():
+    problem_type = randint(1, 5)
+    
+    if problem_type == 1:
+        # Simplifying complex rational expressions with multiple terms
+        a1 = nonzero(-5, 5)
+        b1 = nonzero(-5, 5)
+        a2 = nonzero(-5, 5)
+        b2 = nonzero(-5, 5)
+        
+        # Create (a1*x + b1)/(x^2 - c^2) + (a2*x + b2)/(x^2 - c^2)
+        c = randint(2, 5)
+        denom = x**2 - c**2
+        
+        numer1 = a1*x + b1
+        numer2 = a2*x + b2
+        
+        combined_numer = expand(numer1 + numer2)
+        ans = simplify(combined_numer / denom)
+        
+        return problem(
+            question=f"Simplify: $\\frac{{{latex(numer1)}}}{{{latex(denom)}}} + \\frac{{{latex(numer2)}}}{{{latex(denom)}}}$",
+            answer=ans,
+            difficulty=(1600, 1700),
+            topic="algebra2/rational_expressions",
+            solution=steps(
+                f"The denominators are the same: ${latex(denom)}$",
+                f"Add the numerators: ${latex(numer1)} + ({latex(numer2)}) = {latex(combined_numer)}$",
+                f"Combined: $\\frac{{{latex(combined_numer)}}}{{{latex(denom)}}}$",
+                f"Factor denominator: ${latex(factor(denom))}$",
+                f"Simplified: ${latex(ans)}$"
+            )
+        )
+    
+    elif problem_type == 2:
+        # Complex fraction (fraction divided by fraction)
+        r1 = nonzero(-4, 4)
+        r2 = nonzero(-4, 4)
+        while r1 == r2:
+            r2 = nonzero(-4, 4)
+        
+        a = nonzero(-3, 3)
+        b = nonzero(-3, 3)
+        
+        # (a*x + b)/(x - r1) divided by (x - r2)/(x + r1)
+        numer_top = a*x + b
+        denom_top = x - r1
+        numer_bottom = x - r2
+        denom_bottom = x + r1
+        
+        # Answer is (a*x + b)/(x - r1) * (x + r1)/(x - r2)
+        result = simplify((numer_top * denom_bottom) / (denom_top * numer_bottom))
+        ans = result
+        
+        return problem(
+            question=f"Simplify: $\\frac{{\\frac{{{latex(numer_top)}}}{{{latex(denom_top)}}}}}{{\\frac{{{latex(numer_bottom)}}}{{{latex(denom_bottom)}}}}}$",
+            answer=ans,
+            difficulty=(1650, 1750),
+            topic="algebra2/rational_expressions",
+            solution=steps(
+                f"Rewrite as multiplication by the reciprocal:",
+                f"$\\frac{{{latex(numer_top)}}}{{{latex(denom_top)}}} \\cdot \\frac{{{latex(denom_bottom)}}}{{{latex(numer_bottom)}}}$",
+                f"Multiply: $\\frac{{({latex(numer_top)})({latex(denom_bottom)})}}{{({latex(denom_top)})({latex(numer_bottom)})}}$",
+                f"Simplified: ${latex(ans)}$"
+            )
+        )
+    
+    elif problem_type == 3:
+        # Subtracting rational expressions with different denominators
+        r1 = nonzero(-5, 5)
+        r2 = nonzero(-5, 5)
+        while r1 == r2 or r1 == -r2:
+            r2 = nonzero(-5, 5)
+        
+        a = nonzero(-4, 4)
+        b = nonzero(-4, 4)
+        
+        # a/(x - r1) - b/(x - r2)
+        numer1 = a
+        denom1 = x - r1
+        numer2 = b
+        denom2 = x - r2
+        
+        # LCD is (x - r1)(x - r2)
+        lcd = expand((x - r1) * (x - r2))
+        new_numer1 = expand(a * (x - r2))
+        new_numer2 = expand(b * (x - r1))
+        combined = expand(new_numer1 - new_numer2)
+        
+        ans = simplify(combined / lcd)
+        
+        return problem(
+            question=f"Simplify: $\\frac{{{a}}}{{{latex(denom1)}}} - \\frac{{{b}}}{{{latex(denom2)}}}$",
+            answer=ans,
+            difficulty=(1700, 1800),
+            topic="algebra2/rational_expressions",
+            solution=steps(
+                f"Find LCD: $({latex(denom1)})({latex(denom2)}) = {latex(lcd)}$",
+                f"Rewrite first fraction: $\\frac{{{a} \\cdot ({latex(x - r2)})}}{{{latex(lcd)}}} = \\frac{{{latex(new_numer1)}}}{{{latex(lcd)}}}$",
+                f"Rewrite second fraction: $\\frac{{{b} \\cdot ({latex(x - r1)})}}{{{latex(lcd)}}} = \\frac{{{latex(new_numer2)}}}{{{latex(lcd)}}}$",
+                f"Subtract: $\\frac{{{latex(new_numer1)} - ({latex(new_numer2)})}}{{{latex(lcd)}}} = \\frac{{{latex(combined)}}}{{{latex(lcd)}}}$",
+                f"Simplified: ${latex(ans)}$"
+            )
+        )
+    
+    elif problem_type == 4:
+        # Solving rational equations
+        a = nonzero(-6, 6)
+        b = nonzero(-6, 6)
+        c = nonzero(-6, 6)
+        r = nonzero(-5, 5)
+        
+        # (a*x + b)/(x - r) = c
+        # Solving: a*x + b = c*(x - r)
+        # a*x + b = c*x - c*r
+        # a*x - c*x = -c*r - b
+        # x(a - c) = -c*r - b
+        
+        if a == c:
+            a += 1
+        
+        sol = (-c*r - b) / (a - c)
+        ans = simplify(sol)
+        
+        return problem(
+            question=f"Solve for $x$: $\\frac{{{latex(a*x + b)}}}{{{latex(x - r)}}} = {c}$",
+            answer=ans,
+            difficulty=(1650, 1750),
+            topic="algebra2/rational_expressions",
+            solution=steps(
+                f"Multiply both sides by $({latex(x - r)})$:",
+                f"${latex(a*x + b)} = {c}({latex(x - r)})$",
+                f"${latex(a*x + b)} = {latex(expand(c*(x - r)))}$",
+                f"${latex(a*x)} - {latex(c*x)} = {-c*r} - {b}$",
+                f"${latex((a-c)*x)} = {-c*r - b}$",
+                f"$x = {latex(ans)}$"
+            )
+        )
+    
+    else:
+        # Adding three rational expressions with different denominators
+        r1 = randint(1, 4)
+        r2 = randint(1, 4)
+        while r2 == r1:
+            r2 = randint(1, 4)
+        r3 = randint(1, 4)
+        while r3 == r1 or r3 == r2:
+            r3 = randint(1, 4)
+        
+        a = nonzero(-3, 3)
+        b = nonzero(-3, 3)
+        c = nonzero(-3, 3)
+        
+        # a/(x - r1) + b/(x - r2) + c/(x - r3)
+        denom1 = x - r1
+        denom2 = x - r2
+        denom3 = x - r3
+        
+        lcd = expand((x - r1) * (x - r2) * (x - r3))
+        
+        term1 = expand(a * (x - r2) * (x - r3))
+        term2 = expand(b * (x - r1) * (x - r3))
+        term3 = expand(c * (x - r1) * (x - r2))
+        
+        combined = expand(term1 + term2 + term3)
+        ans = simplify(combined / lcd)
+        
+        return problem(
+            question=f"Simplify: $\\frac{{{a}}}{{{latex(denom1)}}} + \\frac{{{b}}}{{{latex(denom2)}}} + \\frac{{{c}}}{{{latex(denom3)}}}$",
+            answer=ans,
+            difficulty=(1750, 1850),
+            topic="algebra2/rational_expressions",
+            solution=steps(
+                f"Find LCD: ${latex(lcd)}$",
+                f"First term: $\\frac{{{a}({latex((x-r2)*(x-r3))})}}{{{latex(lcd)}}} = \\frac{{{latex(term1)}}}{{{latex(lcd)}}}$",
+                f"Second term: $\\frac{{{b}({latex((x-r1)*(x-r3))})}}{{{latex(lcd)}}} = \\frac{{{latex(term2)}}}{{{latex(lcd)}}}$",
+                f"Third term: $\\frac{{{c}({latex((x-r1)*(x-r2))})}}{{{latex(lcd)}}} = \\frac{{{latex(term3)}}}{{{latex(lcd)}}}$",
+                f"Combined numerator: ${latex(combined)}$",
+                f"Answer: ${latex(ans)}$"
+            )
+        )
 
-def generate_rational_expression_problem():
-    problem_type = random.choice([
-        'simplify_complex',
-        'solve_equation',
-        'add_subtract_complex',
-        'compound_fraction'
-    ])
-    
-    if problem_type == 'simplify_complex':
-        # Complex rational expression simplification
-        # Start with simplified form, work backward
-        a = random.randint(1, 4)
-        b = random.randint(1, 5)
-        c = random.randint(1, 4)
-        
-        # Answer: (ax + b)/(cx + d)
-        d = random.randint(1, 5)
-        while d == b * c // a if a != 0 else False:
-            d = random.randint(1, 5)
-        
-        answer = (a*x + b) / (c*x + d)
-        
-        # Create complex numerator and denominator by multiplying by (ex + f)
-        e = random.randint(1, 3)
-        f = random.randint(1, 4)
-        
-        numerator = sp.expand((a*x + b) * (e*x + f))
-        denominator = sp.expand((c*x + d) * (e*x + f))
-        
-        question = f"\\text{{Simplify: }} \\frac{{{sp.latex(numerator)}}}{{{sp.latex(denominator)}}}"
-        answer_key = str(answer)
-        difficulty = 1650
-        
-    elif problem_type == 'solve_equation':
-        # Solve rational equation with multiple terms
-        # Pick answer first
-        sol = random.randint(-5, 5)
-        while sol == 0:
-            sol = random.randint(-5, 5)
-        
-        a = random.randint(1, 4)
-        b = random.randint(1, 6)
-        c = random.randint(1, 4)
-        d = random.randint(1, 6)
-        
-        # Create equation: a/(x-p) + b/(x-q) = c
-        p = random.randint(-3, 3)
-        q = random.randint(-3, 3)
-        while q == p or sol == p or sol == q:
-            q = random.randint(-3, 3)
-        
-        # Calculate what c should be for our solution
-        lhs = a/(sol - p) + b/(sol - q)
-        c_val = float(lhs)
-        
-        if abs(c_val) < 10 and c_val != 0:
-            question = f"\\text{{Solve for }} x: \\frac{{{a}}}{{{sp.latex(x - p)}}} + \\frac{{{b}}}{{{sp.latex(x - q)}}} = {sp.latex(sp.nsimplify(c_val))}"
-            answer_key = str(sol)
-            difficulty = 1750
-        else:
-            # Fallback to simpler equation
-            m = random.randint(2, 5)
-            n = random.randint(1, 8)
-            sol = random.randint(1, 6)
-            p = random.randint(-4, 4)
-            while sol == p:
-                p = random.randint(-4, 4)
-            
-            rhs = m * sol + n
-            question = f"\\text{{Solve for }} x: \\frac{{{m}x + {n}}}{{{sp.latex(x - p)}}} = {rhs}"
-            answer_key = str(sol)
-            difficulty = 1700
-            
-    elif problem_type == 'add_subtract_complex':
-        # Add/subtract with different denominators requiring factoring
-        a = random.randint(1, 3)
-        b = random.randint(1, 4)
-        c = random.randint(1, 3)
-        
-        # Denominators that share a common factor
-        p = random.randint(1, 4)
-        q = random.randint(1, 4)
-        r = random.randint(1, 3)
-        
-        # First fraction: a/(x+p), second: b/((x+p)(x+q))
-        expr1 = a / (x + p)
-        expr2 = b / ((x + p) * (x + q))
-        
-        combined = expr1 + expr2
-        answer = sp.simplify(combined)
-        
-        denom2_expanded = sp.expand((x + p) * (x + q))
-        
-        question = f"\\text{{Simplify: }} \\frac{{{a}}}{{{sp.latex(x + p)}}} + \\frac{{{b}}}{{{sp.latex(denom2_expanded)}}}"
-        answer_key = str(answer)
-        difficulty = 1680
-        
-    else:  # compound_fraction
-        # Complex fraction (fraction within fraction)
-        a = random.randint(1, 4)
-        b = random.randint(1, 5)
-        c = random.randint(1, 3)
-        d = random.randint(1, 4)
-        e = random.randint(1, 3)
-        
-        # Answer form: (a*x + b)/(c*x + d)
-        answer = (a*x + b) / (c*x + d)
-        
-        # Create compound: (a + b/x) / (c + d/x)
-        numerator_part = a + b/x
-        denominator_part = c + d/x
-        
-        question = f"\\text{{Simplify: }} \\frac{{{sp.latex(numerator_part)}}}{{{sp.latex(denominator_part)}}}"
-        answer_key = str(answer)
-        difficulty = 1720
-    
-    result = {
-        "question_latex": question,
-        "answer_key": answer_key,
-        "difficulty": difficulty,
-        "main_topic": "algebra2",
-        "subtopic": "rational_expressions",
-        "grading_mode": "equivalent"
-    }
-    
-    return result
-
-problem = generate_rational_expression_problem()
-print(json.dumps(problem))
+emit(generate())

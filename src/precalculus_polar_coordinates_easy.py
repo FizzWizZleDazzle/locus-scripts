@@ -1,97 +1,151 @@
 """
 precalculus - polar_coordinates (easy)
-Generated: 2026-02-11T21:55:44.983794
+Generated: 2026-02-22T04:51:35.612492
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_polar_problem():
-    problem_type = random.choice([
-        'rectangular_to_polar_point',
-        'polar_to_rectangular_point',
-        'simple_polar_distance',
-        'polar_to_rectangular_equation_simple',
-        'rectangular_to_polar_equation_simple'
-    ])
+def generate():
+    problem_type = randint(1, 5)
     
-    if problem_type == 'rectangular_to_polar_point':
-        # Pick clean polar coordinates first
-        r_val = random.choice([1, 2, 3, 4, 5])
-        theta_choice = random.choice([0, sp.pi/6, sp.pi/4, sp.pi/3, sp.pi/2, 
-                                     2*sp.pi/3, 3*sp.pi/4, 5*sp.pi/6, sp.pi])
+    if problem_type == 1:
+        # Convert from polar to rectangular coordinates (straightforward)
+        r_val = randint(2, 8)
+        theta_options = [0, pi/6, pi/4, pi/3, pi/2, 2*pi/3, 3*pi/4, 5*pi/6, pi]
+        theta_val = choice(theta_options)
         
-        # Calculate rectangular coordinates
-        x_val = r_val * sp.cos(theta_choice)
-        y_val = r_val * sp.sin(theta_choice)
+        x_val = r_val * cos(theta_val)
+        y_val = r_val * sin(theta_val)
         
-        # Simplify to get clean values
-        x_val = sp.simplify(x_val)
-        y_val = sp.simplify(y_val)
+        # Simplify the answer
+        x_val = simplify(x_val)
+        y_val = simplify(y_val)
         
-        question = f"Convert the rectangular coordinates $({sp.latex(x_val)}, {sp.latex(y_val)})$ to polar coordinates $(r, \\theta)$ where $r > 0$ and $0 \\leq \\theta < 2\\pi$. Give $r$."
-        answer = str(r_val)
-        difficulty = 1200
+        ans = fmt_tuple([x_val, y_val])
         
-    elif problem_type == 'polar_to_rectangular_point':
-        # Pick clean polar coordinates
-        r_val = random.choice([2, 3, 4, 5, 6])
-        theta_choice = random.choice([0, sp.pi/6, sp.pi/4, sp.pi/3, sp.pi/2,
-                                     2*sp.pi/3, 3*sp.pi/4, sp.pi])
+        return problem(
+            question=f"Convert the polar coordinates $\\left({r_val}, {latex(theta_val)}\\right)$ to rectangular coordinates $(x, y)$.",
+            answer=ans,
+            difficulty=(1000, 1150),
+            topic="precalculus/polar_coordinates",
+            solution=steps(
+                f"Use the conversion formulas: $x = r\\cos(\\theta)$ and $y = r\\sin(\\theta)$",
+                f"$x = {r_val}\\cos\\left({latex(theta_val)}\\right) = {latex(x_val)}$",
+                f"$y = {r_val}\\sin\\left({latex(theta_val)}\\right) = {latex(y_val)}$",
+                f"Answer: $\\left({latex(x_val)}, {latex(y_val)}\\right)$"
+            ),
+            answer_type="tuple"
+        )
+    
+    elif problem_type == 2:
+        # Convert from rectangular to polar (r only, simple cases)
+        coord_options = [(3, 0), (0, 4), (1, 1), (1, sqrt(3)), (sqrt(3), 1), (-2, 0), (0, -3)]
+        x_val, y_val = choice(coord_options)
         
-        # Calculate x coordinate
-        x_val = r_val * sp.cos(theta_choice)
-        x_val = sp.simplify(x_val)
+        r_val = sqrt(x_val**2 + y_val**2)
+        r_val = simplify(r_val)
         
-        question = f"Convert the polar coordinates $(r, \\theta) = ({r_val}, {sp.latex(theta_choice)})$ to rectangular coordinates. Give the $x$-coordinate."
-        answer = str(x_val)
-        difficulty = 1100
+        return problem(
+            question=f"Find the distance $r$ from the origin to the point $({latex(x_val)}, {latex(y_val)})$ in polar coordinates.",
+            answer=r_val,
+            difficulty=(1050, 1200),
+            topic="precalculus/polar_coordinates",
+            solution=steps(
+                f"Use the formula: $r = \\sqrt{{x^2 + y^2}}$",
+                f"$r = \\sqrt{{({latex(x_val)})^2 + ({latex(y_val)})^2}}$",
+                f"$r = \\sqrt{{{latex(x_val**2 + y_val**2)}}} = {latex(r_val)}$"
+            )
+        )
+    
+    elif problem_type == 3:
+        # Simple polar equation plotting - identify shape
+        equation_type = randint(1, 3)
         
-    elif problem_type == 'simple_polar_distance':
-        # Distance from origin for a polar point
-        r_val = random.choice([3, 4, 5, 6, 7, 8])
-        theta_choice = random.choice([sp.pi/6, sp.pi/4, sp.pi/3, sp.pi/2,
-                                     2*sp.pi/3, 3*sp.pi/4, 5*sp.pi/6])
+        if equation_type == 1:
+            # Circle: r = constant
+            r_val = randint(2, 6)
+            return problem(
+                question=f"What shape is represented by the polar equation $r = {r_val}$?",
+                answer="circle",
+                difficulty=(1000, 1100),
+                topic="precalculus/polar_coordinates",
+                solution=steps(
+                    f"The equation $r = {r_val}$ means every point is at a constant distance ${r_val}$ from the origin",
+                    f"This describes a circle with center at the origin and radius ${r_val}$"
+                ),
+                answer_type="expression"
+            )
         
-        question = f"Find the distance from the origin to the point with polar coordinates $({r_val}, {sp.latex(theta_choice)})$."
-        answer = str(r_val)
-        difficulty = 1000
+        elif equation_type == 2:
+            # Line through origin: theta = constant
+            theta_options = [pi/6, pi/4, pi/3, pi/2, 2*pi/3, 3*pi/4]
+            theta_val = choice(theta_options)
+            return problem(
+                question=f"What shape is represented by the polar equation $\\theta = {latex(theta_val)}$?",
+                answer="line",
+                difficulty=(1050, 1150),
+                topic="precalculus/polar_coordinates",
+                solution=steps(
+                    f"The equation $\\theta = {latex(theta_val)}$ means the angle is constant",
+                    f"This describes a line (ray) passing through the origin at angle ${latex(theta_val)}$ from the positive $x$-axis"
+                ),
+                answer_type="expression"
+            )
         
-    elif problem_type == 'polar_to_rectangular_equation_simple':
-        # r = constant -> circle
-        r_val = random.choice([2, 3, 4, 5])
-        
-        # Answer: x^2 + y^2 = r^2
-        answer_expr = r_val**2
-        
-        question = f"Convert the polar equation $r = {r_val}$ to rectangular form. Give the value of $x^2 + y^2$."
-        answer = str(answer_expr)
-        difficulty = 1200
-        
-    else:  # rectangular_to_polar_equation_simple
-        # x = constant or y = constant
-        if random.choice([True, False]):
-            # x = a -> r cos(theta) = a -> r = a/cos(theta) = a sec(theta)
-            a_val = random.choice([1, 2, 3, 4])
-            question = f"Convert the rectangular equation $x = {a_val}$ to polar form $r = f(\\theta)$. What is $r \\cos(\\theta)$?"
-            answer = str(a_val)
-            difficulty = 1300
         else:
-            # y = b -> r sin(theta) = b
-            b_val = random.choice([1, 2, 3, 4])
-            question = f"Convert the rectangular equation $y = {b_val}$ to polar form. What is $r \\sin(\\theta)$?"
-            answer = str(b_val)
-            difficulty = 1300
+            # Cardioid identification: r = a(1 + cos(theta))
+            a_val = randint(1, 4)
+            return problem(
+                question=f"What is the name of the curve given by the polar equation $r = {a_val}(1 + \\cos(\\theta))$?",
+                answer="cardioid",
+                difficulty=(1200, 1300),
+                topic="precalculus/polar_coordinates",
+                solution=steps(
+                    f"The equation $r = {a_val}(1 + \\cos(\\theta))$ is in the form $r = a(1 + \\cos(\\theta))$",
+                    f"This is the standard form of a cardioid, which is heart-shaped"
+                ),
+                answer_type="expression"
+            )
     
-    return {
-        "question_latex": question,
-        "answer_key": answer,
-        "difficulty": difficulty,
-        "main_topic": "precalculus",
-        "subtopic": "polar_coordinates",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 4:
+        # Evaluate r for given theta in simple polar equation
+        a_val = randint(2, 6)
+        theta_options = [0, pi/4, pi/2, 3*pi/4, pi]
+        theta_val = choice(theta_options)
+        
+        # r = a*cos(theta)
+        r_result = a_val * cos(theta_val)
+        r_result = simplify(r_result)
+        
+        return problem(
+            question=f"If $r = {a_val}\\cos(\\theta)$, find the value of $r$ when $\\theta = {latex(theta_val)}$.",
+            answer=r_result,
+            difficulty=(1000, 1150),
+            topic="precalculus/polar_coordinates",
+            solution=steps(
+                f"Substitute $\\theta = {latex(theta_val)}$ into $r = {a_val}\\cos(\\theta)$",
+                f"$r = {a_val}\\cos\\left({latex(theta_val)}\\right)$",
+                f"$r = {latex(r_result)}$"
+            )
+        )
+    
+    else:
+        # Given x and y, find r^2 (avoids complex theta calculation)
+        x_val = randint(1, 5)
+        y_val = randint(1, 5)
+        
+        r_squared = x_val**2 + y_val**2
+        
+        return problem(
+            question=f"For the point $({x_val}, {y_val})$ in rectangular coordinates, find $r^2$ where $r$ is the distance from the origin.",
+            answer=r_squared,
+            difficulty=(1000, 1100),
+            topic="precalculus/polar_coordinates",
+            solution=steps(
+                f"Use the relationship: $r^2 = x^2 + y^2$",
+                f"$r^2 = {x_val}^2 + {y_val}^2$",
+                f"$r^2 = {x_val**2} + {y_val**2} = {r_squared}$"
+            )
+        )
 
-problem = generate_polar_problem()
-print(json.dumps(problem))
+emit(generate())

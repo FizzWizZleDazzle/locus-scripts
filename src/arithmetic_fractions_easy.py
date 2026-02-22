@@ -1,129 +1,148 @@
 """
 arithmetic - fractions (easy)
-Generated: 2026-02-11T21:23:46.656187
+Generated: 2026-02-22T03:40:17.437521
 """
 
-import random
-import json
-from sympy import *
+from problem_utils import *
 
-def generate_fraction_problem():
-    problem_type = random.choice([
-        'simplify_single',
-        'add_same_denom',
-        'add_diff_denom_easy',
-        'subtract_same_denom',
-        'multiply_simple',
-        'compare_fractions'
-    ])
+def generate():
+    problem_type = randint(1, 6)
     
-    if problem_type == 'simplify_single':
-        # Pick a simple answer, then multiply to create reducible fraction
-        answer_num = random.randint(1, 5)
-        answer_den = random.randint(2, 6)
-        while gcd(answer_num, answer_den) != 1:
-            answer_den = random.randint(2, 6)
+    if problem_type == 1:
+        # Simplify a fraction (1000-1100)
+        numerator = randint(2, 12)
+        common_factor = randint(2, 6)
+        denominator = numerator * common_factor
+        numerator = numerator * common_factor
         
-        multiplier = random.randint(2, 4)
-        num = answer_num * multiplier
-        den = answer_den * multiplier
+        # Ensure we get a reducible fraction
+        from math import gcd
+        g = gcd(numerator, denominator)
+        simplified_num = numerator // g
+        simplified_den = denominator // g
         
-        question = f"\\text{{Simplify: }} \\frac{{{num}}}{{{den}}}"
-        answer = Rational(answer_num, answer_den)
-        difficulty = 1050
+        ans = Rational(simplified_num, simplified_den)
         
-    elif problem_type == 'add_same_denom':
-        # Pick answer first
-        answer_num = random.randint(2, 8)
-        den = random.randint(3, 10)
-        
-        # Split into two addends
-        num1 = random.randint(1, answer_num - 1)
-        num2 = answer_num - num1
-        
-        question = f"\\frac{{{num1}}}{{{den}}} + \\frac{{{num2}}}{{{den}}}"
-        answer = Rational(answer_num, den)
-        difficulty = 1100
-        
-    elif problem_type == 'add_diff_denom_easy':
-        # Use denominators where one divides the other
-        small_den = random.randint(2, 5)
-        multiplier = random.randint(2, 3)
-        large_den = small_den * multiplier
-        
-        # Pick answer
-        answer_num = random.randint(3, 10)
-        while gcd(answer_num, large_den) > 1 and Rational(answer_num, large_den) > 1:
-            answer_num = random.randint(3, 10)
-        
-        # Work backward
-        num2 = random.randint(1, 3)
-        num1_over_large = answer_num - num2 * multiplier
-        num1 = num1_over_large // multiplier if num1_over_large % multiplier == 0 else random.randint(1, 3)
-        
-        # Recalculate answer based on actual values
-        answer = Rational(num1, small_den) + Rational(num2, large_den)
-        
-        question = f"\\frac{{{num1}}}{{{small_den}}} + \\frac{{{num2}}}{{{large_den}}}"
-        difficulty = 1250
-        
-    elif problem_type == 'subtract_same_denom':
-        # Pick answer first
-        den = random.randint(4, 12)
-        answer_num = random.randint(1, 6)
-        
-        # Create subtraction
-        num1 = answer_num + random.randint(1, 5)
-        num2 = num1 - answer_num
-        
-        question = f"\\frac{{{num1}}}{{{den}}} - \\frac{{{num2}}}{{{den}}}"
-        answer = Rational(answer_num, den)
-        difficulty = 1150
-        
-    elif problem_type == 'multiply_simple':
-        # Pick simple answer
-        answer_num = random.randint(1, 4)
-        answer_den = random.randint(2, 5)
-        while gcd(answer_num, answer_den) != 1:
-            answer_den = random.randint(2, 5)
-        
-        # Create factors
-        num1 = random.randint(1, 4)
-        den1 = random.randint(2, 5)
-        
-        num2 = answer_num * den1
-        den2 = answer_den * num1
-        
-        question = f"\\frac{{{num1}}}{{{den1}}} \\times \\frac{{{num2}}}{{{den2}}}"
-        answer = Rational(answer_num, answer_den)
-        difficulty = 1200
-        
-    else:  # compare_fractions
-        den = random.randint(5, 12)
-        num1 = random.randint(1, den - 1)
-        num2 = random.randint(1, den - 1)
-        while num1 == num2:
-            num2 = random.randint(1, den - 1)
-        
-        if num1 < num2:
-            symbol = "<"
-            answer_val = "True"
-        else:
-            symbol = ">"
-            answer_val = "True"
-        
-        question = f"\\text{{Is }} \\frac{{{num1}}}{{{den}}} {symbol} \\frac{{{num2}}}{{{den}}}\\text{{? (True/False)}}"
-        answer = sympify(answer_val)
-        difficulty = 1080
+        return problem(
+            question=f"Simplify the fraction: $\\frac{{{numerator}}}{{{denominator}}}$",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="arithmetic/fractions",
+            solution=steps(
+                f"Find the greatest common divisor of ${numerator}$ and ${denominator}$: GCD = ${g}$",
+                f"Divide both numerator and denominator by ${g}$",
+                f"$\\frac{{{numerator}}}{{{denominator}}} = \\frac{{{numerator} \\div {g}}}{{{denominator} \\div {g}}} = \\frac{{{simplified_num}}}{{{simplified_den}}}$"
+            ),
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": str(answer),
-        "difficulty": difficulty,
-        "main_topic": "arithmetic",
-        "subtopic": "fractions",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 2:
+        # Add two fractions with same denominator (1000-1100)
+        denominator = randint(3, 12)
+        num1 = randint(1, denominator - 1)
+        num2 = randint(1, denominator - 1)
+        
+        ans = Rational(num1 + num2, denominator)
+        
+        return problem(
+            question=f"Add the fractions: $\\frac{{{num1}}}{{{denominator}}} + \\frac{{{num2}}}{{{denominator}}}$",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="arithmetic/fractions",
+            solution=steps(
+                f"Since the denominators are the same, add the numerators",
+                f"$\\frac{{{num1}}}{{{denominator}}} + \\frac{{{num2}}}{{{denominator}}} = \\frac{{{num1} + {num2}}}{{{denominator}}} = \\frac{{{num1 + num2}}}{{{denominator}}}$",
+                f"Simplified: ${latex(ans)}$"
+            ),
+        )
+    
+    elif problem_type == 3:
+        # Subtract two fractions with same denominator (1100-1200)
+        denominator = randint(4, 12)
+        num1 = randint(3, denominator)
+        num2 = randint(1, num1 - 1)
+        
+        ans = Rational(num1 - num2, denominator)
+        
+        return problem(
+            question=f"Subtract the fractions: $\\frac{{{num1}}}{{{denominator}}} - \\frac{{{num2}}}{{{denominator}}}$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="arithmetic/fractions",
+            solution=steps(
+                f"Since the denominators are the same, subtract the numerators",
+                f"$\\frac{{{num1}}}{{{denominator}}} - \\frac{{{num2}}}{{{denominator}}} = \\frac{{{num1} - {num2}}}{{{denominator}}} = \\frac{{{num1 - num2}}}{{{denominator}}}$",
+                f"Simplified: ${latex(ans)}$"
+            ),
+        )
+    
+    elif problem_type == 4:
+        # Multiply two simple fractions (1100-1200)
+        num1 = randint(1, 6)
+        den1 = randint(2, 8)
+        num2 = randint(1, 6)
+        den2 = randint(2, 8)
+        
+        ans = Rational(num1 * num2, den1 * den2)
+        
+        return problem(
+            question=f"Multiply the fractions: $\\frac{{{num1}}}{{{den1}}} \\times \\frac{{{num2}}}{{{den2}}}$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="arithmetic/fractions",
+            solution=steps(
+                f"Multiply numerators and denominators",
+                f"$\\frac{{{num1}}}{{{den1}}} \\times \\frac{{{num2}}}{{{den2}}} = \\frac{{{num1} \\times {num2}}}{{{den1} \\times {den2}}} = \\frac{{{num1 * num2}}}{{{den1 * den2}}}$",
+                f"Simplified: ${latex(ans)}$"
+            ),
+        )
+    
+    elif problem_type == 5:
+        # Add fractions with different denominators (1200-1300)
+        den1 = randint(2, 6)
+        den2 = randint(2, 6)
+        while den2 == den1:
+            den2 = randint(2, 6)
+        
+        num1 = randint(1, den1)
+        num2 = randint(1, den2)
+        
+        from math import gcd
+        lcm = (den1 * den2) // gcd(den1, den2)
+        
+        ans = Rational(num1, den1) + Rational(num2, den2)
+        
+        return problem(
+            question=f"Add the fractions: $\\frac{{{num1}}}{{{den1}}} + \\frac{{{num2}}}{{{den2}}}$",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="arithmetic/fractions",
+            solution=steps(
+                f"Find the least common denominator: LCD = ${lcm}$",
+                f"Convert to equivalent fractions: $\\frac{{{num1 * (lcm // den1)}}}{{{lcm}}} + \\frac{{{num2 * (lcm // den2)}}}{{{lcm}}}$",
+                f"Add: $\\frac{{{num1 * (lcm // den1) + num2 * (lcm // den2)}}}{{{lcm}}}$",
+                f"Simplified: ${latex(ans)}$"
+            ),
+        )
+    
+    else:
+        # Divide two simple fractions (1200-1300)
+        num1 = randint(1, 6)
+        den1 = randint(2, 8)
+        num2 = randint(1, 6)
+        den2 = randint(2, 8)
+        
+        ans = Rational(num1 * den2, den1 * num2)
+        
+        return problem(
+            question=f"Divide the fractions: $\\frac{{{num1}}}{{{den1}}} \\div \\frac{{{num2}}}{{{den2}}}$",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="arithmetic/fractions",
+            solution=steps(
+                f"Multiply by the reciprocal of the second fraction",
+                f"$\\frac{{{num1}}}{{{den1}}} \\times \\frac{{{den2}}}{{{num2}}} = \\frac{{{num1} \\times {den2}}}{{{den1} \\times {num2}}} = \\frac{{{num1 * den2}}}{{{den1 * num2}}}$",
+                f"Simplified: ${latex(ans)}$"
+            ),
+        )
 
-problem = generate_fraction_problem()
-print(json.dumps(problem))
+emit(generate())

@@ -1,92 +1,125 @@
 """
 arithmetic - order_of_operations (medium)
-Generated: 2026-02-11T21:26:17.946395
+Generated: 2026-02-22T03:44:49.409998
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_order_of_operations_problem():
-    target_elo = random.randint(1300, 1600)
+def generate():
+    # Choose problem type based on difficulty range
+    problem_type = choice(['basic', 'with_exponents', 'with_fractions', 'nested'])
     
-    if target_elo < 1400:
-        answer = random.randint(5, 30)
+    if problem_type == 'basic':
+        # 1300-1400: Basic order of operations with 3-4 operations
+        a = randint(2, 9)
+        b = randint(2, 9)
+        c = randint(2, 9)
+        d = randint(1, 9)
         
-        a = random.randint(2, 9)
-        b = random.randint(2, 9)
-        c = answer - a * b
-        
-        if random.choice([True, False]):
-            question = f"{a} \\times {b} + {c}"
-            actual_answer = a * b + c
+        # Create expression: a * b + c - d or a + b * c - d
+        if choice([True, False]):
+            expr_str = f"{a} \\times {b} + {c} - {d}"
+            step1 = f"First multiply: ${a} \\times {b} = {a*b}$"
+            step2 = f"Then add: ${a*b} + {c} = {a*b + c}$"
+            step3 = f"Finally subtract: ${a*b + c} - {d} = {a*b + c - d}$"
+            ans = a * b + c - d
         else:
-            c = answer + a * b
-            question = f"{c} - {a} \\times {b}"
-            actual_answer = c - a * b
+            expr_str = f"{a} + {b} \\times {c} - {d}"
+            step1 = f"First multiply: ${b} \\times {c} = {b*c}$"
+            step2 = f"Then add: ${a} + {b*c} = {a + b*c}$"
+            step3 = f"Finally subtract: ${a + b*c} - {d} = {a + b*c - d}$"
+            ans = a + b * c - d
         
-        elo = random.randint(1300, 1390)
+        return problem(
+            question=f"Evaluate: ${expr_str}$",
+            answer=ans,
+            difficulty=(1300, 1400),
+            topic="arithmetic/order_of_operations",
+            solution=steps(step1, step2, step3)
+        )
     
-    elif target_elo < 1500:
-        answer = random.randint(10, 50)
+    elif problem_type == 'with_exponents':
+        # 1400-1500: Order of operations with exponents
+        a = randint(2, 5)
+        b = randint(2, 3)
+        c = randint(2, 6)
+        d = randint(1, 10)
         
-        a = random.randint(2, 6)
-        b = random.randint(2, 6)
-        c = random.randint(2, 8)
-        
-        if random.choice([True, False]):
-            d = answer - (a * b + c)
-            question = f"{a} \\times {b} + {c} + {d}"
-            actual_answer = a * b + c + d
+        # Create expression: a^b + c * d or c * d - a^b
+        if choice([True, False]):
+            expr_str = f"{a}^{b} + {c} \\times {d}"
+            step1 = f"First evaluate exponent: ${a}^{b} = {a**b}$"
+            step2 = f"Then multiply: ${c} \\times {d} = {c*d}$"
+            step3 = f"Finally add: ${a**b} + {c*d} = {a**b + c*d}$"
+            ans = a**b + c * d
         else:
-            intermediate = a * b
-            d = random.randint(2, 6)
-            e = answer - intermediate - d
-            question = f"{a} \\times {b} + {d} \\times {e}"
-            actual_answer = a * b + d * e
+            expr_str = f"{c} \\times {d} - {a}^{b}"
+            step1 = f"First evaluate exponent: ${a}^{b} = {a**b}$"
+            step2 = f"Then multiply: ${c} \\times {d} = {c*d}$"
+            step3 = f"Finally subtract: ${c*d} - {a**b} = {c*d - a**b}$"
+            ans = c * d - a**b
         
-        elo = random.randint(1400, 1490)
+        return problem(
+            question=f"Evaluate: ${expr_str}$",
+            answer=ans,
+            difficulty=(1400, 1500),
+            topic="arithmetic/order_of_operations",
+            solution=steps(step1, step2, step3)
+        )
     
-    else:
-        answer = random.randint(5, 40)
+    elif problem_type == 'with_fractions':
+        # 1450-1550: Order of operations with division
+        a = randint(3, 8)
+        b = randint(2, 4)
+        c = randint(2, 5)
+        d = randint(10, 30)
+        # Make d divisible by c for clean answer
+        d = c * randint(3, 8)
         
-        a = random.randint(2, 6)
-        b = random.randint(2, 6)
-        c = random.randint(1, 5)
-        d = random.randint(2, 6)
+        expr_str = f"{d} \\div {c} + {a} \\times {b}"
+        step1 = f"First divide: ${d} \\div {c} = {d//c}$"
+        step2 = f"Then multiply: ${a} \\times {b} = {a*b}$"
+        step3 = f"Finally add: ${d//c} + {a*b} = {d//c + a*b}$"
+        ans = d // c + a * b
         
-        choice = random.randint(1, 3)
+        return problem(
+            question=f"Evaluate: ${expr_str}$",
+            answer=ans,
+            difficulty=(1450, 1550),
+            topic="arithmetic/order_of_operations",
+            solution=steps(step1, step2, step3)
+        )
+    
+    else:  # nested
+        # 1500-1600: Nested operations with parentheses
+        a = randint(2, 6)
+        b = randint(2, 5)
+        c = randint(2, 4)
+        d = randint(1, 8)
+        e = randint(2, 5)
         
-        if choice == 1:
-            inner = a + b
-            e = answer - inner * c
-            question = f"({a} + {b}) \\times {c} + {e}"
-            actual_answer = (a + b) * c + e
-        elif choice == 2:
-            inner = a * b
-            outer = c + d
-            f = answer - inner - outer
-            question = f"{a} \\times {b} + ({c} + {d}) + {f}"
-            actual_answer = a * b + (c + d) + f
+        # Create expression: (a + b) * c - d^e or a * (b + c) - d^e
+        if choice([True, False]):
+            expr_str = f"({a} + {b}) \\times {c} - {d}^{e}"
+            step1 = f"First evaluate parentheses: ${a} + {b} = {a+b}$"
+            step2 = f"Then evaluate exponent: ${d}^{e} = {d**e}$"
+            step3 = f"Then multiply: ${a+b} \\times {c} = {(a+b)*c}$"
+            step4 = f"Finally subtract: ${(a+b)*c} - {d**e} = {(a+b)*c - d**e}$"
+            ans = (a + b) * c - d**e
         else:
-            inner1 = a + b
-            inner2 = c * d
-            e = answer - inner1 - inner2
-            question = f"({a} + {b}) + {c} \\times {d} + {e}"
-            actual_answer = (a + b) + c * d + e
+            expr_str = f"{a} \\times ({b} + {c}) - {d}^{e}"
+            step1 = f"First evaluate parentheses: ${b} + {c} = {b+c}$"
+            step2 = f"Then evaluate exponent: ${d}^{e} = {d**e}$"
+            step3 = f"Then multiply: ${a} \\times {b+c} = {a*(b+c)}$"
+            step4 = f"Finally subtract: ${a*(b+c)} - {d**e} = {a*(b+c) - d**e}$"
+            ans = a * (b + c) - d**e
         
-        elo = random.randint(1500, 1600)
-    
-    result = {
-        "question_latex": question,
-        "answer_key": str(actual_answer),
-        "difficulty": elo,
-        "main_topic": "arithmetic",
-        "subtopic": "order_of_operations",
-        "grading_mode": "equivalent"
-    }
-    
-    return result
+        return problem(
+            question=f"Evaluate: ${expr_str}$",
+            answer=ans,
+            difficulty=(1500, 1600),
+            topic="arithmetic/order_of_operations",
+            solution=steps(step1, step2, step3, step4)
+        )
 
-problem = generate_order_of_operations_problem()
-print(json.dumps(problem))
+emit(generate())

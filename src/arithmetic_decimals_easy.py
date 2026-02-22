@@ -1,69 +1,109 @@
 """
 arithmetic - decimals (easy)
-Generated: 2026-02-11T21:24:35.933941
+Generated: 2026-02-22T03:42:31.874057
 """
 
-import random
-import json
-from sympy import sympify, nsimplify
+from problem_utils import *
 
-def generate_decimal_problem():
-    problem_type = random.choice(['addition', 'subtraction', 'multiplication', 'division'])
+def generate():
+    problem_type = randint(1, 6)
     
-    if problem_type == 'addition':
-        # Pick clean answer first (1-2 decimal places)
-        answer = round(random.uniform(0.5, 20), random.choice([1, 2]))
-        
-        # Create two addends that sum to answer
-        addend1 = round(random.uniform(0.1, answer - 0.1), random.choice([1, 2]))
-        addend2 = round(answer - addend1, 2)
-        
-        question = f"{addend1} + {addend2}"
-        difficulty = 1050  # Single-step addition
-        
-    elif problem_type == 'subtraction':
-        # Pick clean answer first
-        answer = round(random.uniform(0.5, 15), random.choice([1, 2]))
-        
-        # Create minuend larger than answer
-        minuend = round(answer + random.uniform(1, 10), random.choice([1, 2]))
-        subtrahend = round(minuend - answer, 2)
-        
-        question = f"{minuend} - {subtrahend}"
-        difficulty = 1100  # Single-step subtraction
-        
-    elif problem_type == 'multiplication':
-        # Pick clean answer and simple multipliers
-        multiplier1 = round(random.uniform(0.1, 5), 1)
-        multiplier2 = random.choice([2, 3, 4, 5, 10])
-        answer = round(multiplier1 * multiplier2, 2)
-        
-        question = f"{multiplier1} \\times {multiplier2}"
-        difficulty = 1150  # Single-step multiplication with whole number
-        
-    else:  # division
-        # Pick clean divisor and quotient to get clean answer
-        divisor = random.choice([2, 4, 5, 10])
-        quotient = round(random.uniform(0.5, 10), 1)
-        dividend = round(quotient * divisor, 2)
-        answer = round(dividend / divisor, 2)
-        
-        question = f"{dividend} \\div {divisor}"
-        difficulty = 1200  # Single-step division
+    if problem_type == 1:
+        # Simple decimal addition (1000-1100)
+        a = round(uniform(0.1, 9.9), 1)
+        b = round(uniform(0.1, 9.9), 1)
+        ans = round(a + b, 1)
+        return problem(
+            question=f"${a} + {b} = ?$",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="arithmetic/decimals",
+            solution=steps(
+                f"Add the decimals: ${a} + {b}$",
+                f"${ans}$"
+            ),
+        )
     
-    # Ensure answer is properly formatted
-    answer_str = str(nsimplify(answer, rational=False))
+    elif problem_type == 2:
+        # Simple decimal subtraction (1000-1100)
+        b = round(uniform(0.1, 5.0), 1)
+        a = round(uniform(b + 0.1, 9.9), 1)
+        ans = round(a - b, 1)
+        return problem(
+            question=f"${a} - {b} = ?$",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="arithmetic/decimals",
+            solution=steps(
+                f"Subtract the decimals: ${a} - {b}$",
+                f"${ans}$"
+            ),
+        )
     
-    problem = {
-        "question_latex": question,
-        "answer_key": answer_str,
-        "difficulty": difficulty,
-        "main_topic": "arithmetic",
-        "subtopic": "decimals",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 3:
+        # Decimal multiplication by whole number (1100-1200)
+        dec = round(uniform(0.1, 9.9), 1)
+        whole = randint(2, 9)
+        ans = round(dec * whole, 1)
+        return problem(
+            question=f"${dec} \\times {whole} = ?$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="arithmetic/decimals",
+            solution=steps(
+                f"Multiply the decimal by the whole number: ${dec} \\times {whole}$",
+                f"${ans}$"
+            ),
+        )
     
-    return problem
+    elif problem_type == 4:
+        # Simple decimal division (1200-1300)
+        divisor = choice([2, 4, 5])
+        quotient = round(uniform(0.2, 5.0), 1)
+        dividend = round(quotient * divisor, 1)
+        ans = round(dividend / divisor, 2)
+        return problem(
+            question=f"${dividend} \\div {divisor} = ?$",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="arithmetic/decimals",
+            solution=steps(
+                f"Divide the decimal: ${dividend} \\div {divisor}$",
+                f"${ans}$"
+            ),
+        )
+    
+    elif problem_type == 5:
+        # Two decimal addition (1100-1200)
+        a = round(uniform(1.0, 9.9), 2)
+        b = round(uniform(1.0, 9.9), 2)
+        ans = round(a + b, 2)
+        return problem(
+            question=f"${a} + {b} = ?$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="arithmetic/decimals",
+            solution=steps(
+                f"Add the decimals, aligning decimal points:",
+                f"${a} + {b} = {ans}$"
+            ),
+        )
+    
+    else:
+        # Decimal multiplication (1200-1300)
+        a = round(uniform(0.1, 9.9), 1)
+        b = round(uniform(0.1, 9.9), 1)
+        ans = round(a * b, 2)
+        return problem(
+            question=f"${a} \\times {b} = ?$",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="arithmetic/decimals",
+            solution=steps(
+                f"Multiply the decimals: ${a} \\times {b}$",
+                f"Count total decimal places: 2",
+                f"${ans}$"
+            ),
+        )
 
-problem = generate_decimal_problem()
-print(json.dumps(problem))
+emit(generate())

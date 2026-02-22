@@ -1,134 +1,154 @@
 """
 linear_algebra - linear_transformations (medium)
-Generated: 2026-02-11T22:13:08.658302
+Generated: 2026-02-22T06:01:24.126665
 """
 
-import random
-import json
-from sympy import Matrix, symbols, latex, simplify, eye, zeros, sqrt, Rational
+from problem_utils import *
 
-def generate_problem():
-    problem_type = random.choice([
-        'matrix_of_transformation',
-        'image_of_vector',
-        'kernel_basis',
-        'composition',
-        'inverse_transform'
-    ])
+def generate():
+    problem_type = randint(1, 4)
     
-    if problem_type == 'matrix_of_transformation':
-        # Find matrix representation given transformation rule
-        x, y = symbols('x y')
+    if problem_type == 1:
+        # Matrix of a linear transformation given by a formula
+        # Difficulty: 1300-1500
+        # Find the matrix representation of T: R^2 -> R^2
         
-        # Pick a clean answer matrix first
-        a, b, c, d = random.choice([
-            (2, 0, 0, 3),
-            (1, 1, 0, 1),
-            (2, 1, 1, 2),
-            (3, 0, 0, 2),
-            (1, 2, 2, 1),
-            (0, 1, 1, 0)
-        ])
+        a_val = nonzero(-3, 3)
+        b_val = nonzero(-3, 3)
+        c_val = nonzero(-3, 3)
+        d_val = nonzero(-3, 3)
         
-        answer_matrix = Matrix([[a, b], [c, d]])
+        # Create transformation T([x, y]) = [a*x + b*y, c*x + d*y]
+        transformation_matrix = Matrix([[a_val, b_val], [c_val, d_val]])
         
-        # Create transformation description
-        transform_x = a*x + b*y
-        transform_y = c*x + d*y
+        # Format the transformation nicely
+        term1_x = f"{a_val}x" if a_val != 1 else "x" if a_val != -1 else "-x"
+        term1_y = f"{abs(b_val)}y" if abs(b_val) != 1 else "y"
+        sign1 = "+" if b_val > 0 else "-"
         
-        question = f"Find the matrix representation of the linear transformation $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ defined by $T\\begin{{pmatrix}} x \\\\ y \\end{{pmatrix}} = \\begin{{pmatrix}} {latex(transform_x)} \\\\ {latex(transform_y)} \\end{{pmatrix}}$."
+        term2_x = f"{c_val}x" if c_val != 1 else "x" if c_val != -1 else "-x"
+        term2_y = f"{abs(d_val)}y" if abs(d_val) != 1 else "y"
+        sign2 = "+" if d_val > 0 else "-"
         
-        answer_key = str(answer_matrix.tolist())
-        difficulty = 1350
+        question = f"Find the standard matrix for the linear transformation $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ defined by $T\\begin{{pmatrix}} x \\\\ y \\end{{pmatrix}} = \\begin{{pmatrix}} {term1_x} {sign1} {term1_y} \\\\ {term2_x} {sign2} {term2_y} \\end{{pmatrix}}$"
         
-    elif problem_type == 'image_of_vector':
-        # Apply transformation to a vector
+        solution = steps(
+            f"The standard matrix $[T]$ has columns that are the images of the standard basis vectors.",
+            f"$T(\\mathbf{{e}}_1) = T\\begin{{pmatrix}} 1 \\\\ 0 \\end{{pmatrix}} = \\begin{{pmatrix}} {a_val} \\\\ {c_val} \\end{{pmatrix}}$",
+            f"$T(\\mathbf{{e}}_2) = T\\begin{{pmatrix}} 0 \\\\ 1 \\end{{pmatrix}} = \\begin{{pmatrix}} {b_val} \\\\ {d_val} \\end{{pmatrix}}$",
+            f"Therefore, $[T] = {latex(transformation_matrix)}$"
+        )
         
-        # Pick clean transformation matrix
-        matrices = [
-            Matrix([[2, 0], [0, 3]]),
-            Matrix([[1, 1], [0, 1]]),
-            Matrix([[2, 1], [1, 2]]),
-            Matrix([[3, 0], [0, 2]]),
-            Matrix([[0, -1], [1, 0]])
-        ]
-        
-        T = random.choice(matrices)
-        
-        # Pick simple input vector
-        v = Matrix([[random.randint(1, 5)], [random.randint(1, 5)]])
-        
-        # Calculate answer
-        answer = T * v
-        
-        question = f"Let $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ be the linear transformation with matrix $A = {latex(T)}$. Find $T\\left({latex(v)}\\right)$."
-        
-        answer_key = str(answer.tolist())
-        difficulty = 1300
-        
-    elif problem_type == 'kernel_basis':
-        # Find kernel of a transformation
-        
-        # Create matrix with known kernel
-        rank_choice = random.choice([1])  # rank 1 for non-trivial kernel in 2D
-        
-        if rank_choice == 1:
-            # Matrix with 1D kernel
-            a = random.randint(1, 3)
-            b = random.randint(1, 3)
-            T = Matrix([[a, b], [2*a, 2*b]])
-            
-            # Kernel basis: solve Tx = 0
-            # For this matrix: ax + by = 0, so kernel is span of (-b, a)
-            kernel_basis = Matrix([[-b], [a]])
-            
-            question = f"Find a basis for the kernel of the linear transformation $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ with matrix $A = {latex(T)}$."
-            
-            answer_key = str(kernel_basis.tolist())
-            difficulty = 1550
-        
-    elif problem_type == 'composition':
-        # Composition of two transformations
-        
-        # Pick two simple matrices
-        S = Matrix([[2, 0], [0, 1]])
-        T = Matrix([[1, random.randint(1, 2)], [0, 1]])
-        
-        # Answer is product
-        answer = S * T
-        
-        question = f"Let $S: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ and $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ be linear transformations with matrices $A_S = {latex(S)}$ and $A_T = {latex(T)}$ respectively. Find the matrix of the composition $S \\circ T$."
-        
-        answer_key = str(answer.tolist())
-        difficulty = 1450
-        
-    else:  # inverse_transform
-        # Find inverse transformation
-        
-        # Pick invertible matrix with clean inverse
-        matrices_with_inverses = [
-            Matrix([[2, 0], [0, 3]]),
-            Matrix([[1, 1], [0, 1]]),
-            Matrix([[2, 1], [1, 1]]),
-            Matrix([[3, 1], [2, 1]])
-        ]
-        
-        T = random.choice(matrices_with_inverses)
-        answer = T.inv()
-        
-        question = f"Find the matrix of the inverse transformation $T^{{-1}}$ if $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ has matrix $A = {latex(T)}$."
-        
-        answer_key = str(answer.tolist())
-        difficulty = 1500
+        return problem(
+            question=question,
+            answer=transformation_matrix,
+            difficulty=(1300, 1500),
+            topic="linear_algebra/linear_transformations",
+            solution=solution
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": answer_key,
-        "difficulty": difficulty,
-        "main_topic": "linear_algebra",
-        "subtopic": "linear_transformations",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 2:
+        # Image of a vector under a transformation
+        # Difficulty: 1300-1400
+        
+        a_val = nonzero(-3, 3)
+        b_val = nonzero(-3, 3)
+        c_val = nonzero(-3, 3)
+        d_val = nonzero(-3, 3)
+        
+        v_x = nonzero(-4, 4)
+        v_y = nonzero(-4, 4)
+        
+        transformation_matrix = Matrix([[a_val, b_val], [c_val, d_val]])
+        vector = Matrix([v_x, v_y])
+        result = transformation_matrix * vector
+        
+        question = f"Let $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ be the linear transformation with standard matrix ${latex(transformation_matrix)}$. Find $T\\begin{{pmatrix}} {v_x} \\\\ {v_y} \\end{{pmatrix}}$."
+        
+        solution = steps(
+            f"Compute the matrix-vector product:",
+            f"$T\\begin{{pmatrix}} {v_x} \\\\ {v_y} \\end{{pmatrix}} = {latex(transformation_matrix)} \\begin{{pmatrix}} {v_x} \\\\ {v_y} \\end{{pmatrix}}$",
+            f"$= \\begin{{pmatrix}} {a_val}({v_x}) + {b_val}({v_y}) \\\\ {c_val}({v_x}) + {d_val}({v_y}) \\end{{pmatrix}}$",
+            f"$= {latex(result)}$"
+        )
+        
+        return problem(
+            question=question,
+            answer=result,
+            difficulty=(1300, 1400),
+            topic="linear_algebra/linear_transformations",
+            solution=solution
+        )
+    
+    elif problem_type == 3:
+        # Composition of linear transformations
+        # Difficulty: 1400-1600
+        
+        a1, b1 = nonzero(-2, 2), nonzero(-2, 2)
+        c1, d1 = nonzero(-2, 2), nonzero(-2, 2)
+        
+        a2, b2 = nonzero(-2, 2), nonzero(-2, 2)
+        c2, d2 = nonzero(-2, 2), nonzero(-2, 2)
+        
+        T_matrix = Matrix([[a1, b1], [c1, d1]])
+        S_matrix = Matrix([[a2, b2], [c2, d2]])
+        
+        composition = S_matrix * T_matrix
+        
+        question = f"Let $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ and $S: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ be linear transformations with standard matrices $[T] = {latex(T_matrix)}$ and $[S] = {latex(S_matrix)}$. Find the standard matrix of the composition $S \\circ T$."
+        
+        solution = steps(
+            f"The standard matrix of $S \\circ T$ is $[S][T]$:",
+            f"$[S \\circ T] = {latex(S_matrix)} {latex(T_matrix)}$",
+            f"$= {latex(composition)}$"
+        )
+        
+        return problem(
+            question=question,
+            answer=composition,
+            difficulty=(1400, 1600),
+            topic="linear_algebra/linear_transformations",
+            solution=solution
+        )
+    
+    else:
+        # Determine if transformation is linear
+        # Difficulty: 1500-1600
+        # We'll ask about a specific transformation and whether it's linear
+        
+        transformation_choice = randint(1, 2)
+        
+        if transformation_choice == 1:
+            # Non-linear: T(x, y) = (x + 1, y)
+            question = f"Is the transformation $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ defined by $T\\begin{{pmatrix}} x \\\\ y \\end{{pmatrix}} = \\begin{{pmatrix}} x + 1 \\\\ y \\end{{pmatrix}}$ a linear transformation?"
+            
+            answer = False
+            
+            solution = steps(
+                f"For $T$ to be linear, we need $T(\\mathbf{{0}}) = \\mathbf{{0}}$.",
+                f"$T\\begin{{pmatrix}} 0 \\\\ 0 \\end{{pmatrix}} = \\begin{{pmatrix}} 0 + 1 \\\\ 0 \\end{{pmatrix}} = \\begin{{pmatrix}} 1 \\\\ 0 \\end{{pmatrix}} \\neq \\begin{{pmatrix}} 0 \\\\ 0 \\end{{pmatrix}}$",
+                f"Since $T$ does not map the zero vector to the zero vector, $T$ is not linear."
+            )
+        else:
+            # Non-linear: T(x, y) = (x^2, y)
+            question = f"Is the transformation $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ defined by $T\\begin{{pmatrix}} x \\\\ y \\end{{pmatrix}} = \\begin{{pmatrix}} x^2 \\\\ y \\end{{pmatrix}}$ a linear transformation?"
+            
+            answer = False
+            
+            solution = steps(
+                f"For $T$ to be linear, we need $T(c\\mathbf{{v}}) = cT(\\mathbf{{v}})$ for all scalars $c$ and vectors $\\mathbf{{v}}$.",
+                f"Let $\\mathbf{{v}} = \\begin{{pmatrix}} 1 \\\\ 0 \\end{{pmatrix}}$ and $c = 2$.",
+                f"$T(2\\mathbf{{v}}) = T\\begin{{pmatrix}} 2 \\\\ 0 \\end{{pmatrix}} = \\begin{{pmatrix}} 4 \\\\ 0 \\end{{pmatrix}}$",
+                f"$2T(\\mathbf{{v}}) = 2T\\begin{{pmatrix}} 1 \\\\ 0 \\end{{pmatrix}} = 2\\begin{{pmatrix}} 1 \\\\ 0 \\end{{pmatrix}} = \\begin{{pmatrix}} 2 \\\\ 0 \\end{{pmatrix}}$",
+                f"Since $T(2\\mathbf{{v}}) \\neq 2T(\\mathbf{{v}})$, $T$ is not linear."
+            )
+        
+        return problem(
+            question=question,
+            answer=answer,
+            difficulty=(1500, 1600),
+            topic="linear_algebra/linear_transformations",
+            solution=solution
+        )
 
-problem = generate_problem()
-print(json.dumps(problem))
+emit(generate())

@@ -1,110 +1,112 @@
 """
 multivariable_calculus - partial_derivatives (easy)
-Generated: 2026-02-11T22:03:06.799974
+Generated: 2026-02-22T05:33:32.789809
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-x, y, z = sp.symbols('x y z')
-
-def generate_problem():
-    problem_type = random.choice([
-        'simple_polynomial',
-        'power_function',
-        'simple_product',
-        'simple_exponential',
-        'simple_trig'
-    ])
+def generate():
+    problem_type = randint(1, 4)
     
-    if problem_type == 'simple_polynomial':
-        # Type: ∂/∂x of simple polynomial like 3x^2 + 2y
-        power = random.randint(2, 4)
-        coeff = random.randint(2, 8)
-        const_term = random.randint(1, 9)
+    if problem_type == 1:
+        # Type 1: Simple first-order partial derivative of polynomial (1000-1150)
+        # f(x,y) = ax^m + by^n, find ∂f/∂x or ∂f/∂y
+        a_coeff = nonzero(-5, 5)
+        b_coeff = nonzero(-5, 5)
+        x_power = randint(2, 4)
+        y_power = randint(2, 4)
         
-        func = coeff * x**power + const_term * y
-        partial_deriv = sp.diff(func, x)
+        f = a_coeff * x**x_power + b_coeff * y**y_power
         
-        question = f"\\frac{{\\partial}}{{\\partial x}}\\left({sp.latex(func)}\\right)"
-        answer = str(partial_deriv)
-        elo = 1050
+        var_choice = choice([x, y])
+        ans = diff(f, var_choice)
         
-    elif problem_type == 'power_function':
-        # Type: ∂/∂y of x^a * y^b (simple power)
-        a = random.randint(1, 3)
-        b = random.randint(2, 4)
-        coeff = random.randint(1, 5)
-        
-        func = coeff * x**a * y**b
-        partial_deriv = sp.diff(func, y)
-        
-        question = f"\\frac{{\\partial}}{{\\partial y}}\\left({sp.latex(func)}\\right)"
-        answer = str(partial_deriv)
-        elo = 1100
-        
-    elif problem_type == 'simple_product':
-        # Type: ∂/∂x of xy or x^2*y
-        power_x = random.randint(1, 3)
-        power_y = random.randint(1, 2)
-        coeff = random.randint(2, 6)
-        
-        func = coeff * x**power_x * y**power_y
-        var_choice = random.choice([x, y])
-        partial_deriv = sp.diff(func, var_choice)
-        
-        var_str = 'x' if var_choice == x else 'y'
-        question = f"\\frac{{\\partial}}{{\\partial {var_str}}}\\left({sp.latex(func)}\\right)"
-        answer = str(partial_deriv)
-        elo = 1150
-        
-    elif problem_type == 'simple_exponential':
-        # Type: ∂/∂x of e^(ax) * y or e^x + y^2
-        a = random.randint(1, 3)
-        b = random.randint(2, 3)
-        
-        if random.choice([True, False]):
-            func = sp.exp(a*x) + y**b
-            partial_deriv = sp.diff(func, x)
-            var_str = 'x'
-        else:
-            func = x**b + sp.exp(a*y)
-            partial_deriv = sp.diff(func, y)
-            var_str = 'y'
-        
-        question = f"\\frac{{\\partial}}{{\\partial {var_str}}}\\left({sp.latex(func)}\\right)"
-        answer = str(partial_deriv)
-        elo = 1250
-        
-    else:  # simple_trig
-        # Type: ∂/∂x of sin(x) + y^2 or cos(y) + x^2
-        power = random.randint(2, 3)
-        coeff = random.randint(1, 4)
-        
-        if random.choice([True, False]):
-            trig_func = random.choice([sp.sin, sp.cos])
-            func = trig_func(x) + coeff * y**power
-            partial_deriv = sp.diff(func, x)
-            var_str = 'x'
-        else:
-            trig_func = random.choice([sp.sin, sp.cos])
-            func = coeff * x**power + trig_func(y)
-            partial_deriv = sp.diff(func, y)
-            var_str = 'y'
-        
-        question = f"\\frac{{\\partial}}{{\\partial {var_str}}}\\left({sp.latex(func)}\\right)"
-        answer = str(partial_deriv)
-        elo = 1200
+        return problem(
+            question=f"Find $\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}}$ where $f({latex(x)},{latex(y)}) = {latex(f)}$",
+            answer=ans,
+            difficulty=(1000, 1150),
+            topic="multivariable_calculus/partial_derivatives",
+            solution=steps(
+                f"To find $\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}}$, treat all other variables as constants",
+                f"Differentiate ${latex(f)}$ with respect to ${latex(var_choice)}$",
+                f"$\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}} = {latex(ans)}$"
+            )
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": answer,
-        "difficulty": elo,
-        "main_topic": "multivariable_calculus",
-        "subtopic": "partial_derivatives",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 2:
+        # Type 2: Partial derivative of sum of monomials (1100-1250)
+        # f(x,y) = ax^m*y^n + bx^p, find ∂f/∂x or ∂f/∂y
+        a_coeff = nonzero(-4, 4)
+        b_coeff = nonzero(-4, 4)
+        x_power1 = randint(1, 3)
+        y_power1 = randint(1, 3)
+        x_power2 = randint(2, 3)
+        
+        f = a_coeff * x**x_power1 * y**y_power1 + b_coeff * x**x_power2
+        
+        var_choice = choice([x, y])
+        ans = diff(f, var_choice)
+        
+        return problem(
+            question=f"Compute $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left[{latex(f)}\\right]$",
+            answer=ans,
+            difficulty=(1100, 1250),
+            topic="multivariable_calculus/partial_derivatives",
+            solution=steps(
+                f"Differentiate ${latex(f)}$ with respect to ${latex(var_choice)}$, treating other variables as constants",
+                f"Apply the power rule to each term",
+                f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left[{latex(f)}\\right] = {latex(ans)}$"
+            )
+        )
+    
+    elif problem_type == 3:
+        # Type 3: Evaluate partial derivative at a point (1150-1300)
+        # f(x,y) = ax^2 + by^2, find ∂f/∂x at (x0, y0)
+        a_coeff = nonzero(-3, 3)
+        b_coeff = nonzero(-3, 3)
+        
+        f = a_coeff * x**2 + b_coeff * y**2
+        
+        var_choice = choice([x, y])
+        partial = diff(f, var_choice)
+        
+        x0 = randint(-3, 3)
+        y0 = randint(-3, 3)
+        
+        ans = partial.subs([(x, x0), (y, y0)])
+        
+        return problem(
+            question=f"Let $f({latex(x)},{latex(y)}) = {latex(f)}$. Evaluate $\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}}$ at the point $({x0}, {y0})$",
+            answer=ans,
+            difficulty=(1150, 1300),
+            topic="multivariable_calculus/partial_derivatives",
+            solution=steps(
+                f"First, find $\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}} = {latex(partial)}$",
+                f"Substitute ${latex(var_choice)} = {x0 if var_choice == x else y0}$",
+                f"$\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}}({x0}, {y0}) = {latex(ans)}$"
+            )
+        )
+    
+    else:
+        # Type 4: Simple mixed partial with three variables (1200-1300)
+        # f(x,y,z) = axy + byz, find ∂f/∂x or ∂f/∂y or ∂f/∂z
+        a_coeff = nonzero(-5, 5)
+        b_coeff = nonzero(-5, 5)
+        
+        f = a_coeff * x * y + b_coeff * y * z
+        
+        var_choice = choice([x, y, z])
+        ans = diff(f, var_choice)
+        
+        return problem(
+            question=f"Find $\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}}$ where $f({latex(x)},{latex(y)},{latex(z)}) = {latex(f)}$",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="multivariable_calculus/partial_derivatives",
+            solution=steps(
+                f"To find $\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}}$, differentiate with respect to ${latex(var_choice)}$ and treat all other variables as constants",
+                f"$\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}} = {latex(ans)}$"
+            )
+        )
 
-problem = generate_problem()
-print(json.dumps(problem))
+emit(generate())

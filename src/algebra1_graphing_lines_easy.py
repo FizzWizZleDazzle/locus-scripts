@@ -1,84 +1,126 @@
 """
 algebra1 - graphing_lines (easy)
-Generated: 2026-02-11T21:28:47.052674
+Generated: 2026-02-22T03:54:07.817087
 """
 
-import random
-import json
-from sympy import symbols, latex, simplify, Rational
+from problem_utils import *
+from svg_utils import Graph
 
-def generate_problem():
-    x, y = symbols('x y')
-    problem_type = random.choice([
-        'find_slope_two_points',
-        'identify_slope_from_equation',
-        'identify_y_intercept',
-        'point_on_line',
-        'slope_from_graph_description'
-    ])
+def generate():
+    problem_type = randint(1, 5)
     
-    if problem_type == 'find_slope_two_points':
-        x1 = random.randint(-5, 5)
-        y1 = random.randint(-5, 5)
+    if problem_type == 1:
+        # Find slope from two points (easiest)
+        x1, y1 = randint(-5, 5), randint(-5, 5)
+        x2, y2 = x1 + randint(1, 4), y1 + randint(-4, 4)
+        while y2 == y1:
+            y2 = y1 + randint(-4, 4)
         
-        slope_num = random.choice([-3, -2, -1, 1, 2, 3])
-        slope_den = random.choice([1, 2])
-        slope = Rational(slope_num, slope_den)
+        slope = Rational(y2 - y1, x2 - x1)
         
-        dx = random.choice([1, 2, 3, 4])
-        x2 = x1 + dx
-        y2 = y1 + slope * dx
+        g = Graph(x_range=(-8, 8), y_range=(-8, 8), width=300, height=300)
+        g.point(x1, y1, f"({x1},{y1})")
+        g.point(x2, y2, f"({x2},{y2})")
+        line_expr = slope * (x - x1) + y1
+        g.plot(line_expr)
         
-        question = f"Find the slope of the line passing through the points $({x1}, {y1})$ and $({x2}, {y2})$."
-        answer = slope
-        difficulty = 1150
-        
-    elif problem_type == 'identify_slope_from_equation':
-        m = random.choice([-4, -3, -2, -1, 1, 2, 3, 4])
-        b = random.randint(-6, 6)
-        
-        question = f"What is the slope of the line $y = {latex(m*x + b)}$?"
-        answer = m
-        difficulty = 1050
-        
-    elif problem_type == 'identify_y_intercept':
-        m = random.choice([-3, -2, -1, 1, 2, 3])
-        b = random.randint(-8, 8)
-        
-        question = f"What is the y-intercept of the line $y = {latex(m*x + b)}$?"
-        answer = b
-        difficulty = 1000
-        
-    elif problem_type == 'point_on_line':
-        m = random.choice([-2, -1, 1, 2, 3])
-        b = random.randint(-5, 5)
-        
-        x_val = random.randint(-3, 3)
-        y_val = m * x_val + b
-        
-        question = f"Does the point $({x_val}, {y_val})$ lie on the line $y = {latex(m*x + b)}$? Answer 'yes' or 'no'."
-        answer = "yes"
-        difficulty = 1200
-        
-    else:  # slope_from_graph_description
-        m = random.choice([-2, -1, 1, 2])
-        b = random.randint(-4, 4)
-        
-        rise = m * 2
-        run = 2
-        
-        question = f"A line has a slope of ${latex(m)}$ and passes through the point $(0, {b})$. Write the equation of the line in slope-intercept form."
-        answer = simplify(m*x + b)
-        difficulty = 1250
+        return problem(
+            question=f"Find the slope of the line passing through the points $({x1}, {y1})$ and $({x2}, {y2})$.",
+            answer=slope,
+            difficulty=(1000, 1100),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"Use the slope formula: $m = \\frac{{y_2 - y_1}}{{x_2 - x_1}}$",
+                f"$m = \\frac{{{y2} - ({y1})}}{{{x2} - ({x1})}} = \\frac{{{y2 - y1}}}{{{x2 - x1}}}$",
+                f"$m = {latex(slope)}$"
+            ),
+            image=g.render()
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": str(answer),
-        "difficulty": difficulty,
-        "main_topic": "algebra1",
-        "subtopic": "graphing_lines",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 2:
+        # Find y-intercept from graph or equation in slope-intercept form
+        m = nonzero(-3, 3)
+        b_val = randint(-6, 6)
+        
+        equation = Eq(y, m*x + b_val)
+        
+        return problem(
+            question=f"What is the $y$-intercept of the line ${latex(equation)}$?",
+            answer=b_val,
+            difficulty=(1050, 1150),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"The equation is in slope-intercept form: $y = mx + b$",
+                f"The $y$-intercept is the constant term $b$",
+                f"$b = {b_val}$"
+            )
+        )
+    
+    elif problem_type == 3:
+        # Identify slope from slope-intercept form
+        m = Rational(nonzero(-4, 4), choice([1, 2, 3, 4]))
+        b_val = randint(-5, 5)
+        
+        equation = Eq(y, m*x + b_val)
+        
+        return problem(
+            question=f"What is the slope of the line ${latex(equation)}$?",
+            answer=m,
+            difficulty=(1000, 1100),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"The equation is in slope-intercept form: $y = mx + b$",
+                f"The slope is the coefficient of $x$",
+                f"$m = {latex(m)}$"
+            )
+        )
+    
+    elif problem_type == 4:
+        # Find x-intercept (where y=0)
+        m = nonzero(-3, 3)
+        b_val = nonzero(-6, 6)
+        
+        # x-intercept when y=0: 0 = mx + b, so x = -b/m
+        x_intercept = Rational(-b_val, m)
+        
+        equation = Eq(y, m*x + b_val)
+        
+        return problem(
+            question=f"Find the $x$-intercept of the line ${latex(equation)}$.",
+            answer=x_intercept,
+            difficulty=(1150, 1250),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"The $x$-intercept occurs when $y = 0$",
+                f"$0 = {m}x + {b_val}$",
+                f"${-b_val} = {m}x$",
+                f"$x = {latex(x_intercept)}$"
+            )
+        )
+    
+    else:
+        # Graph a simple line (identify slope and y-intercept, then plot)
+        m = choice([-2, -1, 1, 2])
+        b_val = randint(-3, 3)
+        
+        g = Graph(x_range=(-5, 5), y_range=(-5, 5), width=300, height=300)
+        g.plot(m*x + b_val)
+        g.point(0, b_val, f"(0,{b_val})")
+        
+        equation = Eq(y, m*x + b_val)
+        
+        return problem(
+            question=f"The graph shows the line ${latex(equation)}$. What point does the line cross the $y$-axis?",
+            answer=fmt_tuple(0, b_val),
+            difficulty=(1100, 1200),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"The $y$-intercept is where the line crosses the $y$-axis (where $x = 0$)",
+                f"From the equation $y = {m}x + {b_val}$, when $x = 0$:",
+                f"$y = {m}(0) + {b_val} = {b_val}$",
+                f"The point is $(0, {b_val})$"
+            ),
+            image=g.render()
+        )
 
-problem = generate_problem()
-print(json.dumps(problem))
+emit(generate())

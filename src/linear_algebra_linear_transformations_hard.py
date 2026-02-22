@@ -1,118 +1,146 @@
 """
 linear_algebra - linear_transformations (hard)
-Generated: 2026-02-11T22:13:34.632873
+Generated: 2026-02-22T06:01:53.235730
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_linear_transformation_problem():
-    random.seed()
-    problem_type = random.choice([
-        'kernel_dimension',
-        'image_basis',
-        'inverse_transformation',
-        'composition_properties',
-        'eigenspace_transformation',
-        'matrix_representation_nonstandard'
-    ])
+def generate():
+    problem_type = randint(1, 5)
     
-    if problem_type == 'kernel_dimension':
-        # 1600-1700: Find dimension of kernel given transformation
-        m = random.randint(3, 4)
-        n = random.randint(3, 4)
-        rank = random.randint(2, min(m, n) - 1)
+    if problem_type == 1:
+        # Matrix of linear transformation with kernel and image computation
+        # Difficulty: 1600-1750
+        rows = 3
+        cols = 3
+        rank = choice([1, 2])
         
-        A = sp.Matrix([[random.randint(-2, 2) for _ in range(n)] for _ in range(m)])
-        # Adjust to get desired rank by making some rows dependent
-        while sp.Matrix(A).rank() != rank:
-            A = sp.Matrix([[random.randint(-2, 2) for _ in range(n)] for _ in range(m)])
+        # Build matrix with specific rank
+        if rank == 1:
+            v = Matrix([nonzero(-2, 2), nonzero(-2, 2), nonzero(-2, 2)])
+            A = v * Matrix([[nonzero(-2, 2), nonzero(-2, 2), nonzero(-2, 2)]])
+        else:  # rank 2
+            v1 = Matrix([nonzero(-2, 2), nonzero(-2, 2), nonzero(-2, 2)])
+            v2 = Matrix([nonzero(-2, 2), nonzero(-2, 2), nonzero(-2, 2)])
+            A = v1 * Matrix([[1, 0, nonzero(-1, 1)]]) + v2 * Matrix([[0, 1, nonzero(-1, 1)]])
         
-        nullity = n - rank
+        nullity = cols - rank
         
-        question = f"Let $T: \\mathbb{{R}}^{{{n}}} \\to \\mathbb{{R}}^{{{m}}}$ be the linear transformation defined by the matrix $A = {sp.latex(A)}$. Find $\\dim(\\ker(T))$."
-        answer = str(nullity)
-        difficulty = 1650
-        
-    elif problem_type == 'image_basis':
-        # 1700-1800: Find basis for image
-        n = 3
-        m = 3
-        # Create matrix with known column space
-        basis_vecs = [[1, 0, 1], [0, 1, 1]]
-        col3 = [basis_vecs[0][i] + 2*basis_vecs[1][i] for i in range(3)]
-        A = sp.Matrix([basis_vecs[0], basis_vecs[1], col3]).T
-        
-        question = f"Let $T: \\mathbb{{R}}^{{{n}}} \\to \\mathbb{{R}}^{{{m}}}$ be defined by $T(\\mathbf{{x}}) = A\\mathbf{{x}}$ where $A = {sp.latex(A)}$. Find the dimension of the image of $T$."
-        answer = "2"
-        difficulty = 1750
-        
-    elif problem_type == 'inverse_transformation':
-        # 1650-1750: Determine if transformation is invertible and find inverse
-        # Start with invertible matrix
-        while True:
-            A = sp.Matrix([[random.randint(-2, 3) for _ in range(3)] for _ in range(3)])
-            if A.det() != 0:
-                break
-        
-        det_val = A.det()
-        
-        question = f"Let $T: \\mathbb{{R}}^3 \\to \\mathbb{{R}}^3$ be the linear transformation with matrix $A = {sp.latex(A)}$. Is $T$ invertible? If yes, compute $\\det(A^{{-1}})$. If no, enter 0."
-        answer = str(sp.Rational(1, det_val))
-        difficulty = 1680
-        
-    elif problem_type == 'composition_properties':
-        # 1700-1800: Properties of composition
-        A = sp.Matrix([[2, 1], [0, 3]])
-        B = sp.Matrix([[1, -1], [2, 1]])
-        
-        composition = B * A
-        trace_val = composition.trace()
-        
-        question = f"Let $S: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ be given by $S(\\mathbf{{x}}) = {sp.latex(A)}\\mathbf{{x}}$ and $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ be given by $T(\\mathbf{{x}}) = {sp.latex(B)}\\mathbf{{x}}$. Find $\\text{{tr}}(T \\circ S)$."
-        answer = str(trace_val)
-        difficulty = 1720
-        
-    elif problem_type == 'eigenspace_transformation':
-        # 1750-1850: Transformation restricted to eigenspace
-        # Matrix with known eigenvalues
-        lambda1 = random.randint(2, 4)
-        lambda2 = random.randint(-2, -1)
-        A = sp.Matrix([[lambda1, 0, 0], [0, lambda2, 0], [1, 0, lambda1]])
-        
-        # Find dimension of eigenspace for lambda1
-        eigenspace_matrix = A - lambda1 * sp.eye(3)
-        nullity = 3 - eigenspace_matrix.rank()
-        
-        question = f"Consider the linear transformation $T: \\mathbb{{R}}^3 \\to \\mathbb{{R}}^3$ with matrix $A = {sp.latex(A)}$. Find the dimension of the eigenspace corresponding to eigenvalue $\\lambda = {lambda1}$."
-        answer = str(nullity)
-        difficulty = 1800
-        
-    else:  # matrix_representation_nonstandard
-        # 1800-1900: Find matrix in non-standard basis
-        # T maps polynomial space, find matrix representation
-        v1 = sp.Symbol('a')
-        v2 = sp.Symbol('b')
-        
-        question = f"Let $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ be defined by $T\\begin{{pmatrix}} x \\\\ y \\end{{pmatrix}} = \\begin{{pmatrix}} 2x + y \\\\ x - y \\end{{pmatrix}}$. With respect to the basis $\\mathcal{{B}} = \\{{\\begin{{pmatrix}} 1 \\\\ 1 \\end{{pmatrix}}, \\begin{{pmatrix}} 1 \\\\ -1 \\end{{pmatrix}}\\}}$, find the trace of $[T]_\\mathcal{{B}}$."
-        
-        # T applied to basis vectors
-        # T([1,1]) = [3, 0] = 3/2[1,1] + 3/2[1,-1]
-        # T([1,-1]) = [1, 2] = 3/2[1,1] - 1/2[1,-1]
-        # Matrix is [[3/2, 3/2], [3/2, -1/2]]
-        # Trace is 1
-        answer = "1"
-        difficulty = 1850
+        return problem(
+            question=f"Let $T: \\mathbb{{R}}^3 \\to \\mathbb{{R}}^3$ be the linear transformation with matrix ${latex(A)}$. Find the dimension of the kernel (null space) of $T$.",
+            answer=nullity,
+            difficulty=(1600, 1750),
+            topic="linear_algebra/linear_transformations",
+            solution=steps(
+                f"By the rank-nullity theorem: $\\dim(\\ker(T)) + \\dim(\\text{{im}}(T)) = \\dim(\\mathbb{{R}}^3) = 3$",
+                f"Compute the rank of $A$ by row reduction",
+                f"The rank of $A$ is ${rank}$",
+                f"Therefore $\\dim(\\ker(T)) = 3 - {rank} = {nullity}$"
+            ),
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": answer,
-        "difficulty": difficulty,
-        "main_topic": "linear_algebra",
-        "subtopic": "linear_transformations",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 2:
+        # Composition of linear transformations
+        # Difficulty: 1650-1800
+        A = Matrix([[randint(1, 3), nonzero(-2, 2)], [nonzero(-2, 2), randint(1, 3)]])
+        B = Matrix([[nonzero(-2, 2), randint(1, 2)], [randint(1, 2), nonzero(-2, 2)]])
+        
+        v = Matrix([nonzero(-3, 3), nonzero(-3, 3)])
+        
+        result = A * (B * v)
+        
+        return problem(
+            question=f"Let $S: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ be given by $S(\\mathbf{{v}}) = {latex(B)}\\mathbf{{v}}$ and $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ be given by $T(\\mathbf{{v}}) = {latex(A)}\\mathbf{{v}}$. Find $(T \\circ S){latex(v)}$.",
+            answer=result,
+            difficulty=(1650, 1800),
+            topic="linear_algebra/linear_transformations",
+            solution=steps(
+                f"$(T \\circ S)(\\mathbf{{v}}) = T(S(\\mathbf{{v}}))$",
+                f"First compute $S{latex(v)} = {latex(B)}{latex(v)} = {latex(B*v)}$",
+                f"Then compute $T({latex(B*v)}) = {latex(A)}{latex(B*v)} = {latex(result)}$",
+                f"Answer: ${latex(result)}$"
+            ),
+        )
+    
+    elif problem_type == 3:
+        # Finding matrix representation given transformation of basis vectors
+        # Difficulty: 1700-1850
+        e1 = Matrix([1, 0])
+        e2 = Matrix([0, 1])
+        
+        a11, a12 = nonzero(-3, 3), nonzero(-3, 3)
+        a21, a22 = nonzero(-3, 3), nonzero(-3, 3)
+        
+        T_e1 = Matrix([a11, a21])
+        T_e2 = Matrix([a12, a22])
+        
+        A = Matrix([[a11, a12], [a21, a22]])
+        
+        return problem(
+            question=f"A linear transformation $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^2$ satisfies $T{latex(e1)} = {latex(T_e1)}$ and $T{latex(e2)} = {latex(T_e2)}$. Find the matrix $[T]$ representing $T$ with respect to the standard basis.",
+            answer=A,
+            difficulty=(1700, 1850),
+            topic="linear_algebra/linear_transformations",
+            solution=steps(
+                f"The matrix of $T$ has columns given by the images of the standard basis vectors",
+                f"First column: $T{latex(e1)} = {latex(T_e1)}$",
+                f"Second column: $T{latex(e2)} = {latex(T_e2)}$",
+                f"Therefore $[T] = {latex(A)}$"
+            ),
+        )
+    
+    elif problem_type == 4:
+        # Determine if transformation is injective/surjective
+        # Difficulty: 1650-1800
+        is_injective = choice([True, False])
+        
+        if is_injective:
+            # Full rank 2x3 matrix (injective but not surjective)
+            A = Matrix([[1, 0, nonzero(-2, 2)], [0, 1, nonzero(-2, 2)]])
+            rank_val = 2
+            answer_str = "injective but not surjective"
+        else:
+            # Rank 1 matrix 3x2 (neither injective nor surjective)
+            v = Matrix([nonzero(-2, 2), nonzero(-2, 2), nonzero(-2, 2)])
+            w = Matrix([[1, nonzero(-1, 1)]])
+            A = v * w
+            rank_val = 1
+            answer_str = "neither injective nor surjective"
+        
+        return problem(
+            question=f"Let $T: \\mathbb{{R}}^2 \\to \\mathbb{{R}}^3$ be the linear transformation with matrix ${latex(A)}$. Is $T$ injective, surjective, both, or neither?",
+            answer=answer_str,
+            difficulty=(1650, 1800),
+            topic="linear_algebra/linear_transformations",
+            solution=steps(
+                f"The matrix $A$ has rank ${rank_val}$",
+                f"$T$ is injective if and only if $\\dim(\\ker(T)) = 0$, i.e., rank is $2$",
+                f"$T$ is surjective if and only if $\\dim(\\text{{im}}(T)) = 3$, i.e., rank is $3$",
+                f"Since rank is ${rank_val}$, $T$ is {answer_str}"
+            ),
+        )
+    
+    else:  # problem_type == 5
+        # Image of a specific vector under linear transformation
+        # Difficulty: 1600-1750
+        a11, a12, a13 = nonzero(-2, 2), nonzero(-2, 2), nonzero(-2, 2)
+        a21, a22, a23 = nonzero(-2, 2), nonzero(-2, 2), nonzero(-2, 2)
+        a31, a32, a33 = nonzero(-2, 2), nonzero(-2, 2), nonzero(-2, 2)
+        
+        A = Matrix([[a11, a12, a13], [a21, a22, a23], [a31, a32, a33]])
+        v = Matrix([nonzero(-3, 3), nonzero(-3, 3), nonzero(-3, 3)])
+        
+        result = A * v
+        
+        return problem(
+            question=f"Let $T: \\mathbb{{R}}^3 \\to \\mathbb{{R}}^3$ be the linear transformation defined by $T(\\mathbf{{x}}) = {latex(A)}\\mathbf{{x}}$. Find $T{latex(v)}$.",
+            answer=result,
+            difficulty=(1600, 1750),
+            topic="linear_algebra/linear_transformations",
+            solution=steps(
+                f"Apply the matrix multiplication $T{latex(v)} = {latex(A)}{latex(v)}$",
+                f"${latex(result)}$"
+            ),
+        )
 
-problem = generate_linear_transformation_problem()
-print(json.dumps(problem))
+emit(generate())

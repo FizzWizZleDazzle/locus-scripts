@@ -1,109 +1,152 @@
 """
 geometry - pythagorean_theorem (hard)
-Generated: 2026-02-11T21:44:10.367268
+Generated: 2026-02-22T04:18:09.833872
 """
 
-import random
-import json
-from sympy import symbols, sqrt, simplify, latex, Rational
+from problem_utils import *
+from svg_utils import Diagram
 
-def generate_problem():
-    problem_type = random.choice([
-        'nested_right_triangles',
-        'coordinate_distance_with_algebra',
-        'three_dimensional_diagonal',
-        'inverse_problem',
-        'pythagorean_with_ratios'
-    ])
+def generate():
+    problem_type = randint(1, 4)
     
-    if problem_type == 'nested_right_triangles':
-        # Two right triangles sharing a side - requires two applications
-        a = random.randint(3, 8)
-        b = random.randint(3, 8)
-        c = sqrt(a**2 + b**2)
+    if problem_type == 1:
+        # 3D Pythagorean theorem - space diagonal of rectangular prism
+        a_val = randint(3, 8)
+        b_val = randint(3, 8)
+        c_val = randint(3, 8)
         
-        d = random.randint(3, 8)
-        e = sqrt(c**2 + d**2)
+        # Calculate space diagonal
+        ans = sqrt(a_val**2 + b_val**2 + c_val**2)
+        ans_simplified = simplify(ans)
         
-        answer = simplify(e)
-        
-        question = f"In triangle ABC, angle B is 90°, AB = {a}, and BC = {b}. Point D is such that CD is perpendicular to AC and CD = {d}. Find the length of AD."
-        difficulty = 1650
-        
-    elif problem_type == 'coordinate_distance_with_algebra':
-        # Point on line, distance to another point
-        x_coord = random.randint(2, 10)
-        y_base = random.randint(2, 8)
-        k = random.randint(2, 5)
-        
-        # Point A at origin, Point B at (x_coord, k*x_coord + y_base)
-        # Find distance - requires coordinate geometry + Pythagorean
-        dist_squared = x_coord**2 + (k*x_coord + y_base)**2
-        answer = sqrt(dist_squared)
-        
-        question = f"Point A is at the origin (0,0) and point B is at ({x_coord}, {k*x_coord + y_base}). Find the distance AB."
-        difficulty = 1600
-        
-    elif problem_type == 'three_dimensional_diagonal':
-        # Space diagonal of rectangular prism
-        a = random.randint(2, 8)
-        b = random.randint(2, 8)
-        c = random.randint(2, 8)
-        
-        answer = sqrt(a**2 + b**2 + c**2)
-        
-        question = f"A rectangular box has dimensions {a} by {b} by {c}. Find the length of the space diagonal (the distance from one corner to the opposite corner through the interior)."
-        difficulty = 1700
-        
-    elif problem_type == 'inverse_problem':
-        # Given hypotenuse and one leg, find other leg
-        # Then use that in another calculation
-        leg1 = random.randint(5, 12)
-        hyp = random.randint(leg1 + 3, leg1 + 8)
-        
-        leg2_squared = hyp**2 - leg1**2
-        if leg2_squared <= 0:
-            leg1 = 5
-            hyp = 13
-            leg2_squared = 144
-        
-        leg2 = sqrt(leg2_squared)
-        
-        # Area calculation requires finding the other leg first
-        area = Rational(1, 2) * leg1 * leg2
-        answer = simplify(area)
-        
-        question = f"A right triangle has hypotenuse {hyp} and one leg of length {leg1}. Find the area of the triangle."
-        difficulty = 1650
-        
-    else:  # pythagorean_with_ratios
-        # Legs are in ratio, hypotenuse given
-        ratio_a = random.randint(3, 7)
-        ratio_b = random.randint(3, 7)
-        if ratio_a == ratio_b:
-            ratio_b += 1
-        
-        k = random.randint(2, 5)
-        hyp_squared = k**2 * (ratio_a**2 + ratio_b**2)
-        hyp = k * sqrt(ratio_a**2 + ratio_b**2)
-        
-        # Find the longer leg
-        longer_ratio = max(ratio_a, ratio_b)
-        answer = k * longer_ratio
-        
-        question = f"In a right triangle, the legs are in the ratio {ratio_a}:{ratio_b} and the hypotenuse is {latex(hyp)}. Find the length of the longer leg."
-        difficulty = 1750
+        return problem(
+            question=f"A rectangular prism has dimensions ${a_val}$, ${b_val}$, and ${c_val}$. Find the length of the space diagonal (from one corner to the opposite corner through the interior).",
+            answer=ans_simplified,
+            difficulty=(1650, 1750),
+            topic="geometry/pythagorean_theorem",
+            solution=steps(
+                f"The space diagonal $d$ of a rectangular prism satisfies $d^2 = a^2 + b^2 + c^2$",
+                f"$d^2 = {a_val}^2 + {b_val}^2 + {c_val}^2 = {a_val**2} + {b_val**2} + {c_val**2} = {a_val**2 + b_val**2 + c_val**2}$",
+                f"$d = \\sqrt{{{a_val**2 + b_val**2 + c_val**2}}} = {latex(ans_simplified)}$"
+            ),
+            calculator="scientific"
+        )
     
-    result = {
-        "question_latex": question,
-        "answer_key": str(answer),
-        "difficulty": difficulty,
-        "main_topic": "geometry",
-        "subtopic": "pythagorean_theorem",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 2:
+        # Pythagorean theorem with algebraic expressions
+        k_val = randint(2, 5)
+        m_val = randint(1, 4)
+        
+        # Legs are k*n and (k*n + m), hypotenuse is (k*n + m + 1)
+        # This ensures a clean solution
+        leg1 = k_val * n
+        leg2 = k_val * n + m_val
+        hyp = k_val * n + m_val + 1
+        
+        # Solve for n: (k*n)^2 + (k*n + m)^2 = (k*n + m + 1)^2
+        eq = Eq(leg1**2 + leg2**2, hyp**2)
+        solutions = solve(eq, n)
+        ans = [sol for sol in solutions if sol > 0][0]
+        
+        return problem(
+            question=f"A right triangle has legs of length ${latex(leg1)}$ and ${latex(leg2)}$, and hypotenuse of length ${latex(hyp)}$. Find the positive value of $n$.",
+            answer=ans,
+            difficulty=(1600, 1700),
+            topic="geometry/pythagorean_theorem",
+            solution=steps(
+                f"Using the Pythagorean theorem: $({latex(leg1)})^2 + ({latex(leg2)})^2 = ({latex(hyp)})^2$",
+                f"${latex(expand(leg1**2))} + {latex(expand(leg2**2))} = {latex(expand(hyp**2))}$",
+                f"${latex(expand(leg1**2 + leg2**2))} = {latex(expand(hyp**2))}$",
+                f"${latex(expand(leg1**2 + leg2**2 - hyp**2))} = 0$",
+                f"$n = {latex(ans)}$"
+            )
+        )
     
-    return result
+    elif problem_type == 3:
+        # Distance from point to line using Pythagorean theorem
+        # Vertical/horizontal line for simplicity at harder level means complex coordinates
+        
+        x_coord = randint(-8, 8)
+        y_coord = randint(2, 9)
+        line_pos = randint(-6, 6)
+        
+        if randint(0, 1) == 0:
+            # Distance from (x_coord, y_coord) to vertical line x = line_pos
+            horizontal_dist = abs(x_coord - line_pos)
+            # Find point on perpendicular at distance d from the point
+            target_dist = randint(8, 15)
+            
+            # Using Pythagorean: vertical_dist^2 + horizontal_dist^2 = target_dist^2
+            ans = sqrt(target_dist**2 - horizontal_dist**2)
+            
+            return problem(
+                question=f"Point $P = ({x_coord}, {y_coord})$ is ${target_dist}$ units away from point $Q$ on the vertical line $x = {line_pos}$. If $Q$ is above $P$, what is the $y$-coordinate of $Q$?",
+                answer=y_coord + ans,
+                difficulty=(1700, 1800),
+                topic="geometry/pythagorean_theorem",
+                solution=steps(
+                    f"The horizontal distance from $P$ to the line $x = {line_pos}$ is $|{x_coord} - {line_pos}| = {horizontal_dist}$",
+                    f"Let the vertical distance be $h$. By the Pythagorean theorem:",
+                    f"$h^2 + {horizontal_dist}^2 = {target_dist}^2$",
+                    f"$h^2 = {target_dist**2} - {horizontal_dist**2} = {target_dist**2 - horizontal_dist**2}$",
+                    f"$h = {latex(ans)}$",
+                    f"Since $Q$ is above $P$, the $y$-coordinate is ${y_coord} + {latex(ans)} = {latex(y_coord + ans)}$"
+                ),
+                calculator="scientific"
+            )
+        else:
+            # Distance from (x_coord, y_coord) to horizontal line y = line_pos
+            vertical_dist = abs(y_coord - line_pos)
+            target_dist = randint(8, 15)
+            
+            ans = sqrt(target_dist**2 - vertical_dist**2)
+            
+            return problem(
+                question=f"Point $P = ({x_coord}, {y_coord})$ is ${target_dist}$ units away from point $Q$ on the horizontal line $y = {line_pos}$. If $Q$ is to the right of $P$, what is the $x$-coordinate of $Q$?",
+                answer=x_coord + ans,
+                difficulty=(1700, 1800),
+                topic="geometry/pythagorean_theorem",
+                solution=steps(
+                    f"The vertical distance from $P$ to the line $y = {line_pos}$ is $|{y_coord} - {line_pos}| = {vertical_dist}$",
+                    f"Let the horizontal distance be $d$. By the Pythagorean theorem:",
+                    f"$d^2 + {vertical_dist}^2 = {target_dist}^2$",
+                    f"$d^2 = {target_dist**2} - {vertical_dist**2} = {target_dist**2 - vertical_dist**2}$",
+                    f"$d = {latex(ans)}$",
+                    f"Since $Q$ is to the right of $P$, the $x$-coordinate is ${x_coord} + {latex(ans)} = {latex(x_coord + ans)}$"
+                ),
+                calculator="scientific"
+            )
+    
+    else:
+        # Pythagorean theorem with nested radicals or complex setup
+        # Ladder problem with two positions
+        
+        h1 = randint(8, 15)
+        d1 = randint(3, 7)
+        ladder_len_sq = h1**2 + d1**2
+        
+        # New distance from wall
+        d2 = d1 + randint(2, 4)
+        
+        # New height: h2^2 + d2^2 = ladder_len_sq
+        h2_sq = ladder_len_sq - d2**2
+        ans = sqrt(h2_sq)
+        
+        return problem(
+            question=f"A ladder is leaning against a wall. Initially, the base is ${d1}$ feet from the wall and reaches a height of ${h1}$ feet. The base is pulled ${d2 - d1}$ feet farther from the wall. How high up the wall does the ladder reach now?",
+            answer=ans,
+            difficulty=(1650, 1750),
+            topic="geometry/pythagorean_theorem",
+            solution=steps(
+                f"First, find the ladder length using the Pythagorean theorem:",
+                f"$L^2 = {h1}^2 + {d1}^2 = {h1**2} + {d1**2} = {ladder_len_sq}$",
+                f"The ladder length is $L = \\sqrt{{{ladder_len_sq}}}$ feet",
+                f"In the new position, base is ${d2}$ feet from wall. Let new height be $h$:",
+                f"$h^2 + {d2}^2 = {ladder_len_sq}$",
+                f"$h^2 = {ladder_len_sq} - {d2**2} = {h2_sq}$",
+                f"$h = \\sqrt{{{h2_sq}}} = {latex(ans)}$ feet"
+            ),
+            calculator="scientific"
+        )
 
-problem = generate_problem()
-print(json.dumps(problem))
+emit(generate())

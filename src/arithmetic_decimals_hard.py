@@ -1,100 +1,123 @@
 """
 arithmetic - decimals (hard)
-Generated: 2026-02-11T21:25:07.295900
+Generated: 2026-02-22T03:43:07.935581
 """
 
-import random
-import json
-from sympy import sympify, nsimplify, Float, Rational
+from problem_utils import *
 
-def generate_problem():
-    problem_type = random.choice([
-        'multi_step_operations',
-        'complex_word_problem',
-        'mixed_operations_with_conversion',
-        'decimal_equation_solving',
-        'percent_decimal_compound'
-    ])
+def generate():
+    problem_type = randint(1, 5)
     
-    if problem_type == 'multi_step_operations':
-        # Multi-step decimal operations (1600-1700)
-        target = round(random.uniform(5, 50), 2)
-        a = round(random.uniform(1, 10), 2)
-        b = round(random.uniform(1, 10), 2)
-        c = round(random.uniform(1, 5), 2)
+    if problem_type == 1:
+        # Multi-step decimal operations with order of operations
+        a = round(uniform(1.5, 9.9), 2)
+        b = round(uniform(1.2, 5.8), 2)
+        c = round(uniform(0.5, 3.9), 2)
+        d = round(uniform(1.1, 4.5), 2)
         
-        result = round((target * c + b) / a, 2)
+        ans = round(a * b - c * d, 2)
         
-        question = f"Solve for $x$: ${a}x - {b} = {target} \\times {c}$"
-        answer = str(nsimplify(result, rational=False))
-        difficulty = 1650
-        
-    elif problem_type == 'complex_word_problem':
-        # Word problem with decimals requiring multiple steps (1700-1800)
-        price_per_lb = round(random.uniform(2.5, 8.5), 2)
-        quantity1 = round(random.uniform(1.5, 5.5), 1)
-        quantity2 = round(random.uniform(1.5, 5.5), 1)
-        discount_rate = random.choice([0.15, 0.20, 0.25])
-        
-        subtotal = (quantity1 + quantity2) * price_per_lb
-        discount = subtotal * discount_rate
-        total = round(subtotal - discount, 2)
-        
-        discount_percent = int(discount_rate * 100)
-        question = f"A store sells apples at $\\${price_per_lb}$ per pound. Sarah buys ${quantity1}$ pounds and then ${quantity2}$ more pounds. If she receives a ${discount_percent}\\%$ discount on the total, how much does she pay?"
-        answer = str(nsimplify(total, rational=False))
-        difficulty = 1750
-        
-    elif problem_type == 'mixed_operations_with_conversion':
-        # Complex mixed operations (1650-1750)
-        a = round(random.uniform(2, 9), 1)
-        b = round(random.uniform(2, 9), 1)
-        c = round(random.uniform(1, 5), 2)
-        d = round(random.uniform(1, 5), 2)
-        
-        result = round((a * b - c) / d, 2)
-        
-        question = f"Calculate: $\\frac{{{a} \\times {b} - {c}}}{{{d}}}$"
-        answer = str(nsimplify(result, rational=False))
-        difficulty = 1680
-        
-    elif problem_type == 'decimal_equation_solving':
-        # Equation with decimals on both sides (1700-1800)
-        x_val = round(random.uniform(3, 15), 1)
-        a = round(random.uniform(1.5, 5.5), 1)
-        b = round(random.uniform(2, 10), 2)
-        c = round(random.uniform(1.5, 5.5), 1)
-        
-        d = round(a * x_val + b - c * x_val, 2)
-        
-        question = f"Solve for $x$: ${a}x + {b} = {c}x + {d}$"
-        answer = str(nsimplify(x_val, rational=False))
-        difficulty = 1720
-        
-    else:  # percent_decimal_compound
-        # Compound percentage/decimal problem (1750-1850)
-        original = round(random.uniform(100, 500), 2)
-        increase_rate = random.choice([0.12, 0.15, 0.18, 0.20])
-        decrease_rate = random.choice([0.08, 0.10, 0.12])
-        
-        after_increase = original * (1 + increase_rate)
-        final = round(after_increase * (1 - decrease_rate), 2)
-        
-        inc_pct = int(increase_rate * 100)
-        dec_pct = int(decrease_rate * 100)
-        
-        question = f"A price of $\\${original}$ is increased by ${inc_pct}\\%$, then decreased by ${dec_pct}\\%$. What is the final price?"
-        answer = str(nsimplify(final, rational=False))
-        difficulty = 1780
+        return problem(
+            question=f"Calculate: ${a} \\times {b} - {c} \\times {d}$",
+            answer=ans,
+            difficulty=(1600, 1700),
+            topic="arithmetic/decimals",
+            solution=steps(
+                f"First, multiply: ${a} \\times {b} = {round(a*b, 2)}$",
+                f"Then multiply: ${c} \\times {d} = {round(c*d, 2)}$",
+                f"Finally subtract: ${round(a*b, 2)} - {round(c*d, 2)} = {ans}$"
+            ),
+            calculator="scientific"
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": answer,
-        "difficulty": difficulty,
-        "main_topic": "arithmetic",
-        "subtopic": "decimals",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 2:
+        # Division with decimals resulting in repeating or terminating decimal
+        dividend = round(uniform(5.5, 25.8), 2)
+        divisor = round(uniform(0.15, 0.95), 2)
+        
+        ans = round(dividend / divisor, 2)
+        
+        return problem(
+            question=f"Divide and round to two decimal places: ${dividend} \\div {divisor}$",
+            answer=ans,
+            difficulty=(1650, 1750),
+            topic="arithmetic/decimals",
+            solution=steps(
+                f"Convert to whole numbers by multiplying both by 100: ${int(dividend*100)} \\div {int(divisor*100)}$",
+                f"Calculate: ${dividend} \\div {divisor} = {round(dividend/divisor, 4)}$",
+                f"Round to two decimal places: ${ans}$"
+            ),
+            calculator="scientific"
+        )
+    
+    elif problem_type == 3:
+        # Complex fraction with decimals
+        num1 = round(uniform(2.5, 8.9), 2)
+        num2 = round(uniform(1.2, 5.7), 2)
+        denom1 = round(uniform(0.3, 0.9), 2)
+        denom2 = round(uniform(0.4, 0.8), 2)
+        
+        ans = round((num1 + num2) / (denom1 + denom2), 2)
+        
+        return problem(
+            question=f"Calculate: $\\dfrac{{{num1} + {num2}}}{{{denom1} + {denom2}}}$",
+            answer=ans,
+            difficulty=(1700, 1800),
+            topic="arithmetic/decimals",
+            solution=steps(
+                f"Add numerator: ${num1} + {num2} = {round(num1 + num2, 2)}$",
+                f"Add denominator: ${denom1} + {denom2} = {round(denom1 + denom2, 2)}$",
+                f"Divide: ${round(num1 + num2, 2)} \\div {round(denom1 + denom2, 2)} = {ans}$"
+            ),
+            calculator="scientific"
+        )
+    
+    elif problem_type == 4:
+        # Decimal powers and roots
+        base = round(uniform(1.5, 4.5), 1)
+        power = randint(3, 4)
+        
+        ans = round(base ** power, 2)
+        
+        return problem(
+            question=f"Calculate ${base}^{power}$ and round to two decimal places.",
+            answer=ans,
+            difficulty=(1750, 1850),
+            topic="arithmetic/decimals",
+            solution=steps(
+                f"Multiply ${base}$ by itself {power} times",
+                f"${base}^{power} = {ans}$"
+            ),
+            calculator="scientific"
+        )
+    
+    else:
+        # Word problem with decimals
+        price1 = round(uniform(12.50, 45.99), 2)
+        price2 = round(uniform(8.25, 35.75), 2)
+        qty1 = randint(3, 8)
+        qty2 = randint(2, 6)
+        discount_pct = choice([0.15, 0.20, 0.25])
+        
+        subtotal = round(qty1 * price1 + qty2 * price2, 2)
+        discount = round(subtotal * discount_pct, 2)
+        ans = round(subtotal - discount, 2)
+        
+        discount_display = int(discount_pct * 100)
+        
+        return problem(
+            question=f"A customer buys {qty1} items at $\\${price1}$ each and {qty2} items at $\\${price2}$ each. If they receive a {discount_display}\\% discount on the total, what is the final price?",
+            answer=ans,
+            difficulty=(1800, 1900),
+            topic="arithmetic/decimals",
+            solution=steps(
+                f"Cost of first items: ${qty1} \\times \\${price1} = \\${round(qty1*price1, 2)}$",
+                f"Cost of second items: ${qty2} \\times \\${price2} = \\${round(qty2*price2, 2)}$",
+                f"Subtotal: $\\${round(qty1*price1, 2)} + \\${round(qty2*price2, 2)} = \\${subtotal}$",
+                f"Discount: ${discount_display}\\% \\text{{ of }} \\${subtotal} = \\${discount}$",
+                f"Final price: $\\${subtotal} - \\${discount} = \\${ans}$"
+            ),
+            calculator="scientific"
+        )
 
-problem = generate_problem()
-print(json.dumps(problem))
+emit(generate())

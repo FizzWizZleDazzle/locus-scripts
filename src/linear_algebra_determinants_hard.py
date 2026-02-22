@@ -1,139 +1,171 @@
 """
 linear_algebra - determinants (hard)
-Generated: 2026-02-11T22:10:23.812816
+Generated: 2026-02-22T05:52:58.033578
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_determinant_problem():
-    problem_type = random.choice([
-        'symbolic_3x3',
-        'parametric_singular',
-        'cofactor_expansion',
-        'block_matrix',
-        'properties_application'
-    ])
+def generate():
+    problem_type = randint(1, 5)
     
-    if problem_type == 'symbolic_3x3':
-        x = sp.Symbol('x')
-        target_det = random.choice([0, x**2 - 4, x**3 - x, (x-1)*(x-2)*(x-3)])
+    if problem_type == 1:
+        # Determinant of 3x3 with parameters
+        param = choice([a, b, c, d, k, m])
+        v1 = randint(-2, 2)
+        v2 = randint(-2, 2)
+        v3 = nonzero(-3, 3)
+        v4 = nonzero(-2, 2)
         
-        if target_det == 0:
-            base_matrix = sp.Matrix([
-                [1, 2, 3],
-                [2, 4, 6],
-                [1, 2, 3]
-            ])
-            a, b = random.randint(1, 3), random.randint(1, 3)
-            matrix = sp.Matrix([
-                [a, 2*a, 3*a],
-                [b, 2*b, 3*b],
-                [1, 2, 3]
-            ])
-        else:
-            row1 = [1, 0, x]
-            row2 = [x, 1, 0]
-            row3 = [0, x, 1]
-            matrix = sp.Matrix([row1, row2, row3])
-        
-        det = matrix.det().simplify()
-        
-        question = r"\text{Find the determinant: } \det\left(" + sp.latex(matrix) + r"\right)"
-        answer = str(det)
-        difficulty = 1650
-        
-    elif problem_type == 'parametric_singular':
-        x = sp.Symbol('x')
-        target_values = [random.randint(-3, 3) for _ in range(random.randint(1, 2))]
-        
-        det_polynomial = sp.prod([x - val for val in target_values])
-        
-        a, b, c = random.randint(1, 4), random.randint(1, 4), random.randint(1, 4)
-        matrix = sp.Matrix([
-            [x, a, b],
-            [c, x, a],
-            [b, c, x]
+        M = Matrix([
+            [param, v1, v2],
+            [v3, param, v4],
+            [v2, v1, param**2]
         ])
         
-        det = matrix.det().simplify()
+        det_expr = M.det()
+        det_simplified = simplify(det_expr)
         
-        question = r"\text{For what value(s) of } x \text{ is the matrix singular? } " + sp.latex(matrix)
-        answer = str(sp.solveset(det, x, domain=sp.S.Reals))
-        difficulty = 1700
-        
-    elif problem_type == 'cofactor_expansion':
-        a, b, c, d = sp.symbols('a b c d')
-        
-        k1, k2, k3 = random.randint(1, 3), random.randint(1, 3), random.randint(1, 3)
-        
-        matrix = sp.Matrix([
-            [a, b, k1, 0],
-            [c, d, 0, k2],
-            [0, k3, a, b],
-            [k2, 0, c, d]
-        ])
-        
-        det = matrix.det().simplify()
-        
-        question = r"\text{Compute the determinant: } \det\left(" + sp.latex(matrix) + r"\right)"
-        answer = str(det)
-        difficulty = 1750
-        
-    elif problem_type == 'block_matrix':
-        x = sp.Symbol('x')
-        
-        n = random.randint(2, 4)
-        m = random.randint(2, 4)
-        
-        A_det = random.randint(2, 5)
-        B_det = random.randint(2, 5)
-        
-        question = r"\text{Let } A \text{ be a } " + str(n) + r" \times " + str(n) + r" \text{ matrix with } \det(A) = " + str(A_det)
-        question += r"\text{ and } B \text{ be a } " + str(m) + r" \times " + str(m) + r" \text{ matrix with } \det(B) = " + str(B_det) + r"."
-        question += r"\text{ Find } \det\left(\begin{bmatrix} A & 0 \\ 0 & B \end{bmatrix}\right)"
-        
-        answer = str(A_det * B_det)
-        difficulty = 1650
-        
-    else:  # properties_application
-        x = sp.Symbol('x')
-        
-        base_det = random.randint(2, 6)
-        k = random.randint(2, 4)
-        n = random.randint(2, 4)
-        
-        operations = random.choice([
-            ('transpose', base_det, 1600),
-            ('scalar_multiply', base_det * (k**n), 1700),
-            ('inverse', sp.Rational(1, base_det), 1650),
-            ('power', base_det**k, 1750)
-        ])
-        
-        op_type, result, diff = operations
-        
-        if op_type == 'transpose':
-            question = r"\text{If } \det(A) = " + str(base_det) + r"\text{, find } \det(A^T)"
-        elif op_type == 'scalar_multiply':
-            question = r"\text{If } A \text{ is a } " + str(n) + r" \times " + str(n) + r" \text{ matrix with } \det(A) = " + str(base_det)
-            question += r"\text{, find } \det(" + str(k) + r"A)"
-        elif op_type == 'inverse':
-            question = r"\text{If } \det(A) = " + str(base_det) + r"\text{, find } \det(A^{-1})"
-        else:  # power
-            question = r"\text{If } \det(A) = " + str(base_det) + r"\text{, find } \det(A^{" + str(k) + r"})"
-        
-        answer = str(result)
-        difficulty = diff
+        return problem(
+            question=f"Find the determinant of the matrix $\\begin{{pmatrix}} {latex(param)} & {v1} & {v2} \\\\ {v3} & {latex(param)} & {v4} \\\\ {v2} & {v1} & {latex(param**2)} \\end{{pmatrix}}$",
+            answer=det_simplified,
+            difficulty=(1650, 1750),
+            topic="linear_algebra/determinants",
+            solution=steps(
+                f"Use cofactor expansion or the rule of Sarrus for a $3 \\times 3$ matrix",
+                f"$\\det(M) = {latex(M[0,0])}({latex(M[1,1])} \\cdot {latex(M[2,2])} - {latex(M[1,2])} \\cdot {latex(M[2,1])}) - {latex(M[0,1])}({latex(M[1,0])} \\cdot {latex(M[2,2])} - {latex(M[1,2])} \\cdot {latex(M[2,0])}) + {latex(M[0,2])}({latex(M[1,0])} \\cdot {latex(M[2,1])} - {latex(M[1,1])} \\cdot {latex(M[2,0])})$",
+                f"Simplifying: ${latex(det_simplified)}$"
+            )
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": answer,
-        "difficulty": difficulty,
-        "main_topic": "linear_algebra",
-        "subtopic": "determinants",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 2:
+        # Find parameter value for which determinant equals a specific value
+        target = choice([0, 1, -1])
+        v1 = nonzero(-3, 3)
+        v2 = nonzero(-3, 3)
+        v3 = nonzero(-2, 2)
+        v4 = nonzero(-2, 2)
+        
+        M = Matrix([
+            [x, v1, v2],
+            [v3, x, v4],
+            [v2, v1, x]
+        ])
+        
+        det_expr = M.det()
+        equation = Eq(det_expr, target)
+        solutions = solve(equation, x)
+        
+        # Pick one real solution or the simplest one
+        if solutions:
+            ans = solutions[0] if len(solutions) == 1 else solutions
+            if isinstance(ans, list):
+                ans = FiniteSet(*[sol for sol in ans if sol.is_real])
+            
+            return problem(
+                question=f"Find all real values of $x$ for which $\\det\\begin{{pmatrix}} x & {v1} & {v2} \\\\ {v3} & x & {v4} \\\\ {v2} & {v1} & x \\end{{pmatrix}} = {target}$",
+                answer=ans,
+                difficulty=(1700, 1800),
+                topic="linear_algebra/determinants",
+                solution=steps(
+                    f"Calculate the determinant: ${latex(det_expr)}$",
+                    f"Set equal to ${target}$: ${latex(equation)}$",
+                    f"Solve: $x \\in {latex(ans)}$"
+                )
+            )
+    
+    elif problem_type == 3:
+        # Determinant with row operations or special structure
+        v1 = nonzero(-3, 3)
+        v2 = nonzero(-3, 3)
+        v3 = nonzero(-3, 3)
+        v4 = nonzero(-2, 2)
+        v5 = nonzero(-2, 2)
+        v6 = nonzero(-2, 2)
+        
+        # Create matrix with two proportional rows modified
+        M = Matrix([
+            [v1, v2, v3],
+            [2*v1, 2*v2 + v4, 2*v3],
+            [v5, v6, nonzero(-3, 3)]
+        ])
+        
+        det_val = M.det()
+        
+        return problem(
+            question=f"Compute $\\det\\begin{{pmatrix}} {v1} & {v2} & {v3} \\\\ {2*v1} & {2*v2 + v4} & {2*v3} \\\\ {v5} & {v6} & {M[2,2]} \\end{{pmatrix}}$",
+            answer=det_val,
+            difficulty=(1600, 1700),
+            topic="linear_algebra/determinants",
+            solution=steps(
+                f"Notice that row 2 is almost $2 \\times$ row 1",
+                f"Use row operation: $R_2 \\to R_2 - 2R_1$",
+                f"This gives row 2 as $(0, {v4}, 0)$",
+                f"Expand along row 2: $\\det = {v4} \\cdot ({v1} \\cdot {M[2,2]} - {v3} \\cdot {v5})$",
+                f"$= {latex(det_val)}$"
+            )
+        )
+    
+    elif problem_type == 4:
+        # 4x4 determinant with special structure
+        v1 = nonzero(-2, 2)
+        v2 = nonzero(-2, 2)
+        v3 = nonzero(-2, 2)
+        v4 = nonzero(-2, 2)
+        
+        # Upper triangular or block structure
+        M = Matrix([
+            [v1, v2, v3, v4],
+            [0, v2, v3, v1],
+            [0, 0, v1, v2],
+            [0, 0, 0, v3]
+        ])
+        
+        det_val = M.det()
+        
+        return problem(
+            question=f"Find the determinant of $\\begin{{pmatrix}} {v1} & {v2} & {v3} & {v4} \\\\ 0 & {v2} & {v3} & {v1} \\\\ 0 & 0 & {v1} & {v2} \\\\ 0 & 0 & 0 & {v3} \\end{{pmatrix}}$",
+            answer=det_val,
+            difficulty=(1600, 1700),
+            topic="linear_algebra/determinants",
+            solution=steps(
+                f"This is an upper triangular matrix",
+                f"The determinant is the product of diagonal entries",
+                f"$\\det = {v1} \\cdot {v2} \\cdot {v1} \\cdot {v3} = {det_val}$"
+            )
+        )
+    
+    else:
+        # Determinant property: det(AB) = det(A)det(B)
+        v1 = nonzero(-2, 2)
+        v2 = nonzero(-2, 2)
+        v3 = nonzero(-2, 2)
+        v4 = nonzero(-2, 2)
+        
+        A = Matrix([
+            [v1, v2],
+            [v3, v4]
+        ])
+        
+        B = Matrix([
+            [v4, -v2],
+            [-v3, v1]
+        ])
+        
+        det_A = A.det()
+        det_B = B.det()
+        det_product = det_A * det_B
+        
+        return problem(
+            question=f"Let $A = \\begin{{pmatrix}} {v1} & {v2} \\\\ {v3} & {v4} \\end{{pmatrix}}$ and $B = \\begin{{pmatrix}} {v4} & {-v2} \\\\ {-v3} & {v1} \\end{{pmatrix}}$. Find $\\det(AB)$.",
+            answer=det_product,
+            difficulty=(1650, 1800),
+            topic="linear_algebra/determinants",
+            solution=steps(
+                f"Use the property $\\det(AB) = \\det(A) \\cdot \\det(B)$",
+                f"$\\det(A) = {v1} \\cdot {v4} - {v2} \\cdot {v3} = {det_A}$",
+                f"$\\det(B) = {v4} \\cdot {v1} - ({-v2}) \\cdot ({-v3}) = {det_B}$",
+                f"$\\det(AB) = {det_A} \\cdot {det_B} = {det_product}$"
+            )
+        )
 
-problem = generate_determinant_problem()
-print(json.dumps(problem))
+emit(generate())

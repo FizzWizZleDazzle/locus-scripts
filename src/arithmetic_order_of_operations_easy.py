@@ -1,128 +1,143 @@
 """
 arithmetic - order_of_operations (easy)
-Generated: 2026-02-11T21:26:05.883407
+Generated: 2026-02-22T03:44:29.200055
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_order_of_operations_problem():
-    elo_target = random.randint(1000, 1300)
+def generate():
+    problem_type = randint(1, 4)
     
-    if elo_target <= 1150:
-        # Very simple: single operation or two numbers with one operation beyond addition
-        choice = random.choice(['add_sub', 'mult_div', 'simple_parens'])
+    if problem_type == 1:
+        # Simple two-number operation (1000-1100)
+        # e.g., "5 + 3 × 2"
+        a = randint(2, 9)
+        b = randint(2, 9)
+        c = randint(2, 9)
         
-        if choice == 'add_sub':
-            a = random.randint(1, 20)
-            b = random.randint(1, 20)
-            c = random.randint(1, 15)
-            answer = a + b - c
-            if answer > 0:
-                question = f"{a} + {b} - {c}"
-                elo = 1050
-            else:
-                answer = a + b + c
-                question = f"{a} + {b} + {c}"
-                elo = 1000
+        op_choice = randint(1, 2)
+        if op_choice == 1:
+            # Addition and multiplication
+            ans = a + b * c
+            question_str = f"{a} + {b} \\times {c}"
+            solution_str = steps(
+                f"Follow order of operations: multiply first",
+                f"${b} \\times {c} = {b*c}$",
+                f"${a} + {b*c} = {ans}$"
+            )
+        else:
+            # Subtraction and multiplication
+            ans = a - b * c
+            question_str = f"{a} - {b} \\times {c}"
+            solution_str = steps(
+                f"Follow order of operations: multiply first",
+                f"${b} \\times {c} = {b*c}$",
+                f"${a} - {b*c} = {ans}$"
+            )
         
-        elif choice == 'mult_div':
-            a = random.randint(2, 12)
-            b = random.randint(2, 9)
-            answer = a * b
-            question = f"{a} \\times {b}"
-            elo = 1100
-        
-        else:  # simple_parens
-            a = random.randint(2, 10)
-            b = random.randint(1, 10)
-            c = random.randint(2, 5)
-            answer = (a + b) * c
-            question = f"({a} + {b}) \\times {c}"
-            elo = 1150
+        return problem(
+            question=f"${question_str}$",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="arithmetic/order_of_operations",
+            solution=solution_str
+        )
     
-    elif elo_target <= 1250:
-        # Two operations: multiplication/division with addition/subtraction
-        choice = random.choice(['mult_add', 'mult_sub', 'div_add'])
+    elif problem_type == 2:
+        # Simple parentheses (1100-1200)
+        # e.g., "(4 + 2) × 3"
+        a = randint(2, 8)
+        b = randint(2, 8)
+        c = randint(2, 9)
         
-        if choice == 'mult_add':
-            a = random.randint(2, 9)
-            b = random.randint(2, 9)
-            c = random.randint(1, 15)
-            answer = a * b + c
-            question = f"{a} \\times {b} + {c}"
-            elo = 1200
+        op_choice = randint(1, 2)
+        if op_choice == 1:
+            # (a + b) × c
+            ans = (a + b) * c
+            question_str = f"({a} + {b}) \\times {c}"
+            solution_str = steps(
+                f"Evaluate parentheses first",
+                f"${a} + {b} = {a+b}$",
+                f"${a+b} \\times {c} = {ans}$"
+            )
+        else:
+            # (a - b) × c
+            ans = (a - b) * c
+            question_str = f"({a} - {b}) \\times {c}"
+            solution_str = steps(
+                f"Evaluate parentheses first",
+                f"${a} - {b} = {a-b}$",
+                f"${a-b} \\times {c} = {ans}$"
+            )
         
-        elif choice == 'mult_sub':
-            a = random.randint(2, 9)
-            b = random.randint(2, 9)
-            c = random.randint(1, min(15, a * b - 1))
-            answer = a * b - c
-            question = f"{a} \\times {b} - {c}"
-            elo = 1200
+        return problem(
+            question=f"${question_str}$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="arithmetic/order_of_operations",
+            solution=solution_str
+        )
+    
+    elif problem_type == 3:
+        # Division and multiplication (1100-1200)
+        # e.g., "12 ÷ 3 × 2"
+        # Choose dividend that divides evenly
+        divisor = randint(2, 6)
+        quotient = randint(2, 9)
+        dividend = divisor * quotient
+        multiplier = randint(2, 9)
         
-        else:  # div_add
-            b = random.randint(2, 6)
-            quotient = random.randint(2, 8)
-            a = b * quotient
-            c = random.randint(1, 12)
-            answer = quotient + c
-            question = f"{a} \\div {b} + {c}"
-            elo = 1250
+        ans = quotient * multiplier
+        question_str = f"{dividend} \\div {divisor} \\times {multiplier}"
+        
+        return problem(
+            question=f"${question_str}$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="arithmetic/order_of_operations",
+            solution=steps(
+                f"Evaluate left to right (division and multiplication have equal precedence)",
+                f"${dividend} \\div {divisor} = {quotient}$",
+                f"${quotient} \\times {multiplier} = {ans}$"
+            )
+        )
     
     else:
-        # Three operations or nested parentheses
-        choice = random.choice(['three_ops', 'nested_parens', 'mixed'])
+        # Three operations with parentheses (1200-1300)
+        # e.g., "2 × (6 + 3) - 4"
+        a = randint(2, 5)
+        b = randint(3, 9)
+        c = randint(2, 8)
+        d = randint(2, 9)
         
-        if choice == 'three_ops':
-            a = random.randint(2, 8)
-            b = random.randint(2, 6)
-            c = random.randint(1, 10)
-            d = random.randint(1, 10)
-            answer = a * b + c - d
-            if answer > 0:
-                question = f"{a} \\times {b} + {c} - {d}"
-            else:
-                answer = a * b + c + d
-                question = f"{a} \\times {b} + {c} + {d}"
-            elo = 1280
+        op_choice = randint(1, 2)
+        if op_choice == 1:
+            # a × (b + c) - d
+            ans = a * (b + c) - d
+            question_str = f"{a} \\times ({b} + {c}) - {d}"
+            solution_str = steps(
+                f"Evaluate parentheses first",
+                f"${b} + {c} = {b+c}$",
+                f"Multiply next: ${a} \\times {b+c} = {a*(b+c)}$",
+                f"Subtract: ${a*(b+c)} - {d} = {ans}$"
+            )
+        else:
+            # a × (b - c) + d
+            ans = a * (b - c) + d
+            question_str = f"{a} \\times ({b} - {c}) + {d}"
+            solution_str = steps(
+                f"Evaluate parentheses first",
+                f"${b} - {c} = {b-c}$",
+                f"Multiply next: ${a} \\times {b-c} = {a*(b-c)}$",
+                f"Add: ${a*(b-c)} + {d} = {ans}$"
+            )
         
-        elif choice == 'nested_parens':
-            a = random.randint(2, 8)
-            b = random.randint(1, 8)
-            c = random.randint(2, 5)
-            d = random.randint(1, 6)
-            answer = (a + b) * c - d
-            if answer > 0:
-                question = f"({a} + {b}) \\times {c} - {d}"
-            else:
-                answer = (a + b) * c + d
-                question = f"({a} + {b}) \\times {c} + {d}"
-            elo = 1300
-        
-        else:  # mixed
-            a = random.randint(2, 6)
-            b = random.randint(2, 6)
-            c = random.randint(1, 8)
-            d = random.randint(2, 4)
-            answer = a * (b + c) - d
-            if answer > 0:
-                question = f"{a} \\times ({b} + {c}) - {d}"
-            else:
-                answer = a * (b + c) + d
-                question = f"{a} \\times ({b} + {c}) + {d}"
-            elo = 1290
-    
-    result = {
-        "question_latex": question,
-        "answer_key": str(answer),
-        "difficulty": elo,
-        "main_topic": "arithmetic",
-        "subtopic": "order_of_operations",
-        "grading_mode": "equivalent"
-    }
-    
-    print(json.dumps(result))
+        return problem(
+            question=f"${question_str}$",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="arithmetic/order_of_operations",
+            solution=solution_str
+        )
 
-generate_order_of_operations_problem()
+emit(generate())

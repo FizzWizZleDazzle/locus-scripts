@@ -1,78 +1,102 @@
 """
 arithmetic - percentages (easy)
-Generated: 2026-02-11T21:25:18.481623
+Generated: 2026-02-22T03:43:21.858613
 """
 
-import random
-import json
-from sympy import symbols, sympify, nsimplify
+from problem_utils import *
 
-def generate_percentage_problem():
-    problem_type = random.choice([
-        'find_percentage_of_number',
-        'what_percent_is',
-        'find_whole_from_part',
-        'simple_increase_decrease'
-    ])
+def generate():
+    problem_type = randint(1, 5)
     
-    if problem_type == 'find_percentage_of_number':
-        # Reverse engineer: pick a clean answer first
-        answer = random.choice([5, 10, 12, 15, 20, 25, 30, 40, 50, 60, 75, 80, 100])
+    if problem_type == 1:
+        # Simple percentage of a number (1000-1100)
+        whole = choice([10, 20, 25, 50, 100, 200])
+        percent = choice([10, 20, 25, 50, 75])
+        ans = whole * percent / 100
         
-        # Choose a simple percentage
-        percent = random.choice([10, 20, 25, 50, 75])
+        return problem(
+            question=f"What is ${percent}\\%$ of ${whole}$?",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="arithmetic/percentages",
+            solution=steps(
+                f"Convert ${percent}\\%$ to decimal: ${percent / 100}$",
+                f"Multiply: ${whole} \\times {percent / 100} = {ans}$"
+            ),
+        )
+    
+    elif problem_type == 2:
+        # Find what percentage one number is of another (1100-1200)
+        whole = choice([20, 25, 50, 100, 200])
+        percent = choice([10, 20, 25, 50, 75])
+        part = whole * percent / 100
         
-        # Calculate the whole number
-        whole = (answer * 100) // percent
+        return problem(
+            question=f"${part}$ is what percent of ${whole}$?",
+            answer=percent,
+            difficulty=(1100, 1200),
+            topic="arithmetic/percentages",
+            solution=steps(
+                f"Set up the equation: $\\frac{{{part}}}{{{whole}}} \\times 100\\%$",
+                f"Calculate: ${part / whole} \\times 100 = {percent}\\%$"
+            ),
+        )
+    
+    elif problem_type == 3:
+        # Simple increase/decrease by percentage (1200-1300)
+        original = choice([50, 100, 200, 500])
+        percent = choice([10, 20, 25, 50])
+        increase = choice([True, False])
         
-        question = f"What is ${percent}\\%$ of ${whole}$?"
-        difficulty = 1100
-        
-    elif problem_type == 'what_percent_is':
-        # Pick clean numbers
-        whole = random.choice([20, 25, 40, 50, 80, 100, 200])
-        percent = random.choice([10, 20, 25, 40, 50, 75, 80])
-        part = (whole * percent) // 100
-        
-        question = f"${part}$ is what percent of ${whole}$?"
-        answer = percent
-        difficulty = 1250
-        
-    elif problem_type == 'find_whole_from_part':
-        # Pick the whole number first
-        whole = random.choice([20, 40, 50, 60, 80, 100, 120, 200])
-        percent = random.choice([10, 20, 25, 50])
-        part = (whole * percent) // 100
-        
-        question = f"${part}$ is ${percent}\\%$ of what number?"
-        answer = whole
-        difficulty = 1300
-        
-    else:  # simple_increase_decrease
-        original = random.choice([20, 40, 50, 60, 80, 100, 200])
-        percent = random.choice([10, 20, 25, 50])
-        
-        if random.choice([True, False]):
-            # Increase
-            increase = (original * percent) // 100
-            answer = original + increase
-            question = f"Increase ${original}$ by ${percent}\\%$."
+        change = original * percent / 100
+        if increase:
+            ans = original + change
+            word = "increase"
+            sign = "+"
         else:
-            # Decrease
-            decrease = (original * percent) // 100
-            answer = original - decrease
-            question = f"Decrease ${original}$ by ${percent}\\%$."
+            ans = original - change
+            word = "decrease"
+            sign = "-"
         
-        difficulty = 1200
+        return problem(
+            question=f"${original}$ is {word}d by ${percent}\\%$. What is the new value?",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="arithmetic/percentages",
+            solution=steps(
+                f"Calculate ${percent}\\%$ of ${original}$: ${original} \\times {percent / 100} = {change}$",
+                f"{word.capitalize()} the original: ${original} {sign} {change} = {ans}$"
+            ),
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": str(answer),
-        "difficulty": difficulty,
-        "main_topic": "arithmetic",
-        "subtopic": "percentages",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 4:
+        # Convert percentage to decimal (1000-1100)
+        percent = choice([5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 80])
+        ans = percent / 100
+        
+        return problem(
+            question=f"Convert ${percent}\\%$ to a decimal.",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="arithmetic/percentages",
+            solution=steps(
+                f"Divide by $100$: ${percent} \\div 100 = {ans}$"
+            ),
+        )
+    
+    else:
+        # Convert decimal to percentage (1000-1100)
+        decimal_val = choice([0.1, 0.2, 0.25, 0.5, 0.75, 0.8])
+        ans = decimal_val * 100
+        
+        return problem(
+            question=f"Convert ${decimal_val}$ to a percentage.",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="arithmetic/percentages",
+            solution=steps(
+                f"Multiply by $100$: ${decimal_val} \\times 100 = {ans}\\%$"
+            ),
+        )
 
-problem = generate_percentage_problem()
-print(json.dumps(problem))
+emit(generate())

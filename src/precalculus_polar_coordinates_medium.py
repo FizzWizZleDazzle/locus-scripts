@@ -1,95 +1,162 @@
 """
 precalculus - polar_coordinates (medium)
-Generated: 2026-02-11T21:56:01.825089
+Generated: 2026-02-22T04:52:06.160815
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_polar_problem():
-    problem_type = random.choice([
-        'rectangular_to_polar',
-        'polar_to_rectangular',
-        'distance_between_polar',
-        'polar_equation_convert'
+def generate():
+    problem_type = choice([
+        "rect_to_polar",
+        "polar_to_rect", 
+        "polar_distance",
+        "polar_equation_convert",
+        "polar_symmetry"
     ])
     
-    if problem_type == 'rectangular_to_polar':
-        # Pick clean polar coordinates first
-        r = random.choice([2, 3, 4, 5, 6])
-        theta_choice = random.choice([
-            (sp.pi/6, '30°'), (sp.pi/4, '45°'), (sp.pi/3, '60°'),
-            (sp.pi/2, '90°'), (2*sp.pi/3, '120°'), (3*sp.pi/4, '135°'),
-            (5*sp.pi/6, '150°'), (sp.pi, '180°')
-        ])
-        theta = theta_choice[0]
+    if problem_type == "rect_to_polar":
+        # Convert rectangular coordinates to polar
+        # Pick nice angles for clean answers
+        angles = [0, pi/6, pi/4, pi/3, pi/2, 2*pi/3, 3*pi/4, 5*pi/6, pi, 
+                  7*pi/6, 5*pi/4, 4*pi/3, 3*pi/2, 5*pi/3, 7*pi/4, 11*pi/6]
+        theta = choice(angles)
+        r_val = randint(2, 6)
         
-        # Calculate rectangular coordinates
-        x = sp.simplify(r * sp.cos(theta))
-        y = sp.simplify(r * sp.sin(theta))
+        x_val = r_val * cos(theta)
+        y_val = r_val * sin(theta)
         
-        question = f"Convert the rectangular coordinates $({sp.latex(x)}, {sp.latex(y)})$ to polar coordinates $(r, \\theta)$ where $r > 0$ and $0 \\leq \\theta < 2\\pi$."
-        answer = f"({r}, {sp.latex(theta)})"
-        difficulty = 1350
+        # Simplify to get exact values
+        x_val = simplify(x_val)
+        y_val = simplify(y_val)
         
-    elif problem_type == 'polar_to_rectangular':
-        # Pick clean polar coordinates
-        r = random.choice([2, 3, 4, 5, 6])
-        theta_choice = random.choice([
-            sp.pi/6, sp.pi/4, sp.pi/3, sp.pi/2,
-            2*sp.pi/3, 3*sp.pi/4, 5*sp.pi/6
-        ])
+        ans = fmt_tuple([r_val, theta])
         
-        # Calculate rectangular
-        x = sp.simplify(r * sp.cos(theta_choice))
-        y = sp.simplify(r * sp.sin(theta_choice))
-        
-        question = f"Convert the polar coordinates $({r}, {sp.latex(theta_choice)})$ to rectangular coordinates $(x, y)$."
-        answer = f"({sp.latex(x)}, {sp.latex(y)})"
-        difficulty = 1300
-        
-    elif problem_type == 'distance_between_polar':
-        # Pick two points with clean polar coordinates
-        r1 = random.choice([2, 3, 4, 5])
-        r2 = random.choice([2, 3, 4, 5])
-        theta1 = random.choice([0, sp.pi/6, sp.pi/4, sp.pi/3, sp.pi/2])
-        theta2 = random.choice([sp.pi/2, 2*sp.pi/3, 3*sp.pi/4, sp.pi])
-        
-        # Use distance formula: d^2 = r1^2 + r2^2 - 2*r1*r2*cos(theta2-theta1)
-        d_squared = r1**2 + r2**2 - 2*r1*r2*sp.cos(theta2 - theta1)
-        d = sp.simplify(sp.sqrt(d_squared))
-        
-        question = f"Find the distance between the points with polar coordinates $({r1}, {sp.latex(theta1)})$ and $({r2}, {sp.latex(theta2)})$."
-        answer = sp.latex(d)
-        difficulty = 1500
-        
-    else:  # polar_equation_convert
-        # Convert simple polar equations to rectangular
-        equation_type = random.choice(['circle', 'line'])
-        
-        if equation_type == 'circle':
-            a = random.choice([2, 3, 4, 5])
-            # r = 2a*cos(theta) converts to (x-a)^2 + y^2 = a^2
-            question = f"Convert the polar equation $r = {2*a}\\cos(\\theta)$ to rectangular form."
-            answer = f"(x - {a})^2 + y^2 = {a**2}"
-            difficulty = 1550
-            
-        else:  # line
-            # r*cos(theta) = a becomes x = a
-            a = random.choice([1, 2, 3, 4, 5])
-            question = f"Convert the polar equation $r\\cos(\\theta) = {a}$ to rectangular form."
-            answer = f"x = {a}"
-            difficulty = 1400
+        return problem(
+            question=f"Convert the rectangular coordinates $\\left({latex(x_val)}, {latex(y_val)}\\right)$ to polar coordinates $(r, \\theta)$ where $r > 0$ and $0 \\leq \\theta < 2\\pi$.",
+            answer=ans,
+            difficulty=(1300, 1500),
+            topic="precalculus/polar_coordinates",
+            answer_type="tuple",
+            solution=steps(
+                f"$r = \\sqrt{{x^2 + y^2}} = \\sqrt{{({latex(x_val)})^2 + ({latex(y_val)})^2}} = \\sqrt{{{latex(simplify(x_val**2 + y_val**2))}}} = {r_val}$",
+                f"$\\theta = \\arctan\\left(\\frac{{y}}{{x}}\\right) = \\arctan\\left(\\frac{{{latex(y_val)}}}{{{latex(x_val)}}}\\right) = {latex(theta)}$",
+                f"Therefore, $(r, \\theta) = ({r_val}, {latex(theta)})$"
+            ),
+            calculator="scientific"
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": answer,
-        "difficulty": difficulty,
-        "main_topic": "precalculus",
-        "subtopic": "polar_coordinates",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == "polar_to_rect":
+        # Convert polar coordinates to rectangular
+        angles = [0, pi/6, pi/4, pi/3, pi/2, 2*pi/3, 3*pi/4, 5*pi/6, pi]
+        theta = choice(angles)
+        r_val = randint(2, 8)
+        
+        x_val = simplify(r_val * cos(theta))
+        y_val = simplify(r_val * sin(theta))
+        
+        ans = fmt_tuple([x_val, y_val])
+        
+        return problem(
+            question=f"Convert the polar coordinates $\\left({r_val}, {latex(theta)}\\right)$ to rectangular coordinates $(x, y)$.",
+            answer=ans,
+            difficulty=(1200, 1400),
+            topic="precalculus/polar_coordinates",
+            answer_type="tuple",
+            solution=steps(
+                f"$x = r\\cos(\\theta) = {r_val}\\cos\\left({latex(theta)}\\right) = {latex(x_val)}$",
+                f"$y = r\\sin(\\theta) = {r_val}\\sin\\left({latex(theta)}\\right) = {latex(y_val)}$",
+                f"Therefore, $(x, y) = ({latex(x_val)}, {latex(y_val)})$"
+            ),
+            calculator="scientific"
+        )
+    
+    elif problem_type == "polar_distance":
+        # Distance between two points in polar coordinates
+        r1 = randint(2, 6)
+        r2 = randint(2, 6)
+        angles = [0, pi/6, pi/4, pi/3, pi/2, 2*pi/3, 3*pi/4]
+        theta1 = choice(angles)
+        theta2 = choice([a for a in angles if a != theta1])
+        
+        # Distance formula: d = sqrt(r1^2 + r2^2 - 2*r1*r2*cos(theta2 - theta1))
+        distance_squared = r1**2 + r2**2 - 2*r1*r2*cos(theta2 - theta1)
+        distance = simplify(sqrt(distance_squared))
+        
+        return problem(
+            question=f"Find the distance between the points with polar coordinates $({r1}, {latex(theta1)})$ and $({r2}, {latex(theta2)})$.",
+            answer=distance,
+            difficulty=(1400, 1600),
+            topic="precalculus/polar_coordinates",
+            solution=steps(
+                f"Use the distance formula: $d = \\sqrt{{r_1^2 + r_2^2 - 2r_1r_2\\cos(\\theta_2 - \\theta_1)}}$",
+                f"$d = \\sqrt{{{r1}^2 + {r2}^2 - 2({r1})({r2})\\cos\\left({latex(theta2)} - {latex(theta1)}\\right)}}$",
+                f"$d = \\sqrt{{{r1**2} + {r2**2} - {2*r1*r2}\\cos\\left({latex(simplify(theta2 - theta1))}\\right)}}$",
+                f"$d = \\sqrt{{{latex(simplify(distance_squared))}}} = {latex(distance)}$"
+            ),
+            calculator="scientific"
+        )
+    
+    elif problem_type == "polar_equation_convert":
+        # Convert rectangular equation to polar or vice versa
+        if choice([True, False]):
+            # Rectangular to polar: x^2 + y^2 = a^2 becomes r = a
+            a_val = randint(2, 8)
+            
+            return problem(
+                question=f"Convert the rectangular equation $x^2 + y^2 = {a_val**2}$ to polar form.",
+                answer=Eq(Symbol('r'), a_val),
+                difficulty=(1300, 1500),
+                topic="precalculus/polar_coordinates",
+                answer_type="equation",
+                solution=steps(
+                    f"Substitute $x = r\\cos(\\theta)$ and $y = r\\sin(\\theta)$",
+                    f"$(r\\cos(\\theta))^2 + (r\\sin(\\theta))^2 = {a_val**2}$",
+                    f"$r^2\\cos^2(\\theta) + r^2\\sin^2(\\theta) = {a_val**2}$",
+                    f"$r^2(\\cos^2(\\theta) + \\sin^2(\\theta)) = {a_val**2}$",
+                    f"$r^2 = {a_val**2}$",
+                    f"$r = {a_val}$ (taking positive value)"
+                )
+            )
+        else:
+            # Polar to rectangular: r = a*cos(theta) becomes (x-a/2)^2 + y^2 = (a/2)^2
+            a_val = choice([2, 4, 6, 8])
+            r_var = Symbol('r')
+            theta_var = Symbol('theta')
+            
+            return problem(
+                question=f"Convert the polar equation $r = {a_val}\\cos(\\theta)$ to rectangular form.",
+                answer=Eq(x**2 + y**2, a_val*x),
+                difficulty=(1400, 1600),
+                topic="precalculus/polar_coordinates",
+                answer_type="equation",
+                solution=steps(
+                    f"Multiply both sides by $r$: $r^2 = {a_val}r\\cos(\\theta)$",
+                    f"Substitute $r^2 = x^2 + y^2$ and $r\\cos(\\theta) = x$",
+                    f"$x^2 + y^2 = {a_val}x$"
+                )
+            )
+    
+    else:  # polar_symmetry
+        # Test for symmetry in polar equations
+        eq_types = [
+            ("r = \\cos(\\theta)", "polar axis", "Replace θ with -θ: r = cos(-θ) = cos(θ), equation unchanged"),
+            ("r = \\sin(\\theta)", "line \\theta = \\frac{\\pi}{2}", "Replace θ with π-θ: r = sin(π-θ) = sin(θ), equation unchanged"),
+            ("r^2 = \\cos(2\\theta)", "polar axis, line \\theta = \\frac{\\pi}{2}, and pole", "Symmetric about all three")
+        ]
+        
+        eq_str, sym_type, explanation = choice(eq_types)
+        
+        return problem(
+            question=f"Determine if the polar equation ${eq_str}$ is symmetric with respect to the polar axis, the line $\\theta = \\frac{{\\pi}}{{2}}$, or the pole.",
+            answer=sym_type,
+            difficulty=(1400, 1600),
+            topic="precalculus/polar_coordinates",
+            answer_type="expression",
+            solution=steps(
+                f"Test for symmetry by substitution:",
+                explanation,
+                f"The equation is symmetric with respect to: {sym_type}"
+            )
+        )
 
-problem = generate_polar_problem()
-print(json.dumps(problem))
+emit(generate())

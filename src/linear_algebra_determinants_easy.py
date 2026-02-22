@@ -1,100 +1,124 @@
 """
 linear_algebra - determinants (easy)
-Generated: 2026-02-11T22:09:41.338624
+Generated: 2026-02-22T05:52:08.269563
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_problem():
-    problem_type = random.choice([
-        'det_2x2_integers',
-        'det_2x2_simple',
-        'det_3x3_diagonal',
-        'det_3x3_triangular',
-        'det_2x2_with_variable'
-    ])
+def generate():
+    problem_type = randint(1, 4)
     
-    if problem_type == 'det_2x2_integers':
-        # ELO 1000-1100: Simple 2x2 determinant with small integers
-        det_value = random.randint(-10, 10)
-        a = random.randint(1, 5)
-        b = random.randint(-5, 5)
-        c = random.randint(-5, 5)
-        d = (det_value + b * c) // a if a != 0 else random.randint(-5, 5)
+    if problem_type == 1:
+        # 2x2 determinant with small integers (ELO ~1000-1100)
+        a_val = randint(-3, 3)
+        b_val = randint(-3, 3)
+        c_val = randint(-3, 3)
+        d_val = randint(-3, 3)
         
-        question = f"\\text{{Calculate the determinant of }} \\begin{{pmatrix}} {a} & {b} \\\\ {c} & {d} \\end{{pmatrix}}"
-        answer = a * d - b * c
-        difficulty = 1050
+        M = Matrix([[a_val, b_val], [c_val, d_val]])
+        ans = M.det()
         
-    elif problem_type == 'det_2x2_simple':
-        # ELO 1100-1150: 2x2 determinant with slightly larger numbers
-        a = random.randint(-8, 8)
-        b = random.randint(-8, 8)
-        c = random.randint(-8, 8)
-        d = random.randint(-8, 8)
+        return problem(
+            question=f"Calculate the determinant of $\\begin{{bmatrix}} {a_val} & {b_val} \\\\ {c_val} & {d_val} \\end{{bmatrix}}$",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="linear_algebra/determinants",
+            solution=steps(
+                f"For a $2 \\times 2$ matrix $\\begin{{bmatrix}} a & b \\\\ c & d \\end{{bmatrix}}$, the determinant is $ad - bc$",
+                f"$\\det(M) = ({a_val})({d_val}) - ({b_val})({c_val})$",
+                f"$\\det(M) = {a_val * d_val} - {b_val * c_val}$",
+                f"$\\det(M) = {ans}$"
+            ),
+        )
+    
+    elif problem_type == 2:
+        # 2x2 determinant with one parameter (ELO ~1100-1200)
+        a_val = nonzero(-3, 3)
+        b_val = nonzero(-3, 3)
+        c_val = nonzero(-3, 3)
         
-        question = f"\\text{{Find }} \\det\\begin{{pmatrix}} {a} & {b} \\\\ {c} & {d} \\end{{pmatrix}}"
-        answer = a * d - b * c
-        difficulty = 1100
+        M = Matrix([[a_val, b_val], [c_val, x]])
+        det_expr = M.det()
+        ans = det_expr
         
-    elif problem_type == 'det_3x3_diagonal':
-        # ELO 1150-1200: 3x3 diagonal matrix determinant
-        a = random.randint(1, 6)
-        b = random.randint(1, 6)
-        c = random.randint(1, 6)
+        return problem(
+            question=f"Find the determinant of $\\begin{{bmatrix}} {a_val} & {b_val} \\\\ {c_val} & x \\end{{bmatrix}}$ in terms of $x$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="linear_algebra/determinants",
+            solution=steps(
+                f"For a $2 \\times 2$ matrix $\\begin{{bmatrix}} a & b \\\\ c & d \\end{{bmatrix}}$, the determinant is $ad - bc$",
+                f"$\\det(M) = ({a_val})(x) - ({b_val})({c_val})$",
+                f"$\\det(M) = {latex(ans)}$"
+            ),
+        )
+    
+    elif problem_type == 3:
+        # 3x3 diagonal or triangular matrix (ELO ~1100-1200)
+        diagonal = choice([True, False])
         
-        question = f"\\text{{Compute the determinant of }} \\begin{{pmatrix}} {a} & 0 & 0 \\\\ 0 & {b} & 0 \\\\ 0 & 0 & {c} \\end{{pmatrix}}"
-        answer = a * b * c
-        difficulty = 1150
-        
-    elif problem_type == 'det_3x3_triangular':
-        # ELO 1200-1250: 3x3 upper or lower triangular matrix
-        is_upper = random.choice([True, False])
-        a = random.randint(1, 5)
-        b = random.randint(1, 5)
-        c = random.randint(1, 5)
-        
-        if is_upper:
-            x = random.randint(-4, 4)
-            y = random.randint(-4, 4)
-            z = random.randint(-4, 4)
-            question = f"\\text{{Find the determinant of }} \\begin{{pmatrix}} {a} & {x} & {y} \\\\ 0 & {b} & {z} \\\\ 0 & 0 & {c} \\end{{pmatrix}}"
+        if diagonal:
+            a_val = nonzero(-4, 4)
+            b_val = nonzero(-4, 4)
+            c_val = nonzero(-4, 4)
+            M = Matrix([[a_val, 0, 0], [0, b_val, 0], [0, 0, c_val]])
+            ans = M.det()
+            
+            return problem(
+                question=f"Calculate the determinant of the diagonal matrix $\\begin{{bmatrix}} {a_val} & 0 & 0 \\\\ 0 & {b_val} & 0 \\\\ 0 & 0 & {c_val} \\end{{bmatrix}}$",
+                answer=ans,
+                difficulty=(1100, 1200),
+                topic="linear_algebra/determinants",
+                solution=steps(
+                    "For a diagonal matrix, the determinant is the product of the diagonal entries",
+                    f"$\\det(M) = ({a_val})({b_val})({c_val})$",
+                    f"$\\det(M) = {ans}$"
+                ),
+            )
         else:
-            x = random.randint(-4, 4)
-            y = random.randint(-4, 4)
-            z = random.randint(-4, 4)
-            question = f"\\text{{Find the determinant of }} \\begin{{pmatrix}} {a} & 0 & 0 \\\\ {x} & {b} & 0 \\\\ {y} & {z} & {c} \\end{{pmatrix}}"
-        
-        answer = a * b * c
-        difficulty = 1220
-        
-    else:  # det_2x2_with_variable
-        # ELO 1250-1300: 2x2 determinant with one variable
-        x = sp.Symbol('x')
-        det_value = random.randint(-5, 5)
-        a = random.randint(1, 4)
-        b = random.randint(-4, 4)
-        c = random.randint(-4, 4)
-        
-        # ad - bc = det_value, where d = x
-        # ax - bc = det_value
-        # x = (det_value + bc) / a
-        
-        question = f"\\text{{If }} \\det\\begin{{pmatrix}} {a} & {b} \\\\ {c} & x \\end{{pmatrix}} = {det_value}, \\text{{ find }} x"
-        answer_expr = sp.solve(a * x - b * c - det_value, x)[0]
-        answer = answer_expr
-        difficulty = 1280
+            # Upper triangular
+            a_val = nonzero(-3, 3)
+            b_val = nonzero(-3, 3)
+            c_val = nonzero(-3, 3)
+            d_val = randint(-3, 3)
+            e_val = randint(-3, 3)
+            f_val = randint(-3, 3)
+            M = Matrix([[a_val, d_val, e_val], [0, b_val, f_val], [0, 0, c_val]])
+            ans = M.det()
+            
+            return problem(
+                question=f"Calculate the determinant of the upper triangular matrix $\\begin{{bmatrix}} {a_val} & {d_val} & {e_val} \\\\ 0 & {b_val} & {f_val} \\\\ 0 & 0 & {c_val} \\end{{bmatrix}}$",
+                answer=ans,
+                difficulty=(1200, 1300),
+                topic="linear_algebra/determinants",
+                solution=steps(
+                    "For a triangular matrix, the determinant is the product of the diagonal entries",
+                    f"$\\det(M) = ({a_val})({b_val})({c_val})$",
+                    f"$\\det(M) = {ans}$"
+                ),
+            )
     
-    return {
-        "question_latex": question,
-        "answer_key": str(answer),
-        "difficulty": difficulty,
-        "main_topic": "linear_algebra",
-        "subtopic": "determinants",
-        "grading_mode": "equivalent"
-    }
+    else:
+        # Solve for x when det = 0 (ELO ~1200-1300)
+        a_val = nonzero(-4, 4)
+        b_val = nonzero(-4, 4)
+        c_val = nonzero(-4, 4)
+        
+        M = Matrix([[x, a_val], [b_val, c_val]])
+        det_expr = M.det()
+        solutions = solve(det_expr, x)
+        ans = solutions[0]
+        
+        return problem(
+            question=f"Find the value of $x$ such that $\\det\\begin{{bmatrix}} x & {a_val} \\\\ {b_val} & {c_val} \\end{{bmatrix}} = 0$",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="linear_algebra/determinants",
+            solution=steps(
+                f"Calculate the determinant: $\\det(M) = x \\cdot {c_val} - {a_val} \\cdot {b_val}$",
+                f"Set equal to zero: ${latex(det_expr)} = 0$",
+                f"Solve for $x$: $x = {latex(ans)}$"
+            ),
+        )
 
-problem = generate_problem()
-print(json.dumps(problem))
+emit(generate())

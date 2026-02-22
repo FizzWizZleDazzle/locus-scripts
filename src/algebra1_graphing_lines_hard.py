@@ -1,150 +1,225 @@
 """
 algebra1 - graphing_lines (hard)
-Generated: 2026-02-11T21:29:35.711477
+Generated: 2026-02-22T03:55:13.901596
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
+from svg_utils import Graph
 
-def generate_problem():
-    x, y = sp.symbols('x y')
-    
-    problem_type = random.choice([
-        'perpendicular_through_point',
-        'parallel_through_point',
-        'intersection_of_lines',
-        'line_through_two_points_complex',
+def generate():
+    problem_type = choice([
+        'perpendicular_line',
+        'parallel_line',
+        'intercepts_from_standard',
+        'line_from_two_points',
+        'intersection_point',
         'distance_and_line',
-        'reflection_across_line'
+        'equation_from_parallel_perpendicular'
     ])
     
-    if problem_type == 'perpendicular_through_point':
-        # Given line and point, find perpendicular line
-        m1 = random.choice([2, 3, -2, -3, sp.Rational(2,3), sp.Rational(3,4), sp.Rational(-3,2)])
-        b1 = random.randint(-5, 5)
+    if problem_type == 'perpendicular_line':
+        # Find equation of line perpendicular to given line through a point
+        m1 = nonzero(-4, 4)
+        b1 = randint(-5, 5)
+        px = nonzero(-6, 6)
+        py = randint(-6, 6)
         
-        px = random.randint(-4, 4)
-        py = random.randint(-4, 4)
+        # Perpendicular slope
+        m2 = Rational(-1, m1)
         
-        m2 = sp.Rational(-1, m1)
+        # Find b using point-slope: y - py = m2(x - px)
         b2 = py - m2 * px
         
-        answer = sp.simplify(m2 * x + b2)
+        ans = simplify(m2 * x + b2)
         
-        question = f"Find the equation of the line perpendicular to $y = {sp.latex(m1 * x + b1)}$ that passes through the point $({px}, {py})$. Express your answer in the form $y = mx + b$."
+        g = Graph(x_range=(-8, 8), y_range=(-8, 8), width=300, height=300)
+        g.plot(m1*x + b1, color="blue", dashed=True)
+        g.plot(ans, color="red")
+        g.point(px, py, label=f"({px},{py})")
         
-        return question, str(answer), 1650
+        return problem(
+            question=f"Find the equation of the line perpendicular to $y = {latex(m1*x + b1)}$ that passes through $({px}, {py})$. Write your answer in slope-intercept form.",
+            answer=ans,
+            difficulty=(1600, 1700),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"The given line has slope $m_1 = {m1}$",
+                f"Perpendicular lines have slopes that are negative reciprocals: $m_2 = -\\frac{{1}}{{m_1}} = {latex(m2)}$",
+                f"Use point-slope form: $y - {py} = {latex(m2)}(x - {px})$",
+                f"Simplify: $y - {py} = {latex(m2*x - m2*px)}$",
+                f"$y = {latex(ans)}$"
+            ),
+            image=g.render()
+        )
     
-    elif problem_type == 'parallel_through_point':
-        # Given line in standard form, find parallel line through point
-        a = random.randint(2, 5)
-        b = random.randint(2, 5)
-        c = random.randint(-8, 8)
+    elif problem_type == 'parallel_line':
+        # Find equation of line parallel to given line through a point
+        m = nonzero(-4, 4)
+        b1 = randint(-5, 5)
+        px = nonzero(-6, 6)
+        py = randint(-6, 6)
         
-        px = random.randint(-4, 4)
-        py = random.randint(-4, 4)
+        # Parallel lines have same slope
+        b2 = py - m * px
         
-        # Parallel line: same a, b coefficients
-        c_new = a * px + b * py
+        ans = simplify(m * x + b2)
         
-        answer_expr = sp.Eq(a*x + b*y, c_new)
-        
-        question = f"Find the equation of the line parallel to ${a}x + {b}y = {c}$ that passes through $({px}, {py})$. Express your answer in standard form $Ax + By = C$ where $A$, $B$, and $C$ are integers."
-        
-        return question, f"Eq({a}*x + {b}*y, {c_new})", 1620
+        return problem(
+            question=f"Find the equation of the line parallel to $y = {latex(m*x + b1)}$ that passes through $({px}, {py})$.",
+            answer=ans,
+            difficulty=(1600, 1700),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"Parallel lines have the same slope: $m = {m}$",
+                f"Use point-slope form: $y - {py} = {m}(x - {px})$",
+                f"Simplify: $y - {py} = {latex(m*x - m*px)}$",
+                f"$y = {latex(ans)}$"
+            )
+        )
     
-    elif problem_type == 'intersection_of_lines':
-        # Find intersection, then find line through intersection and another point
-        m1 = random.randint(1, 4)
-        b1 = random.randint(-3, 3)
+    elif problem_type == 'intercepts_from_standard':
+        # Given line in standard form, find both intercepts
+        A = nonzero(-5, 5)
+        B = nonzero(-5, 5)
+        C = nonzero(-10, 10)
         
-        m2 = random.randint(-4, -1)
-        b2 = random.randint(-3, 3)
+        # x-intercept when y=0: Ax = C, x = C/A
+        x_int = Rational(C, A)
+        # y-intercept when x=0: By = C, y = C/B
+        y_int = Rational(C, B)
         
-        # Intersection point
-        x_int = sp.Rational(b2 - b1, m1 - m2)
-        y_int = m1 * x_int + b1
+        ans = (x_int, y_int)
         
-        # Another point
-        px = random.randint(-5, 5)
-        py = random.randint(-5, 5)
-        
-        if px != x_int:
-            m_new = sp.simplify((py - y_int) / (px - x_int))
-            b_new = sp.simplify(y_int - m_new * x_int)
-            
-            answer = sp.simplify(m_new * x + b_new)
-            
-            question = f"Lines $y = {m1}x + {b1}$ and $y = {m2}x + {b2}$ intersect at point $P$. Find the equation of the line passing through $P$ and the point $({px}, {py})$ in slope-intercept form."
-            
-            return question, str(answer), 1720
+        return problem(
+            question=f"Find the $x$-intercept and $y$-intercept of the line ${latex(A*x + B*y)} = {C}$. Give your answer as an ordered pair $(x\\text{{-int}}, y\\text{{-int}})$.",
+            answer=ans,
+            difficulty=(1600, 1700),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"For $x$-intercept, set $y = 0$: ${latex(A*x)} = {C}$, so $x = {latex(x_int)}$",
+                f"For $y$-intercept, set $x = 0$: ${latex(B*y)} = {C}$, so $y = {latex(y_int)}$",
+                f"Answer: $({latex(x_int)}, {latex(y_int)})$"
+            )
+        )
     
-    elif problem_type == 'line_through_two_points_complex':
-        # Two points with fractions/complex coordinates
-        x1 = sp.Rational(random.randint(-10, 10), random.choice([2, 3, 4]))
-        y1 = sp.Rational(random.randint(-10, 10), random.choice([2, 3, 4]))
-        x2 = sp.Rational(random.randint(-10, 10), random.choice([2, 3, 4]))
-        y2 = sp.Rational(random.randint(-10, 10), random.choice([2, 3, 4]))
+    elif problem_type == 'line_from_two_points':
+        # Find equation from two points with non-integer slope
+        x1 = nonzero(-6, 6)
+        y1 = randint(-6, 6)
+        x2 = x1 + nonzero(-4, 4)
+        y2 = y1 + nonzero(-5, 5)
         
-        if x1 != x2:
-            m = sp.simplify((y2 - y1) / (x2 - x1))
-            b = sp.simplify(y1 - m * x1)
-            
-            answer = sp.simplify(m * x + b)
-            
-            question = f"Find the equation of the line passing through $\\left({sp.latex(x1)}, {sp.latex(y1)}\\right)$ and $\\left({sp.latex(x2)}, {sp.latex(y2)}\\right)$ in slope-intercept form."
-            
-            return question, str(answer), 1680
+        # Calculate slope
+        m = Rational(y2 - y1, x2 - x1)
+        
+        # y - y1 = m(x - x1)
+        b = y1 - m * x1
+        
+        ans = simplify(m * x + b)
+        
+        return problem(
+            question=f"Find the equation of the line passing through $({x1}, {y1})$ and $({x2}, {y2})$. Write in slope-intercept form.",
+            answer=ans,
+            difficulty=(1650, 1750),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"Calculate slope: $m = \\frac{{{y2} - ({y1})}}{{{x2} - ({x1})}} = \\frac{{{y2-y1}}}{{{x2-x1}}} = {latex(m)}$",
+                f"Use point-slope form with $({x1}, {y1})$: $y - {y1} = {latex(m)}(x - {x1})$",
+                f"Expand: $y - {y1} = {latex(m*x - m*x1)}$",
+                f"$y = {latex(ans)}$"
+            )
+        )
+    
+    elif problem_type == 'intersection_point':
+        # Find intersection of two lines
+        m1 = nonzero(-4, 4)
+        b1 = randint(-6, 6)
+        m2 = nonzero(-4, 4)
+        while m2 == m1:
+            m2 = nonzero(-4, 4)
+        b2 = randint(-6, 6)
+        
+        # Solve m1*x + b1 = m2*x + b2
+        x_sol = solve(Eq(m1*x + b1, m2*x + b2), x)[0]
+        y_sol = m1 * x_sol + b1
+        
+        ans = (x_sol, y_sol)
+        
+        return problem(
+            question=f"Find the intersection point of the lines $y = {latex(m1*x + b1)}$ and $y = {latex(m2*x + b2)}$.",
+            answer=ans,
+            difficulty=(1600, 1700),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"Set the equations equal: ${latex(m1*x + b1)} = {latex(m2*x + b2)}$",
+                f"Solve for $x$: ${latex((m1-m2)*x)} = {b2-b1}$",
+                f"$x = {latex(x_sol)}$",
+                f"Substitute back: $y = {latex(m1*x_sol + b1)} = {latex(y_sol)}$",
+                f"Intersection point: $({latex(x_sol)}, {latex(y_sol)})$"
+            )
+        )
     
     elif problem_type == 'distance_and_line':
-        # Find line at specific distance from origin with given slope
-        m = random.choice([sp.Rational(3,4), sp.Rational(4,3), sp.Rational(-3,4), sp.Rational(5,12)])
-        d = random.randint(2, 5)
+        # Find equation of line given slope and distance to origin
+        m = Rational(nonzero(-3, 3), choice([1, 2]))
+        distance = randint(2, 5)
         
-        # Distance from origin to line y = mx + b is |b|/sqrt(1+m^2)
-        b_val = d * sp.sqrt(1 + m**2)
-        b_pos = sp.simplify(b_val)
+        # Line y = mx + b has distance from origin: |b|/sqrt(1+m^2) = distance
+        # So |b| = distance * sqrt(1 + m^2)
+        b_val = distance * sqrt(1 + m**2)
         
-        answer = sp.simplify(m * x + b_pos)
+        # Choose positive b for uniqueness
+        ans = m*x + b_val
         
-        question = f"Find the equation of the line with slope ${sp.latex(m)}$ that is at a distance of ${d}$ units from the origin (choose the line with positive $y$-intercept). Express in slope-intercept form."
-        
-        return question, str(answer), 1780
+        return problem(
+            question=f"Find the equation of the line with slope ${latex(m)}$ that is at a perpendicular distance of ${distance}$ units from the origin. (Choose the line with positive $y$-intercept.)",
+            answer=ans,
+            difficulty=(1750, 1850),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"The distance from origin to line $y = mx + b$ is $\\frac{{|b|}}{{\\sqrt{{1+m^2}}}}$",
+                f"With $m = {latex(m)}$ and distance $= {distance}$:",
+                f"$\\frac{{|b|}}{{\\sqrt{{1+{latex(m**2)}}}}} = {distance}$",
+                f"$|b| = {distance}\\sqrt{{{latex(1+m**2)}}} = {latex(b_val)}$",
+                f"Taking positive value: $y = {latex(ans)}$"
+            ),
+            calculator="scientific"
+        )
     
-    else:  # reflection_across_line
-        # Find reflection of a point across y=x or y=-x, then line through it and another point
-        px = random.randint(1, 5)
-        py = random.randint(-5, -1)
+    else:  # equation_from_parallel_perpendicular
+        # More complex: find line perpendicular to one line and parallel to another (actually finds line through intersection)
+        m1 = nonzero(-3, 3)
+        b1 = randint(-5, 5)
         
-        # Reflect across y = x
-        rx, ry = py, px
+        # Create perpendicular line to first
+        m_perp = Rational(-1, m1)
+        b_perp = randint(-5, 5)
         
-        qx = random.randint(-3, 3)
-        qy = random.randint(-3, 3)
+        # Find intersection of these two
+        x_int = solve(Eq(m1*x + b1, m_perp*x + b_perp), x)[0]
+        y_int = m1*x_int + b1
         
-        if qx != rx:
-            m = sp.Rational(qy - ry, qx - rx)
-            b = ry - m * rx
-            
-            answer = sp.simplify(m * x + b)
-            
-            question = f"Point $P = ({px}, {py})$ is reflected across the line $y = x$ to obtain point $P'$. Find the equation of the line through $P'$ and $Q = ({qx}, {qy})$ in slope-intercept form."
-            
-            return question, str(answer), 1750
-    
-    # Fallback
-    return generate_problem()
+        # Now create a different slope line through this point
+        m3 = nonzero(-4, 4)
+        while m3 == m1 or m3 == m_perp:
+            m3 = nonzero(-4, 4)
+        
+        b3 = y_int - m3*x_int
+        ans = simplify(m3*x + b3)
+        
+        return problem(
+            question=f"Line $\\ell_1$ has equation $y = {latex(m1*x + b1)}$ and line $\\ell_2$ is perpendicular to $\\ell_1$ with equation $y = {latex(m_perp*x + b_perp)}$. Find the equation of the line with slope ${latex(m3)}$ that passes through the intersection of $\\ell_1$ and $\\ell_2$.",
+            answer=ans,
+            difficulty=(1750, 1850),
+            topic="algebra1/graphing_lines",
+            solution=steps(
+                f"Find intersection of $\\ell_1$ and $\\ell_2$:",
+                f"${latex(m1*x + b1)} = {latex(m_perp*x + b_perp)}$",
+                f"$x = {latex(x_int)}$, $y = {latex(y_int)}$",
+                f"Line with slope ${latex(m3)}$ through $({latex(x_int)}, {latex(y_int)})$:",
+                f"$y - {latex(y_int)} = {latex(m3)}(x - {latex(x_int)})$",
+                f"$y = {latex(ans)}$"
+            )
+        )
 
-question, answer, difficulty = generate_problem()
-
-output = {
-    "question_latex": question,
-    "answer_key": answer,
-    "difficulty": difficulty,
-    "main_topic": "algebra1",
-    "subtopic": "graphing_lines",
-    "grading_mode": "equivalent"
-}
-
-print(json.dumps(output))
+emit(generate())

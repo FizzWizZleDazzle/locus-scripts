@@ -1,151 +1,167 @@
 """
 multivariable_calculus - line_integrals (hard)
-Generated: 2026-02-11T22:07:02.281500
+Generated: 2026-02-22T05:44:47.706376
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_line_integral_problem():
-    x, y, z, t = sp.symbols('x y z t', real=True)
+def generate():
+    problem_type = randint(1, 5)
     
-    problem_type = random.choice([
-        'scalar_field_2d',
-        'vector_field_2d', 
-        'vector_field_3d',
-        'conservative_field',
-        'work_against_force'
-    ])
+    if problem_type == 1:
+        # Line integral of a vector field along a parametric curve (conservative field check)
+        # Difficulty: 1600-1750
+        a_val = nonzero(-3, 3)
+        b_val = nonzero(-3, 3)
+        c_val = nonzero(-3, 3)
+        
+        # Conservative field: F = grad(f) where f = a*x*y + b*y*z + c*x*z
+        # So F = (a*y + c*z, a*x + b*z, b*y + c*x)
+        F_x = a_val*y + c_val*z
+        F_y = a_val*x + b_val*z
+        F_z = b_val*y + c_val*x
+        
+        # Endpoints
+        x0, y0, z0 = randint(-2, 2), randint(-2, 2), randint(-2, 2)
+        x1, y1, z1 = randint(-2, 2), randint(-2, 2), randint(-2, 2)
+        
+        # For conservative field, integral = f(end) - f(start)
+        f_start = a_val*x0*y0 + b_val*y0*z0 + c_val*x0*z0
+        f_end = a_val*x1*y1 + b_val*y1*z1 + c_val*x1*z1
+        ans = f_end - f_start
+        
+        return problem(
+            question=f"Evaluate the line integral $\\int_C \\mathbf{{F}} \\cdot d\\mathbf{{r}}$ where $\\mathbf{{F}} = \\langle {latex(F_x)}, {latex(F_y)}, {latex(F_z)} \\rangle$ and $C$ is any path from $({x0}, {y0}, {z0})$ to $({x1}, {y1}, {z1})$.",
+            answer=ans,
+            difficulty=(1600, 1750),
+            topic="multivariable_calculus/line_integrals",
+            solution=steps(
+                f"Check if $\\mathbf{{F}}$ is conservative by verifying $\\nabla \\times \\mathbf{{F}} = \\mathbf{{0}}$",
+                f"$\\frac{{\\partial F_z}}{{\\partial y}} - \\frac{{\\partial F_y}}{{\\partial z}} = {latex(diff(F_z, y))} - {latex(diff(F_y, z))} = 0$",
+                f"$\\frac{{\\partial F_x}}{{\\partial z}} - \\frac{{\\partial F_z}}{{\\partial x}} = {latex(diff(F_x, z))} - {latex(diff(F_z, x))} = 0$",
+                f"$\\frac{{\\partial F_y}}{{\\partial x}} - \\frac{{\\partial F_x}}{{\\partial y}} = {latex(diff(F_y, x))} - {latex(diff(F_x, y))} = 0$",
+                f"Since $\\mathbf{{F}}$ is conservative, find potential function $f$ where $\\nabla f = \\mathbf{{F}}$",
+                f"$f(x,y,z) = {latex(a_val*x*y + b_val*y*z + c_val*x*z)}$",
+                f"Line integral = $f({x1},{y1},{z1}) - f({x0},{y0},{z0}) = {f_end} - {f_start} = {ans}$"
+            ),
+        )
     
-    if problem_type == 'scalar_field_2d':
-        # Line integral of scalar field: ∫ f(x,y) ds
-        # Choose answer first
-        answer = random.choice([sp.Rational(i, j) for i in range(1, 20) for j in range(1, 8)] + list(range(1, 15)))
+    elif problem_type == 2:
+        # Line integral along a helix with non-conservative field
+        # Difficulty: 1700-1850
+        a_coeff = nonzero(-2, 2)
+        b_coeff = nonzero(-2, 2)
         
-        # Create parametric curve: circle, line segment, or parabola
-        curve_type = random.choice(['circle', 'line', 'parabola'])
+        # F = <y, -x, z>  (not conservative, typical rotation field)
+        # Parametrize helix: r(t) = <cos(t), sin(t), t> for t in [0, 2*pi]
+        # r'(t) = <-sin(t), cos(t), 1>
+        # F(r(t)) = <sin(t), -cos(t), t>
+        # F · r' = -sin²(t) - cos²(t) + t = -1 + t
+        # Integral from 0 to 2π of (-1 + t) dt = [-t + t²/2] from 0 to 2π
         
-        if curve_type == 'circle':
-            radius = random.randint(1, 4)
-            # x = r*cos(t), y = r*sin(t), t: 0 to 2π
-            # ds = r dt
-            # Pick f such that integral works out
-            coeffs = [random.randint(-3, 3) for _ in range(3)]
-            f = coeffs[0] + coeffs[1]*x + coeffs[2]*y
-            
-            # Substitute parametrization
-            x_param = radius * sp.cos(t)
-            y_param = radius * sp.sin(t)
-            f_param = f.subs([(x, x_param), (y, y_param)])
-            ds = radius
-            
-            integrand = f_param * ds
-            # Adjust coefficients to get desired answer
-            actual_integral = sp.integrate(integrand, (t, 0, 2*sp.pi))
-            
-            if actual_integral != 0:
-                scale = answer / actual_integral
-                f = sp.simplify(f * scale)
-            
-            question = f"\\int_C {sp.latex(f)} \\, ds \\text{{ where }} C \\text{{ is the circle }} x^2 + y^2 = {radius**2} \\text{{ traversed counterclockwise}}"
-            difficulty = 1650
-            
-        elif curve_type == 'line':
-            # Line from (0,0) to (a,b)
-            a, b = random.randint(1, 5), random.randint(1, 5)
-            # x = at, y = bt, t: 0 to 1
-            # ds = sqrt(a^2 + b^2) dt
-            
-            c1, c2 = random.randint(-2, 2), random.randint(-2, 2)
-            f = c1*x + c2*y
-            
-            x_param = a*t
-            y_param = b*t
-            f_param = f.subs([(x, x_param), (y, y_param)])
-            ds = sp.sqrt(a**2 + b**2)
-            
-            integrand = f_param * ds
-            actual_integral = sp.integrate(integrand, (t, 0, 1))
-            
-            if actual_integral != 0 and actual_integral.is_number:
-                scale = answer / actual_integral
-                f = sp.simplify(f * scale)
-                answer = sp.simplify(answer)
-            else:
-                answer = actual_integral
-            
-            question = f"\\int_C {sp.latex(f)} \\, ds \\text{{ where }} C \\text{{ is the line segment from }} (0,0) \\text{{ to }} ({a},{b})"
-            difficulty = 1600
-            
-        else:  # parabola
-            a = random.randint(1, 3)
-            # y = ax^2, x: 0 to 1
-            # Parametrize: x=t, y=at^2
-            # ds = sqrt(1 + (2at)^2) dt
-            
-            f = x + y
-            x_param = t
-            y_param = a*t**2
-            f_param = f.subs([(x, x_param), (y, y_param)])
-            ds = sp.sqrt(1 + (2*a*t)**2)
-            
-            integrand = f_param * ds
-            answer = sp.integrate(integrand, (t, 0, 1))
-            
-            question = f"\\int_C (x+y) \\, ds \\text{{ where }} C \\text{{ is the parabola }} y = {a}x^2 \\text{{ from }} (0,0) \\text{{ to }} (1,{a})"
-            difficulty = 1700
+        t_end = 2  # Use 2π for cleaner computation
+        
+        ans = -t_end + Rational(t_end**2, 2)
+        
+        return problem(
+            question=f"Evaluate $\\int_C (y\\,dx - x\\,dy + z\\,dz)$ where $C$ is the helix parametrized by $\\mathbf{{r}}(t) = \\langle \\cos(t), \\sin(t), t \\rangle$ for $t \\in [0, {t_end}]$.",
+            answer=ans,
+            difficulty=(1700, 1850),
+            topic="multivariable_calculus/line_integrals",
+            solution=steps(
+                f"Compute $\\mathbf{{r}}'(t) = \\langle -\\sin(t), \\cos(t), 1 \\rangle$",
+                f"On the curve: $x = \\cos(t)$, $y = \\sin(t)$, $z = t$",
+                f"The integrand becomes: $y(-\\sin(t)) - x(\\cos(t)) + z(1)$",
+                f"$= \\sin(t)(-\\sin(t)) - \\cos(t)(\\cos(t)) + t = -\\sin^2(t) - \\cos^2(t) + t = -1 + t$",
+                f"$\\int_0^{{{t_end}}} (-1 + t)\\,dt = \\left[-t + \\frac{{t^2}}{{2}}\\right]_0^{{{t_end}}}$",
+                f"$= -{t_end} + \\frac{{{t_end**2}}}{{2}} = {latex(ans)}$"
+            ),
+        )
     
-    elif problem_type == 'vector_field_2d':
-        # Line integral of vector field: ∫ F·dr
-        # Choose simple answer
-        answer = random.randint(-10, 10)
+    elif problem_type == 3:
+        # Work done by force field along a line segment
+        # Difficulty: 1650-1800
+        a_val = nonzero(-3, 3)
+        b_val = nonzero(-3, 3)
         
-        # Parametric curve
-        curve_type = random.choice(['circle', 'line'])
+        # F = <ax, by>, line segment from (0,0) to (1,1)
+        # r(t) = <t, t>, r'(t) = <1, 1> for t in [0,1]
+        # F(r(t)) = <a*t, b*t>
+        # F · r' = a*t + b*t = (a+b)*t
+        # Integral = (a+b) * t²/2 from 0 to 1 = (a+b)/2
         
-        if curve_type == 'circle':
-            r = random.randint(1, 3)
-            # Circle: x = r*cos(t), y = r*sin(t), t: 0 to 2π
-            # dr = (-r*sin(t), r*cos(t)) dt
-            
-            # Choose F = (P, Q)
-            a, b = random.randint(-2, 2), random.randint(-2, 2)
-            P = -a*y
-            Q = a*x + b
-            
-            F = sp.Matrix([P, Q])
-            
-            x_param = r*sp.cos(t)
-            y_param = r*sp.sin(t)
-            dx_dt = -r*sp.sin(t)
-            dy_dt = r*sp.cos(t)
-            
-            P_param = P.subs([(x, x_param), (y, y_param)])
-            Q_param = Q.subs([(x, x_param), (y, y_param)])
-            
-            integrand = P_param * dx_dt + Q_param * dy_dt
-            actual_answer = sp.integrate(integrand, (t, 0, 2*sp.pi))
-            answer = sp.simplify(actual_answer)
-            
-            question = f"\\int_C \\mathbf{{F}} \\cdot d\\mathbf{{r}} \\text{{ where }} \\mathbf{{F}} = ({sp.latex(P)}, {sp.latex(Q)}) \\text{{ and }} C \\text{{ is the circle }} x^2 + y^2 = {r**2} \\text{{ traversed counterclockwise}}"
-            difficulty = 1680
+        ans = Rational(a_val + b_val, 2)
         
-        else:  # line
-            x0, y0 = random.randint(-2, 2), random.randint(-2, 2)
-            x1, y1 = random.randint(-2, 2), random.randint(-2, 2)
-            
-            # Line from (x0,y0) to (x1,y1)
-            # x = x0 + (x1-x0)t, y = y0 + (y1-y0)t
-            
-            a, b, c, d = random.randint(-2, 3), random.randint(-2, 3), random.randint(-2, 3), random.randint(-2, 3)
-            P = a*x + b*y
-            Q = c*x + d*y
-            
-            x_param = x0 + (x1 - x0)*t
-            y_param = y0 + (y1 - y0)*t
-            dx_dt = x1 - x0
-            dy_dt = y1 - y0
-            
-            P_param = P.subs([(x, x_param), (y, y_param)])
-            Q_
+        return problem(
+            question=f"Calculate the work done by the force field $\\mathbf{{F}}(x,y) = \\langle {a_val}x, {b_val}y \\rangle$ on a particle moving along the line segment from $(0,0)$ to $(1,1)$.",
+            answer=ans,
+            difficulty=(1650, 1800),
+            topic="multivariable_calculus/line_integrals",
+            solution=steps(
+                f"Parametrize the line segment: $\\mathbf{{r}}(t) = \\langle t, t \\rangle$ for $t \\in [0,1]$",
+                f"Compute $\\mathbf{{r}}'(t) = \\langle 1, 1 \\rangle$",
+                f"Evaluate $\\mathbf{{F}}(\\mathbf{{r}}(t)) = \\langle {a_val}t, {b_val}t \\rangle$",
+                f"$\\mathbf{{F}} \\cdot \\mathbf{{r}}' = {a_val}t \\cdot 1 + {b_val}t \\cdot 1 = {a_val + b_val}t$",
+                f"Work = $\\int_0^1 {a_val + b_val}t\\,dt = {a_val + b_val} \\cdot \\frac{{t^2}}{{2}}\\bigg|_0^1 = {latex(ans)}$"
+            ),
+        )
+    
+    elif problem_type == 4:
+        # Line integral with respect to arc length
+        # Difficulty: 1600-1750
+        a_val = nonzero(1, 4)
+        
+        # Integrate f(x,y) = xy along the circle x² + y² = a²
+        # Parametrize: x = a*cos(t), y = a*sin(t), t in [0, 2π]
+        # ds = a dt
+        # f = a²*cos(t)*sin(t) = (a²/2)*sin(2t)
+        # Integral of (a²/2)*sin(2t) * a dt from 0 to 2π
+        # = (a³/2) * [-cos(2t)/2] from 0 to 2π = 0
+        
+        ans = 0
+        
+        return problem(
+            question=f"Evaluate $\\int_C xy\\,ds$ where $C$ is the circle $x^2 + y^2 = {a_val**2}$ traversed counterclockwise.",
+            answer=ans,
+            difficulty=(1600, 1750),
+            topic="multivariable_calculus/line_integrals",
+            solution=steps(
+                f"Parametrize the circle: $x = {a_val}\\cos(t)$, $y = {a_val}\\sin(t)$ for $t \\in [0, 2\\pi]$",
+                f"Compute $ds = \\sqrt{{x'(t)^2 + y'(t)^2}}\\,dt = \\sqrt{{{a_val**2}\\sin^2(t) + {a_val**2}\\cos^2(t)}}\\,dt = {a_val}\\,dt$",
+                f"On the curve: $xy = {a_val**2}\\cos(t)\\sin(t) = \\frac{{{a_val**2}}}{{2}}\\sin(2t)$",
+                f"$\\int_C xy\\,ds = \\int_0^{{2\\pi}} \\frac{{{a_val**2}}}{{2}}\\sin(2t) \\cdot {a_val}\\,dt$",
+                f"$= \\frac{{{a_val**3}}}{{2}} \\int_0^{{2\\pi}} \\sin(2t)\\,dt = \\frac{{{a_val**3}}}{{2}} \\left[-\\frac{{\\cos(2t)}}{{2}}\\right]_0^{{2\\pi}}$",
+                f"$= \\frac{{{a_val**3}}}{{4}}[-\\cos(4\\pi) + \\cos(0)] = \\frac{{{a_val**3}}}{{4}}[-1 + 1] = 0$"
+            ),
+        )
+    
+    else:  # problem_type == 5
+        # Circulation around a closed curve using Green's theorem verification
+        # Difficulty: 1750-1900
+        a_val = nonzero(-2, 2)
+        b_val = nonzero(-2, 2)
+        
+        # F = <-y + ax, x + by>, rectangle [0,2] × [0,1]
+        # Green's: ∮ F·dr = ∬ (∂Q/∂x - ∂P/∂y) dA
+        # P = -y + ax, Q = x + by
+        # ∂Q/∂x = 1, ∂P/∂y = -1
+        # ∂Q/∂x - ∂P/∂y = 1 - (-1) = 2
+        # Area = 2*1 = 2, so integral = 2*2 = 4
+        
+        ans = 4
+        
+        return problem(
+            question=f"Compute the circulation $\\oint_C \\mathbf{{F}} \\cdot d\\mathbf{{r}}$ where $\\mathbf{{F}} = \\langle -y + {a_val}x, x + {b_val}y \\rangle$ and $C$ is the boundary of the rectangle $[0,2] \\times [0,1]$ traversed counterclockwise.",
+            answer=ans,
+            difficulty=(1750, 1900),
+            topic="multivariable_calculus/line_integrals",
+            solution=steps(
+                f"Use Green's Theorem: $\\oint_C \\mathbf{{F}} \\cdot d\\mathbf{{r}} = \\iint_D \\left(\\frac{{\\partial Q}}{{\\partial x}} - \\frac{{\\partial P}}{{\\partial y}}\\right) dA$",
+                f"Here $P = -y + {a_val}x$ and $Q = x + {b_val}y$",
+                f"$\\frac{{\\partial Q}}{{\\partial x}} = 1$, $\\frac{{\\partial P}}{{\\partial y}} = -1$",
+                f"$\\frac{{\\partial Q}}{{\\partial x}} - \\frac{{\\partial P}}{{\\partial y}} = 1 - (-1) = 2$",
+                f"$\\iint_D 2\\,dA = 2 \\cdot \\text{{Area}}(D) = 2 \\cdot (2 \\times 1) = 4$"
+            ),
+        )
+
+emit(generate())

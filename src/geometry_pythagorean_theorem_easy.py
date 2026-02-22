@@ -1,71 +1,129 @@
 """
 geometry - pythagorean_theorem (easy)
-Generated: 2026-02-11T21:43:35.265246
+Generated: 2026-02-22T04:17:13.145456
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
+from svg_utils import Diagram
 
-def generate_pythagorean_problem():
-    problem_type = random.choice(['find_hypotenuse', 'find_leg', 'verify_triangle'])
+def generate():
+    # For ELO 1000-1300, we want simple Pythagorean theorem problems
+    # We'll vary the difficulty within this range
     
-    if problem_type == 'find_hypotenuse':
-        # Pick a Pythagorean triple or simple values
-        triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25), (6, 8, 10), (9, 12, 15), (12, 16, 20)]
-        a, b, c = random.choice(triples)
+    problem_type = randint(1, 4)
+    
+    if problem_type == 1:
+        # ELO ~1000-1100: Given both legs, find hypotenuse with Pythagorean triple
+        triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (6, 8, 10)]
+        leg1, leg2, hyp = choice(triples)
         
-        # Decide difficulty
-        if random.random() < 0.5:
-            # 1100: Direct application with whole numbers
-            question = f"In a right triangle, the two legs have lengths {a} and {b}. Find the length of the hypotenuse."
-            answer = sp.sympify(c)
-            difficulty = 1100
-        else:
-            # 1200: With units or slight context
-            units = random.choice(['cm', 'm', 'ft', 'inches'])
-            question = f"A right triangle has legs of length {a} {units} and {b} {units}. What is the length of the hypotenuse in {units}?"
-            answer = sp.sympify(c)
-            difficulty = 1200
-    
-    elif problem_type == 'find_leg':
-        # Pick a Pythagorean triple
-        triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (6, 8, 10), (9, 12, 15), (12, 16, 20)]
-        a, b, c = random.choice(triples)
+        # Create diagram
+        d = Diagram(width=300, height=250, padding=40)
+        d.polygon([(0, 0), (leg1, 0), (leg1, leg2)], labels=['A', 'B', 'C'])
+        d.right_angle((leg1, 0), (0, 0), (leg1, leg2))
+        d.segment_label((0, 0), (leg1, 0), str(leg1))
+        d.segment_label((leg1, 0), (leg1, leg2), str(leg2))
+        d.segment_label((leg1, leg2), (0, 0), 'c')
         
-        if random.random() < 0.5:
-            # Find first leg given second leg and hypotenuse
-            question = f"In a right triangle, one leg has length {b} and the hypotenuse has length {c}. Find the length of the other leg."
-            answer = sp.sympify(a)
-            difficulty = 1250
-        else:
-            # Find second leg given first leg and hypotenuse
-            question = f"A right triangle has a hypotenuse of length {c} and one leg of length {a}. What is the length of the other leg?"
-            answer = sp.sympify(b)
-            difficulty = 1250
+        return problem(
+            question=f"A right triangle has legs of length ${leg1}$ and ${leg2}$. Find the length of the hypotenuse $c$.",
+            answer=hyp,
+            difficulty=(1000, 1100),
+            topic="geometry/pythagorean_theorem",
+            solution=steps(
+                f"Use the Pythagorean theorem: $a^2 + b^2 = c^2$",
+                f"${leg1}^2 + {leg2}^2 = c^2$",
+                f"${leg1**2} + {leg2**2} = c^2$",
+                f"${leg1**2 + leg2**2} = c^2$",
+                f"$c = \\sqrt{{{leg1**2 + leg2**2}}} = {hyp}$"
+            ),
+            image=d.render()
+        )
     
-    else:  # verify_triangle
+    elif problem_type == 2:
+        # ELO ~1100-1200: Given hypotenuse and one leg, find other leg with Pythagorean triple
+        triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (6, 8, 10)]
+        leg1, leg2, hyp = choice(triples)
+        
+        # Create diagram
+        d = Diagram(width=300, height=250, padding=40)
+        d.polygon([(0, 0), (leg1, 0), (leg1, leg2)], labels=['A', 'B', 'C'])
+        d.right_angle((leg1, 0), (0, 0), (leg1, leg2))
+        d.segment_label((0, 0), (leg1, 0), str(leg1))
+        d.segment_label((leg1, 0), (leg1, leg2), 'b')
+        d.segment_label((leg1, leg2), (0, 0), str(hyp))
+        
+        return problem(
+            question=f"A right triangle has one leg of length ${leg1}$ and hypotenuse of length ${hyp}$. Find the length of the other leg $b$.",
+            answer=leg2,
+            difficulty=(1100, 1200),
+            topic="geometry/pythagorean_theorem",
+            solution=steps(
+                f"Use the Pythagorean theorem: $a^2 + b^2 = c^2$",
+                f"${leg1}^2 + b^2 = {hyp}^2$",
+                f"${leg1**2} + b^2 = {hyp**2}$",
+                f"$b^2 = {hyp**2} - {leg1**2}$",
+                f"$b^2 = {hyp**2 - leg1**2}$",
+                f"$b = \\sqrt{{{hyp**2 - leg1**2}}} = {leg2}$"
+            ),
+            image=d.render()
+        )
+    
+    elif problem_type == 3:
+        # ELO ~1200-1250: Given both legs, find hypotenuse (non-triple, requires simplification)
+        leg1 = randint(1, 4)
+        leg2 = randint(1, 4)
+        hyp_squared = leg1**2 + leg2**2
+        ans = sqrt(hyp_squared)
+        
+        # Create diagram
+        d = Diagram(width=300, height=250, padding=40)
+        d.polygon([(0, 0), (leg1, 0), (leg1, leg2)], labels=['A', 'B', 'C'])
+        d.right_angle((leg1, 0), (0, 0), (leg1, leg2))
+        d.segment_label((0, 0), (leg1, 0), str(leg1))
+        d.segment_label((leg1, 0), (leg1, leg2), str(leg2))
+        d.segment_label((leg1, leg2), (0, 0), 'c')
+        
+        return problem(
+            question=f"A right triangle has legs of length ${leg1}$ and ${leg2}$. Find the length of the hypotenuse $c$. Simplify your answer.",
+            answer=ans,
+            difficulty=(1200, 1250),
+            topic="geometry/pythagorean_theorem",
+            solution=steps(
+                f"Use the Pythagorean theorem: $a^2 + b^2 = c^2$",
+                f"${leg1}^2 + {leg2}^2 = c^2$",
+                f"${leg1**2} + {leg2**2} = c^2$",
+                f"${hyp_squared} = c^2$",
+                f"$c = \\sqrt{{{hyp_squared}}} = {latex(ans)}$"
+            ),
+            image=d.render(),
+            calculator="scientific"
+        )
+    
+    else:
+        # ELO ~1250-1300: Word problem with Pythagorean triple
         triples = [(3, 4, 5), (5, 12, 13), (6, 8, 10)]
-        a, b, c = random.choice(triples)
+        leg1, leg2, hyp = choice(triples)
         
-        # 1150: Verify if it's a right triangle
-        question = f"Is a triangle with sides {a}, {b}, and {c} a right triangle? Answer 'yes' or 'no'."
-        answer = sp.sympify(1)  # We'll use 1 for yes
-        difficulty = 1150
+        contexts = [
+            (f"A ladder is leaning against a wall. The base of the ladder is ${leg1}$ feet from the wall, and the top of the ladder reaches ${leg2}$ feet up the wall. How long is the ladder?", hyp),
+            (f"A rectangular TV screen is ${leg1}$ feet wide and ${leg2}$ feet tall. What is the diagonal length of the screen?", hyp),
+        ]
         
-        # Modify to make output consistent
-        question = f"A right triangle has legs of length {a} and {b}. Find the hypotenuse."
-        answer = sp.sympify(c)
-        difficulty = 1150
-    
-    return {
-        "question_latex": question,
-        "answer_key": str(answer),
-        "difficulty": difficulty,
-        "main_topic": "geometry",
-        "subtopic": "pythagorean_theorem",
-        "grading_mode": "equivalent"
-    }
+        question_text, ans = choice(contexts)
+        
+        return problem(
+            question=question_text,
+            answer=ans,
+            difficulty=(1250, 1300),
+            topic="geometry/pythagorean_theorem",
+            solution=steps(
+                f"This is a right triangle problem. Use the Pythagorean theorem: $a^2 + b^2 = c^2$",
+                f"${leg1}^2 + {leg2}^2 = c^2$",
+                f"${leg1**2} + {leg2**2} = c^2$",
+                f"${leg1**2 + leg2**2} = c^2$",
+                f"$c = \\sqrt{{{leg1**2 + leg2**2}}} = {ans}$ feet"
+            )
+        )
 
-problem = generate_pythagorean_problem()
-print(json.dumps(problem))
+emit(generate())

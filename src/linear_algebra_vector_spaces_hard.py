@@ -1,166 +1,200 @@
 """
 linear_algebra - vector_spaces (hard)
-Generated: 2026-02-11T22:11:31.090069
+Generated: 2026-02-22T05:54:38.126833
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_vector_space_problem():
-    random.seed()
-    problem_type = random.choice([
-        'basis_dimension',
-        'linear_independence',
-        'span_membership',
-        'subspace_verification',
-        'coordinate_vector'
-    ])
+def generate():
+    problem_type = randint(1, 5)
     
-    if problem_type == 'basis_dimension':
-        # Pick dimension first
-        dim = random.randint(2, 3)
-        # Create a subspace defined by linear constraints
+    if problem_type == 1:
+        # Linear independence / dependence with parameters
+        dim = randint(3, 4)
+        num_vecs = dim
         
-        if random.choice([True, False]):
-            # Null space of a matrix
-            rows = random.randint(1, 2)
-            cols = dim + 1
+        # Create linearly dependent vectors with one being a linear combination
+        base_vecs = []
+        for i in range(num_vecs - 1):
+            vec = [nonzero(-3, 3) for _ in range(dim)]
+            base_vecs.append(vec)
+        
+        # Last vector is a linear combination
+        coeff1 = nonzero(-2, 2)
+        coeff2 = nonzero(-2, 2)
+        last_vec = [coeff1 * base_vecs[0][i] + coeff2 * base_vecs[1][i] for i in range(dim)]
+        
+        all_vecs = base_vecs + [last_vec]
+        
+        # Create matrix with these vectors as columns
+        mat = Matrix([all_vecs[j] for j in range(num_vecs)]).T
+        
+        question_vecs = ", ".join([f"\\mathbf{{v_{i+1}}} = {latex(Matrix(all_vecs[i]))}" for i in range(num_vecs)])
+        
+        ans = False
+        
+        return problem(
+            question=f"Determine if the following vectors are linearly independent: ${question_vecs}$",
+            answer=ans,
+            difficulty=(1600, 1750),
+            topic="linear_algebra/vector_spaces",
+            solution=steps(
+                f"Form matrix with vectors as columns: ${latex(mat)}$",
+                f"Compute rank by row reduction",
+                f"Rank is ${mat.rank()}$ which is less than ${num_vecs}$",
+                f"Since rank < number of vectors, they are linearly dependent",
+                f"Answer: No, they are not linearly independent"
+            ),
+            answer_type="boolean"
+        )
+    
+    elif problem_type == 2:
+        # Find basis for subspace defined by constraints
+        # Subspace of R^4 where x1 + x2 = 0 and x3 - x4 = 0
+        constraint_type = randint(1, 2)
+        
+        if constraint_type == 1:
+            # Two constraints in R^4
+            a1, a2 = nonzero(-2, 2), nonzero(-2, 2)
+            b1, b2 = nonzero(-2, 2), nonzero(-2, 2)
             
-            # Build matrix with known rank
-            rank = rows
-            A = sp.Matrix([[random.randint(-3, 3) for _ in range(cols)] for _ in range(rows)])
+            # Basis vectors satisfying constraints
+            v1 = Matrix([1, -a1, 0, 0])
+            v2 = Matrix([0, 0, 1, 1])
             
-            # Ensure non-trivial null space
-            while A.rank() >= cols - 1:
-                A = sp.Matrix([[random.randint(-3, 3) for _ in range(cols)] for _ in range(rows)])
+            dimension = 2
             
-            null_dim = cols - A.rank()
+            basis_str = fmt_set([v1, v2])
             
-            question = f"Find the dimension of the null space of the matrix $A = {sp.latex(A)}$."
-            answer = str(null_dim)
-            difficulty = 1650
+            return problem(
+                question=f"Find a basis for the subspace of $\\mathbb{{R}}^4$ defined by ${a1}x_1 + {a2}x_2 = 0$ and $x_3 - x_4 = 0$",
+                answer=basis_str,
+                difficulty=(1650, 1800),
+                topic="linear_algebra/vector_spaces",
+                solution=steps(
+                    f"Express constraints: ${a1}x_1 + {a2}x_2 = 0$ means $x_2 = {latex(-a1*x/a2 if a2 != 0 else 0)}$",
+                    f"And $x_3 = x_4$",
+                    f"Let $x_1 = s$ and $x_3 = t$ be free variables",
+                    f"General vector: $s{latex(v1)} + t{latex(v2)}$",
+                    f"Basis: ${{{latex(v1)}, {latex(v2)}}}$"
+                ),
+                answer_type="set"
+            )
         else:
-            # Span of vectors
-            num_vecs = random.randint(3, 4)
-            vec_dim = 3
+            # Single constraint in R^3
+            a1, a2, a3 = nonzero(-3, 3), nonzero(-3, 3), nonzero(-3, 3)
             
-            # Create vectors with known rank
-            target_rank = random.randint(2, 3)
+            # Find two linearly independent vectors perpendicular to (a1, a2, a3)
+            if a1 != 0:
+                v1 = Matrix([a2, -a1, 0])
+                v2 = Matrix([a3, 0, -a1])
+            elif a2 != 0:
+                v1 = Matrix([1, 0, 0])
+                v2 = Matrix([0, a3, -a2])
+            else:
+                v1 = Matrix([1, 0, 0])
+                v2 = Matrix([0, 1, 0])
             
-            vecs = []
-            M = sp.Matrix.zeros(vec_dim, 0)
+            basis_str = fmt_set([v1, v2])
             
-            for i in range(num_vecs):
-                if i < target_rank:
-                    v = sp.Matrix([random.randint(-4, 4) for _ in range(vec_dim)])
-                    while M.rank() == M.shape[1] and (M.row_join(v)).rank() == M.rank():
-                        v = sp.Matrix([random.randint(-4, 4) for _ in range(vec_dim)])
-                    M = M.row_join(v)
-                else:
-                    # Linear combination of previous
-                    coeffs = [random.randint(-2, 2) for _ in range(target_rank)]
-                    v = sum(coeffs[j] * M[:, j] for j in range(target_rank))
-                    M = M.row_join(v)
-                vecs.append(v)
-            
-            vec_strs = [f"\\mathbf{{v}}_{i+1} = {sp.latex(vecs[i])}" for i in range(num_vecs)]
-            
-            question = f"Find the dimension of the subspace $W$ spanned by the vectors {', '.join(vec_strs)}."
-            answer = str(target_rank)
-            difficulty = 1680
+            return problem(
+                question=f"Find a basis for the subspace of $\\mathbb{{R}}^3$ consisting of all vectors perpendicular to ${latex(Matrix([a1, a2, a3]))}$",
+                answer=basis_str,
+                difficulty=(1600, 1750),
+                topic="linear_algebra/vector_spaces",
+                solution=steps(
+                    f"Vectors perpendicular to $\\mathbf{{n}} = {latex(Matrix([a1, a2, a3]))}$ satisfy ${a1}x_1 + {a2}x_2 + {a3}x_3 = 0$",
+                    f"Find two linearly independent solutions",
+                    f"Basis: ${{{latex(v1)}, {latex(v2)}}}$"
+                ),
+                answer_type="set"
+            )
     
-    elif problem_type == 'linear_independence':
-        vec_dim = 3
-        num_vecs = random.randint(3, 4)
+    elif problem_type == 3:
+        # Dimension of intersection of two subspaces
+        dim = 4
         
-        # Choose answer first
-        is_independent = random.choice([True, False])
+        # Create two subspaces via spanning sets
+        # Use dimension formula: dim(U + V) = dim(U) + dim(V) - dim(U ∩ V)
         
-        if is_independent and num_vecs <= vec_dim:
-            # Create independent vectors
-            vecs = []
-            M = sp.Matrix.zeros(vec_dim, 0)
-            
-            for i in range(num_vecs):
-                v = sp.Matrix([random.randint(-4, 4) for _ in range(vec_dim)])
-                while M.shape[1] > 0 and (M.row_join(v)).rank() <= M.rank():
-                    v = sp.Matrix([random.randint(-4, 4) for _ in range(vec_dim)])
-                M = M.row_join(v)
-                vecs.append(v)
-            
-            answer_val = "independent"
-        else:
-            # Create dependent vectors
-            base_vecs = random.randint(2, min(3, num_vecs - 1))
-            vecs = []
-            M = sp.Matrix.zeros(vec_dim, 0)
-            
-            for i in range(base_vecs):
-                v = sp.Matrix([random.randint(-4, 4) for _ in range(vec_dim)])
-                while M.shape[1] > 0 and (M.row_join(v)).rank() <= M.rank():
-                    v = sp.Matrix([random.randint(-4, 4) for _ in range(vec_dim)])
-                M = M.row_join(v)
-                vecs.append(v)
-            
-            # Add dependent vectors
-            for i in range(num_vecs - base_vecs):
-                coeffs = [random.randint(-2, 2) for _ in range(base_vecs)]
-                v = sum(coeffs[j] * vecs[j] for j in range(base_vecs))
-                vecs.append(v)
-            
-            random.shuffle(vecs)
-            answer_val = "dependent"
+        dim_U = 2
+        dim_V = 2
+        dim_intersection = 1
         
-        vec_strs = [f"\\mathbf{{v}}_{i+1} = {sp.latex(vecs[i])}" for i in range(len(vecs))]
-        question = f"Determine whether the vectors {', '.join(vec_strs)} are linearly independent or dependent."
-        answer = answer_val
-        difficulty = 1620
+        # Build bases
+        v_common = Matrix([1, 0, 1, 0])
+        u1 = Matrix([1, 1, 0, 0])
+        u2 = v_common
+        v1 = Matrix([0, 1, 1, 1])
+        v2 = v_common
+        
+        ans = dim_intersection
+        
+        return problem(
+            question=f"Let $U = \\text{{span}}\\{{{latex(Matrix([1, 1, 0, 0]))}, {latex(Matrix([1, 0, 1, 0]))}\\}}$ and $V = \\text{{span}}\\{{{latex(Matrix([0, 1, 1, 1]))}, {latex(Matrix([1, 0, 1, 0]))}\\}}$ be subspaces of $\\mathbb{{R}}^4$. Find $\\dim(U \\cap V)$.",
+            answer=ans,
+            difficulty=(1700, 1850),
+            topic="linear_algebra/vector_spaces",
+            solution=steps(
+                f"Notice that ${latex(v_common)}$ is in both $U$ and $V$",
+                f"$\\dim(U) = 2$ and $\\dim(V) = 2$",
+                f"The vector ${latex(v_common)}$ spans the intersection",
+                f"Therefore $\\dim(U \\cap V) = 1$"
+            ),
+            answer_type="numeric"
+        )
     
-    elif problem_type == 'span_membership':
-        vec_dim = 3
-        num_basis = random.randint(2, 3)
+    elif problem_type == 4:
+        # Coordinate vector with respect to a non-standard basis
+        # Find [v]_B where B is a given basis
         
-        # Create basis vectors
-        basis_vecs = []
-        M = sp.Matrix.zeros(vec_dim, 0)
+        # Create a basis for R^3
+        b1 = Matrix([1, 1, 0])
+        b2 = Matrix([1, 0, 1])
+        b3 = Matrix([0, 1, 1])
         
-        for i in range(num_basis):
-            v = sp.Matrix([random.randint(-3, 3) for _ in range(vec_dim)])
-            while M.shape[1] > 0 and (M.row_join(v)).rank() <= M.rank():
-                v = sp.Matrix([random.randint(-3, 3) for _ in range(vec_dim)])
-            M = M.row_join(v)
-            basis_vecs.append(v)
+        # Create target vector as linear combination
+        c1, c2, c3 = randint(-3, 3), randint(-3, 3), nonzero(-3, 3)
+        v = c1 * b1 + c2 * b2 + c3 * b3
         
-        # Decide if target is in span
-        in_span = random.choice([True, False])
+        ans = Matrix([c1, c2, c3])
         
-        if in_span:
-            # Create linear combination
-            coeffs = [random.randint(-3, 3) for _ in range(num_basis)]
-            target = sum(coeffs[i] * basis_vecs[i] for i in range(num_basis))
-            answer_val = "yes"
-        else:
-            # Create vector outside span
-            target = sp.Matrix([random.randint(-5, 5) for _ in range(vec_dim)])
-            augmented = M.row_join(target)
-            while augmented.rank() == M.rank():
-                target = sp.Matrix([random.randint(-5, 5) for _ in range(vec_dim)])
-                augmented = M.row_join(target)
-            answer_val = "no"
-        
-        basis_strs = [f"\\mathbf{{v}}_{i+1} = {sp.latex(basis_vecs[i])}" for i in range(num_basis)]
-        question = f"Is the vector $\\mathbf{{w}} = {sp.latex(target)}$ in the span of {', '.join(basis_strs)}? Answer 'yes' or 'no'."
-        answer = answer_val
-        difficulty = 1700
+        return problem(
+            question=f"Let $B = \\{{{latex(b1)}, {latex(b2)}, {latex(b3)}\\}}$ be a basis for $\\mathbb{{R}}^3$. Find the coordinate vector $[\\mathbf{{v}}]_B$ where $\\mathbf{{v}} = {latex(v)}$.",
+            answer=ans,
+            difficulty=(1650, 1800),
+            topic="linear_algebra/vector_spaces",
+            solution=steps(
+                f"Need to find $c_1, c_2, c_3$ such that $\\mathbf{{v}} = c_1{latex(b1)} + c_2{latex(b2)} + c_3{latex(b3)}$",
+                f"Set up system: ${latex(Matrix([b1, b2, b3]).T)} {latex(Matrix([c, d, k]))} = {latex(v)}$",
+                f"Solving gives $c_1 = {c1}, c_2 = {c2}, c_3 = {c3}$",
+                f"$[\\mathbf{{v}}]_B = {latex(ans)}$"
+            ),
+            answer_type="matrix"
+        )
     
-    elif problem_type == 'subspace_verification':
-        # Check if a set is a subspace
-        vec_dim = 3
+    else:
+        # Prove/determine if a set is a subspace
+        # Check if W = {(a, b, c) : a + 2b - c = 0} is a subspace
         
-        subspace_type = random.choice(['plane_through_origin', 'not_closed_scalar', 'not_containing_zero'])
+        coeff_a = nonzero(-2, 2)
+        coeff_b = nonzero(-2, 2)
         
-        if subspace_type == 'plane_through_origin':
-            # Define plane ax + by + cz = 0
-            a, b, c = [random.randint(-3, 3) for _ in range(3)]
-            while a ==
+        ans = True
+        
+        return problem(
+            question=f"Is $W = \\{{(a, b, c) \\in \\mathbb{{R}}^3 : {coeff_a}a + {coeff_b}b - c = 0\\}}$ a subspace of $\\mathbb{{R}}^3$?",
+            answer=ans,
+            difficulty=(1600, 1700),
+            topic="linear_algebra/vector_spaces",
+            solution=steps(
+                "Check three conditions: (1) zero vector, (2) closed under addition, (3) closed under scalar multiplication",
+                f"(1) Zero vector $(0,0,0)$ satisfies ${coeff_a}(0) + {coeff_b}(0) - 0 = 0$ ✓",
+                f"(2) If $\\mathbf{{u}}, \\mathbf{{v}} \\in W$, then ${coeff_a}(u_1+v_1) + {coeff_b}(u_2+v_2) - (u_3+v_3) = 0$ ✓",
+                f"(3) If $\\mathbf{{u}} \\in W$ and $k \\in \\mathbb{{R}}$, then ${coeff_a}(ku_1) + {coeff_b}(ku_2) - ku_3 = k({coeff_a}u_1 + {coeff_b}u_2 - u_3) = 0$ ✓",
+                "All conditions satisfied, so $W$ is a subspace"
+            ),
+            answer_type="boolean"
+        )
+
+emit(generate())

@@ -1,69 +1,120 @@
 """
 algebra2 - radical_expressions (easy)
-Generated: 2026-02-11T21:47:22.533809
+Generated: 2026-02-22T04:25:39.499579
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_radical_problem():
-    x = sp.Symbol('x')
-    problem_type = random.choice([
-        'simplify_sqrt',
-        'simplify_sqrt_fraction',
-        'multiply_radicals',
-        'add_like_radicals',
-        'rationalize_denominator_simple'
-    ])
+def generate():
+    problem_type = randint(1, 5)
     
-    if problem_type == 'simplify_sqrt':
-        perfect_square = random.choice([4, 9, 16, 25, 36, 49])
-        other_factor = random.choice([2, 3, 5, 6, 7])
-        radicand = perfect_square * other_factor
-        answer = sp.sqrt(perfect_square) * sp.sqrt(other_factor)
-        question = f"\\sqrt{{{radicand}}}"
-        difficulty = 1050
+    if problem_type == 1:
+        # Simplify sqrt of perfect square
+        # ELO 1000-1100
+        base = randint(2, 12)
+        value = base**2
+        ans = base
         
-    elif problem_type == 'simplify_sqrt_fraction':
-        numerator_perfect = random.choice([4, 9, 16, 25])
-        denominator_perfect = random.choice([4, 9, 16, 25])
-        while numerator_perfect == denominator_perfect:
-            denominator_perfect = random.choice([4, 9, 16, 25])
-        answer = sp.sqrt(numerator_perfect) / sp.sqrt(denominator_perfect)
-        question = f"\\sqrt{{\\frac{{{numerator_perfect}}}{{{denominator_perfect}}}}}"
-        difficulty = 1100
-        
-    elif problem_type == 'multiply_radicals':
-        a = random.randint(2, 5)
-        b = random.randint(2, 5)
-        answer = sp.sqrt(a * b)
-        question = f"\\sqrt{{{a}}} \\cdot \\sqrt{{{b}}}"
-        difficulty = 1150
-        
-    elif problem_type == 'add_like_radicals':
-        coef1 = random.randint(2, 5)
-        coef2 = random.randint(2, 5)
-        radical_value = random.choice([2, 3, 5, 6, 7])
-        answer = (coef1 + coef2) * sp.sqrt(radical_value)
-        question = f"{coef1}\\sqrt{{{radical_value}}} + {coef2}\\sqrt{{{radical_value}}}"
-        difficulty = 1200
-        
-    else:  # rationalize_denominator_simple
-        numerator = random.randint(1, 5)
-        denominator_radical = random.choice([2, 3, 5])
-        answer = sp.Rational(numerator, 1) * sp.sqrt(denominator_radical) / denominator_radical
-        question = f"\\frac{{{numerator}}}{{\\sqrt{{{denominator_radical}}}}}"
-        difficulty = 1250
+        return problem(
+            question=f"Simplify: $\\sqrt{{{value}}}$",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="algebra2/radical_expressions",
+            solution=steps(
+                f"Recognize that ${value} = {base}^2$",
+                f"Therefore $\\sqrt{{{value}}} = {base}$"
+            )
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": str(answer),
-        "difficulty": difficulty,
-        "main_topic": "algebra2",
-        "subtopic": "radical_expressions",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 2:
+        # Simplify sqrt(a^2 * b) where b is small
+        # ELO 1100-1200
+        base = randint(2, 8)
+        small_num = choice([2, 3, 5, 6, 7])
+        value = base**2 * small_num
+        ans = base * sqrt(small_num)
+        
+        return problem(
+            question=f"Simplify: $\\sqrt{{{value}}}$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="algebra2/radical_expressions",
+            solution=steps(
+                f"Factor: ${value} = {base**2} \\cdot {small_num} = {base}^2 \\cdot {small_num}$",
+                f"Extract perfect square: $\\sqrt{{{value}}} = \\sqrt{{{base}^2 \\cdot {small_num}}} = {base}\\sqrt{{{small_num}}}$"
+            )
+        )
+    
+    elif problem_type == 3:
+        # Add or subtract like radicals
+        # ELO 1200-1300
+        coeff1 = randint(2, 8)
+        coeff2 = randint(2, 8)
+        radical_num = choice([2, 3, 5, 6, 7])
+        operation = choice(['+', '-'])
+        
+        if operation == '+':
+            result_coeff = coeff1 + coeff2
+        else:
+            result_coeff = coeff1 - coeff2
+        
+        ans = result_coeff * sqrt(radical_num)
+        
+        return problem(
+            question=f"Simplify: ${coeff1}\\sqrt{{{radical_num}}} {operation} {coeff2}\\sqrt{{{radical_num}}}$",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="algebra2/radical_expressions",
+            solution=steps(
+                f"Combine like radicals (both have $\\sqrt{{{radical_num}}}$)",
+                f"${coeff1}\\sqrt{{{radical_num}}} {operation} {coeff2}\\sqrt{{{radical_num}}} = ({coeff1} {operation} {coeff2})\\sqrt{{{radical_num}}}$",
+                f"$= {result_coeff}\\sqrt{{{radical_num}}}$"
+            )
+        )
+    
+    elif problem_type == 4:
+        # Multiply sqrt(a) * sqrt(b)
+        # ELO 1100-1200
+        num1 = randint(2, 9)
+        num2 = randint(2, 9)
+        product = num1 * num2
+        
+        # Check if product is a perfect square
+        sqrt_product = int(product**0.5)
+        if sqrt_product**2 == product:
+            ans = sqrt_product
+        else:
+            ans = sqrt(product)
+        
+        return problem(
+            question=f"Simplify: $\\sqrt{{{num1}}} \\cdot \\sqrt{{{num2}}}$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="algebra2/radical_expressions",
+            solution=steps(
+                f"Use the property $\\sqrt{{a}} \\cdot \\sqrt{{b}} = \\sqrt{{ab}}$",
+                f"$\\sqrt{{{num1}}} \\cdot \\sqrt{{{num2}}} = \\sqrt{{{num1} \\cdot {num2}}} = \\sqrt{{{product}}}$",
+                f"$= {latex(ans)}$"
+            )
+        )
+    
+    else:
+        # Simplify coefficient * sqrt
+        # ELO 1000-1100
+        coeff = randint(2, 6)
+        base = randint(2, 5)
+        value = base**2
+        ans = coeff * base
+        
+        return problem(
+            question=f"Simplify: ${coeff}\\sqrt{{{value}}}$",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="algebra2/radical_expressions",
+            solution=steps(
+                f"Simplify $\\sqrt{{{value}}} = \\sqrt{{{base}^2}} = {base}$",
+                f"${coeff}\\sqrt{{{value}}} = {coeff} \\cdot {base} = {ans}$"
+            )
+        )
 
-problem = generate_radical_problem()
-print(json.dumps(problem))
+emit(generate())

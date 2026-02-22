@@ -1,117 +1,239 @@
 """
 linear_algebra - vector_spaces (medium)
-Generated: 2026-02-11T22:11:03.347808
+Generated: 2026-02-22T05:53:56.640327
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_vector_space_problem():
-    problem_type = random.choice([
-        'linear_combination',
-        'span_check',
-        'linear_independence',
-        'basis_verification',
-        'dimension'
-    ])
+def generate():
+    problem_type = randint(1, 5)
     
-    if problem_type == 'linear_combination':
-        # Express vector as linear combination
-        # ELO: 1300-1400 (two-step: set up system, solve)
-        dim = random.choice([2, 3])
+    if problem_type == 1:
+        # Linear independence check for 2-3 vectors in R^2 or R^3
+        dim = choice([2, 3])
+        num_vecs = choice([2, 3])
+        
+        if randint(0, 1) == 0:  # Make linearly dependent
+            if dim == 2:
+                v1_vals = [nonzero(-4, 4), nonzero(-4, 4)]
+                scalar = choice([2, 3, -2, -3])
+                v2_vals = [scalar * v1_vals[0], scalar * v1_vals[1]]
+                vectors = [Matrix(v1_vals), Matrix(v2_vals)]
+                ans = False
+            else:  # dim == 3
+                v1_vals = [nonzero(-3, 3), nonzero(-3, 3), nonzero(-3, 3)]
+                v2_vals = [nonzero(-3, 3), nonzero(-3, 3), nonzero(-3, 3)]
+                # Make v3 a linear combination
+                s1, s2 = choice([1, 2, -1]), choice([1, 2, -1])
+                v3_vals = [s1*v1_vals[0] + s2*v2_vals[0], 
+                          s1*v1_vals[1] + s2*v2_vals[1],
+                          s1*v1_vals[2] + s2*v2_vals[2]]
+                vectors = [Matrix(v1_vals), Matrix(v2_vals), Matrix(v3_vals)]
+                ans = False
+        else:  # Make linearly independent
+            if dim == 2 and num_vecs == 2:
+                v1_vals = [nonzero(-4, 4), nonzero(-4, 4)]
+                v2_vals = [nonzero(-4, 4), nonzero(-4, 4)]
+                # Ensure not parallel
+                while v1_vals[0] * v2_vals[1] == v1_vals[1] * v2_vals[0]:
+                    v2_vals = [nonzero(-4, 4), nonzero(-4, 4)]
+                vectors = [Matrix(v1_vals), Matrix(v2_vals)]
+                ans = True
+            else:  # 3D
+                v1_vals = [1, 0, 0]
+                v2_vals = [0, 1, 0]
+                if num_vecs == 3:
+                    v3_vals = [0, 0, 1]
+                    vectors = [Matrix(v1_vals), Matrix(v2_vals), Matrix(v3_vals)]
+                else:
+                    vectors = [Matrix(v1_vals), Matrix(v2_vals)]
+                ans = True
+        
+        vec_strs = [f"\\begin{{bmatrix}} {' \\\\ '.join(map(str, v))} \\end{{bmatrix}}" 
+                    for v in vectors]
+        question = f"Are the vectors {', '.join(vec_strs)} linearly independent?"
+        
+        M = Matrix.hstack(*vectors)
+        rref_M = M.rref()[0]
+        
+        solution = steps(
+            f"Form matrix with vectors as columns: ${latex(M)}$",
+            f"Reduce to RREF: ${latex(rref_M)}$",
+            f"{'All columns have pivots, so vectors are linearly independent.' if ans else 'Not all columns have pivots, so vectors are linearly dependent.'}"
+        )
+        
+        return problem(
+            question=question,
+            answer=ans,
+            difficulty=(1300, 1450),
+            topic="linear_algebra/vector_spaces",
+            solution=solution
+        )
+    
+    elif problem_type == 2:
+        # Find basis for span of vectors
+        dim = choice([2, 3])
         
         if dim == 2:
-            # Pick clean coefficients (answer)
-            c1, c2 = random.randint(-3, 3), random.randint(-3, 3)
-            while c1 == 0 and c2 == 0:
-                c1, c2 = random.randint(-3, 3), random.randint(-3, 3)
+            v1_vals = [nonzero(-3, 3), nonzero(-3, 3)]
+            scalar = choice([2, 3, -2])
+            v2_vals = [scalar * v1_vals[0], scalar * v1_vals[1]]
+            v3_vals = [nonzero(-3, 3), nonzero(-3, 3)]
+            while v3_vals[0] * v1_vals[1] == v3_vals[1] * v1_vals[0]:
+                v3_vals = [nonzero(-3, 3), nonzero(-3, 3)]
             
-            # Pick basis vectors
-            v1 = [random.randint(-3, 3) for _ in range(2)]
-            v2 = [random.randint(-3, 3) for _ in range(2)]
-            while v1[0] * v2[1] == v1[1] * v2[0]:  # Ensure independence
-                v2 = [random.randint(-3, 3) for _ in range(2)]
-            
-            # Construct target vector
-            target = [c1 * v1[0] + c2 * v2[0], c1 * v1[1] + c2 * v2[1]]
-            
-            question = f"Express \\(\\begin{{pmatrix}} {target[0]} \\\\ {target[1]} \\end{{pmatrix}}\\) as a linear combination of \\(\\begin{{pmatrix}} {v1[0]} \\\\ {v1[1]} \\end{{pmatrix}}\\) and \\(\\begin{{pmatrix}} {v2[0]} \\\\ {v2[1]} \\end{{pmatrix}}\\). Enter your answer as an ordered pair \\((c_1, c_2)\\) where the combination is \\(c_1 v_1 + c_2 v_2\\)."
-            
-            answer = f"({c1}, {c2})"
-            difficulty = 1350
+            vectors = [Matrix(v1_vals), Matrix(v2_vals), Matrix(v3_vals)]
+            basis = [Matrix(v1_vals), Matrix(v3_vals)]
+        else:
+            v1_vals = [1, 0, 0]
+            v2_vals = [0, 1, 0]
+            v3_vals = [1, 1, 0]
+            vectors = [Matrix(v1_vals), Matrix(v2_vals), Matrix(v3_vals)]
+            basis = [Matrix(v1_vals), Matrix(v2_vals)]
         
-        else:  # dim == 3
-            c1, c2, c3 = random.randint(-2, 2), random.randint(-2, 2), random.randint(-2, 2)
-            while c1 == 0 and c2 == 0 and c3 == 0:
-                c1, c2, c3 = random.randint(-2, 2), random.randint(-2, 2), random.randint(-2, 2)
-            
-            v1 = [1, 0, 0]
-            v2 = [0, 1, 0]
-            v3 = [0, 0, 1]
-            
-            target = [c1, c2, c3]
-            
-            question = f"Express \\(\\begin{{pmatrix}} {target[0]} \\\\ {target[1]} \\\\ {target[2]} \\end{{pmatrix}}\\) as a linear combination of the standard basis vectors in \\(\\mathbb{{R}}^3\\). Enter your answer as an ordered triple \\((c_1, c_2, c_3)\\)."
-            
-            answer = f"({c1}, {c2}, {c3})"
-            difficulty = 1300
+        vec_strs = [f"\\begin{{bmatrix}} {' \\\\ '.join(map(str, v))} \\end{{bmatrix}}" 
+                    for v in vectors]
+        question = f"Find a basis for the span of {', '.join(vec_strs)}. Enter your answer as a list of column vectors."
+        
+        ans = basis
+        
+        M = Matrix.hstack(*vectors)
+        rref_M = M.rref()[0]
+        
+        solution = steps(
+            f"Form matrix with vectors as columns: ${latex(M)}$",
+            f"Reduce to RREF: ${latex(rref_M)}$",
+            f"Pivot columns correspond to basis vectors",
+            f"Basis: {', '.join([latex(v) for v in basis])}"
+        )
+        
+        return problem(
+            question=question,
+            answer=ans,
+            difficulty=(1400, 1550),
+            topic="linear_algebra/vector_spaces",
+            solution=solution
+        )
     
-    elif problem_type == 'span_check':
+    elif problem_type == 3:
+        # Determine dimension of subspace
+        dim = choice([3, 4])
+        
+        if dim == 3:
+            # Span of 2 independent vectors in R^3
+            v1_vals = [1, 0, nonzero(-2, 2)]
+            v2_vals = [0, 1, nonzero(-2, 2)]
+            ans = 2
+            vectors = [Matrix(v1_vals), Matrix(v2_vals)]
+        else:
+            # Span of 3 independent vectors in R^4
+            v1_vals = [1, 0, 0, 0]
+            v2_vals = [0, 1, 0, 0]
+            v3_vals = [0, 0, 1, 0]
+            ans = 3
+            vectors = [Matrix(v1_vals), Matrix(v2_vals), Matrix(v3_vals)]
+        
+        vec_strs = [f"\\begin{{bmatrix}} {' \\\\ '.join(map(str, v))} \\end{{bmatrix}}" 
+                    for v in vectors]
+        question = f"What is the dimension of the subspace spanned by {', '.join(vec_strs)}?"
+        
+        M = Matrix.hstack(*vectors)
+        
+        solution = steps(
+            f"Form matrix with vectors as columns: ${latex(M)}$",
+            f"Count the number of linearly independent vectors",
+            f"The dimension is ${ans}$"
+        )
+        
+        return problem(
+            question=question,
+            answer=ans,
+            difficulty=(1300, 1450),
+            topic="linear_algebra/vector_spaces",
+            solution=solution
+        )
+    
+    elif problem_type == 4:
         # Check if vector is in span
-        # ELO: 1400-1500 (requires understanding span and solving system)
-        dim = 2
+        v1_vals = [1, 0, nonzero(-2, 2)]
+        v2_vals = [0, 1, nonzero(-2, 2)]
         
-        in_span = random.choice([True, False])
+        if randint(0, 1) == 0:  # In span
+            c1, c2 = nonzero(-3, 3), nonzero(-3, 3)
+            test_vals = [c1 * v1_vals[0] + c2 * v2_vals[0],
+                        c1 * v1_vals[1] + c2 * v2_vals[1],
+                        c1 * v1_vals[2] + c2 * v2_vals[2]]
+            ans = True
+        else:  # Not in span
+            test_vals = [nonzero(-3, 3), nonzero(-3, 3), nonzero(-3, 3)]
+            # Make sure third component doesn't match
+            while test_vals[2] == test_vals[0] * v1_vals[2] + test_vals[1] * v2_vals[2]:
+                test_vals[2] = nonzero(-3, 3)
+            ans = False
         
-        v1 = [random.randint(1, 3), random.randint(-2, 2)]
-        v2 = [random.randint(-2, 2), random.randint(1, 3)]
-        while v1[0] * v2[1] == v1[1] * v2[0]:
-            v2 = [random.randint(-2, 2), random.randint(1, 3)]
+        v1 = Matrix(v1_vals)
+        v2 = Matrix(v2_vals)
+        test = Matrix(test_vals)
         
-        if in_span:
-            c1, c2 = random.randint(-2, 2), random.randint(-2, 2)
-            target = [c1 * v1[0] + c2 * v2[0], c1 * v1[1] + c2 * v2[1]]
-            answer = "True"
-        else:
-            target = [random.randint(-5, 5), random.randint(-5, 5)]
-            # Verify not in span
-            det = v1[0] * v2[1] - v1[1] * v2[0]
-            if det != 0:
-                calc_c1 = (target[0] * v2[1] - target[1] * v2[0]) / det
-                if calc_c1 == int(calc_c1):
-                    target[0] += 1
-            answer = "False"
+        vec_strs = [f"\\begin{{bmatrix}} {' \\\\ '.join(map(str, v))} \\end{{bmatrix}}" 
+                    for v in [v1, v2]]
+        test_str = f"\\begin{{bmatrix}} {' \\\\ '.join(map(str, test))} \\end{{bmatrix}}"
         
-        question = f"Is the vector \\(\\begin{{pmatrix}} {target[0]} \\\\ {target[1]} \\end{{pmatrix}}\\) in the span of \\(\\left\\{{\\begin{{pmatrix}} {v1[0]} \\\\ {v1[1]} \\end{{pmatrix}}, \\begin{{pmatrix}} {v2[0]} \\\\ {v2[1]} \\end{{pmatrix}}\\right\\}}\\)? Answer True or False."
+        question = f"Is the vector {test_str} in the span of {', '.join(vec_strs)}?"
         
-        difficulty = 1450
+        M = Matrix.hstack(v1, v2, test)
+        rref_M = M.rref()[0]
+        
+        solution = steps(
+            f"Form augmented matrix: ${latex(M)}$",
+            f"Reduce to RREF: ${latex(rref_M)}$",
+            f"{'The system is consistent, so the vector is in the span.' if ans else 'The system is inconsistent, so the vector is not in the span.'}"
+        )
+        
+        return problem(
+            question=question,
+            answer=ans,
+            difficulty=(1350, 1500),
+            topic="linear_algebra/vector_spaces",
+            solution=solution
+        )
     
-    elif problem_type == 'linear_independence':
-        # Check linear independence
-        # ELO: 1500-1600 (requires understanding determinant or row reduction)
-        dim = 3
+    else:  # problem_type == 5
+        # Find coordinates relative to a basis
+        # Simple basis in R^2
+        b1_vals = [1, nonzero(-2, 2)]
+        b2_vals = [0, 1]
         
-        independent = random.choice([True, False])
+        c1, c2 = nonzero(-3, 3), nonzero(-3, 3)
+        v_vals = [c1 * b1_vals[0] + c2 * b2_vals[0],
+                 c1 * b1_vals[1] + c2 * b2_vals[1]]
         
-        if independent:
-            # Create independent vectors using identity base
-            v1 = [random.randint(1, 2), random.randint(-1, 1), random.randint(-1, 1)]
-            v2 = [random.randint(-1, 1), random.randint(1, 2), random.randint(-1, 1)]
-            v3 = [random.randint(-1, 1), random.randint(-1, 1), random.randint(1, 2)]
-            
-            # Verify determinant non-zero
-            mat = sp.Matrix([v1, v2, v3]).T
-            if mat.det() == 0:
-                v3[2] += 1
-            
-            answer = "True"
-        else:
-            v1 = [random.randint(1, 3), random.randint(-2, 2), random.randint(-2, 2)]
-            v2 = [random.randint(-2, 2), random.randint(1, 3), random.randint(-2, 2)]
-            c1, c2 = random.randint(1, 2), random.randint(1, 2)
-            v3 = [c1 * v1[0] + c2 * v2[0], c1 * v1[1] + c2 * v2[1], c1 * v1[2] + c2 * v2[2]]
-            
-            answer = "False"
+        b1 = Matrix(b1_vals)
+        b2 = Matrix(b2_vals)
+        v = Matrix(v_vals)
         
-        question = f"Are the vectors \\(\\begin{{pmatrix}} {v1[0]} \\\\ {v1[1]} \\\\ {v1[2]} \\end{{pmatrix}}\\), \\(\\begin{{pmatrix}} {v2[0]} \\\\ {v2[1]} \\\\ {v2[2]} \\end{{pmatrix}}\\), and \\(\\begin{{pmatrix}} {v3[0]} \\\\ {v3[1]} \\\\ {v3[2]} \\end{{pmat
+        ans = Matrix([c1, c2])
+        
+        basis_strs = [f"\\begin{{bmatrix}} {' \\\\ '.join(map(str, vec))} \\end{{bmatrix}}" 
+                     for vec in [b1, b2]]
+        v_str = f"\\begin{{bmatrix}} {' \\\\ '.join(map(str, v))} \\end{{bmatrix}}"
+        
+        question = f"Find the coordinates of {v_str} relative to the basis $\\mathcal{{B}} = \\{{ {', '.join(basis_strs)} \\}}$. Enter as a column vector."
+        
+        P = Matrix.hstack(b1, b2)
+        
+        solution = steps(
+            f"We need to solve ${latex(P)} \\mathbf{{c}} = {latex(v)}$",
+            f"where $\\mathbf{{c}} = \\begin{{bmatrix}} c_1 \\\\ c_2 \\end{{bmatrix}}$",
+            f"Solving gives $\\mathbf{{c}} = {latex(ans)}$"
+        )
+        
+        return problem(
+            question=question,
+            answer=ans,
+            difficulty=(1400, 1600),
+            topic="linear_algebra/vector_spaces",
+            solution=solution
+        )
+
+emit(generate())

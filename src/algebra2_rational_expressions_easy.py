@@ -1,118 +1,119 @@
 """
 algebra2 - rational_expressions (easy)
-Generated: 2026-02-11T21:46:30.595082
+Generated: 2026-02-22T04:23:13.838829
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-x = sp.Symbol('x')
-
-def generate_problem():
-    problem_type = random.choice([
-        'simplify_monomial',
-        'simplify_binomial', 
-        'multiply_simple',
-        'divide_simple',
-        'add_same_denom',
-        'subtract_same_denom'
-    ])
+def generate():
+    problem_type = randint(1, 4)
     
-    if problem_type == 'simplify_monomial':
-        # Simplify (ax)/(bx) = a/b
-        a = random.randint(2, 12)
-        b = random.randint(2, 12)
-        while sp.gcd(a, b) != 1:
-            a = random.randint(2, 12)
-            b = random.randint(2, 12)
+    if problem_type == 1:
+        # Type 1: Simplify a simple rational expression (single fraction)
+        # ELO 1000-1100: Basic simplification with common factors
+        factor1 = nonzero(-5, 5)
+        factor2 = nonzero(-5, 5)
+        common = nonzero(2, 4)
         
-        numerator = a * x
-        denominator = b * x
-        answer = sp.simplify(numerator / denominator)
+        numerator = common * factor1
+        denominator = common * factor2
         
-        question = f"\\text{{Simplify: }} \\frac{{{sp.latex(numerator)}}}{{{sp.latex(denominator)}}}"
-        difficulty = 1050
+        expr = numerator * x / (denominator * x)
+        ans = simplify(expr)
         
-    elif problem_type == 'simplify_binomial':
-        # Simplify (ax + b)/(cx + d) where there's a common factor
-        factor = random.randint(2, 5)
-        a = random.randint(1, 4)
-        b = random.randint(1, 6)
-        
-        numerator = factor * (a * x + b)
-        denominator = factor * random.randint(2, 6)
-        answer = sp.simplify(numerator / denominator)
-        
-        question = f"\\text{{Simplify: }} \\frac{{{sp.latex(sp.expand(numerator))}}}{{{denominator}}}"
-        difficulty = 1150
-        
-    elif problem_type == 'multiply_simple':
-        # Multiply two simple fractions
-        a = random.randint(1, 6)
-        b = random.randint(2, 8)
-        c = random.randint(1, 6)
-        d = random.randint(2, 8)
-        
-        frac1 = a / b
-        frac2 = (c * x) / d
-        answer = sp.simplify(frac1 * frac2)
-        
-        question = f"\\text{{Multiply: }} \\frac{{{a}}}{{{b}}} \\cdot \\frac{{{sp.latex(c*x)}}}{{{d}}}"
-        difficulty = 1100
-        
-    elif problem_type == 'divide_simple':
-        # Divide simple fractions
-        a = random.randint(1, 6)
-        b = random.randint(2, 6)
-        c = random.randint(1, 6)
-        d = random.randint(2, 6)
-        
-        frac1 = (a * x) / b
-        frac2 = c / d
-        answer = sp.simplify(frac1 / frac2)
-        
-        question = f"\\text{{Divide: }} \\frac{{{sp.latex(a*x)}}}{{{b}}} \\div \\frac{{{c}}}{{{d}}}"
-        difficulty = 1200
-        
-    elif problem_type == 'add_same_denom':
-        # Add fractions with same denominator
-        denom = random.randint(3, 10)
-        a = random.randint(1, 5)
-        b = random.randint(1, 5)
-        c = random.randint(1, 5)
-        d = random.randint(1, 5)
-        
-        frac1 = (a * x + b) / denom
-        frac2 = (c * x + d) / denom
-        answer = sp.simplify(frac1 + frac2)
-        
-        question = f"\\text{{Add: }} \\frac{{{sp.latex(a*x + b)}}}{{{denom}}} + \\frac{{{sp.latex(c*x + d)}}}{{{denom}}}"
-        difficulty = 1150
-        
-    else:  # subtract_same_denom
-        # Subtract fractions with same denominator
-        denom = random.randint(3, 10)
-        a = random.randint(2, 6)
-        b = random.randint(3, 8)
-        c = random.randint(1, 4)
-        d = random.randint(1, 6)
-        
-        frac1 = (a * x + b) / denom
-        frac2 = (c * x + d) / denom
-        answer = sp.simplify(frac1 - frac2)
-        
-        question = f"\\text{{Subtract: }} \\frac{{{sp.latex(a*x + b)}}}{{{denom}}} - \\frac{{{sp.latex(c*x + d)}}}{{{denom}}}"
-        difficulty = 1200
+        return problem(
+            question=f"Simplify: $\\frac{{{latex(numerator * x)}}}{{{latex(denominator * x)}}}$",
+            answer=ans,
+            difficulty=(1000, 1100),
+            topic="algebra2/rational_expressions",
+            solution=steps(
+                f"Factor out common factor from numerator and denominator",
+                f"$\\frac{{{latex(numerator * x)}}}{{{latex(denominator * x)}}} = \\frac{{{common} \\cdot {factor1} \\cdot x}}{{{common} \\cdot {factor2} \\cdot x}}$",
+                f"Cancel common factors of ${common}$ and $x$",
+                f"${latex(ans)}$"
+            ),
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": str(answer),
-        "difficulty": difficulty,
-        "main_topic": "algebra2",
-        "subtopic": "rational_expressions",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 2:
+        # Type 2: Add/subtract rational expressions with same denominator
+        # ELO 1100-1200: Same denominator, combine numerators
+        denom = nonzero(2, 6)
+        num1_coeff = nonzero(-5, 5)
+        num2_coeff = nonzero(-5, 5)
+        
+        expr1 = num1_coeff * x / denom
+        expr2 = num2_coeff * x / denom
+        
+        operation = choice(['+', '-'])
+        if operation == '+':
+            expr = expr1 + expr2
+            ans = simplify(expr)
+            op_symbol = "+"
+        else:
+            expr = expr1 - expr2
+            ans = simplify(expr)
+            op_symbol = "-"
+        
+        return problem(
+            question=f"Simplify: $\\frac{{{latex(num1_coeff * x)}}}{{{denom}}} {op_symbol} \\frac{{{latex(num2_coeff * x)}}}{{{denom}}}$",
+            answer=ans,
+            difficulty=(1100, 1200),
+            topic="algebra2/rational_expressions",
+            solution=steps(
+                f"Since denominators are the same, combine numerators",
+                f"$\\frac{{{latex(num1_coeff * x)} {op_symbol} {latex(num2_coeff * x)}}}{{{denom}}}$",
+                f"Simplify the numerator: ${latex(ans)}$"
+            ),
+        )
+    
+    elif problem_type == 3:
+        # Type 3: Multiply two simple rational expressions
+        # ELO 1200-1300: Multiply and simplify
+        num1 = nonzero(2, 5)
+        denom1 = nonzero(2, 5)
+        num2 = nonzero(2, 5)
+        denom2 = nonzero(2, 5)
+        
+        expr = (num1 * x / denom1) * (num2 / (denom2 * x))
+        ans = simplify(expr)
+        
+        return problem(
+            question=f"Multiply and simplify: $\\frac{{{latex(num1 * x)}}}{{{denom1}}} \\cdot \\frac{{{num2}}}{{{latex(denom2 * x)}}}$",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="algebra2/rational_expressions",
+            solution=steps(
+                f"Multiply numerators and denominators",
+                f"$\\frac{{{latex(num1 * x)} \\cdot {num2}}}{{{denom1} \\cdot {latex(denom2 * x)}}}$",
+                f"$\\frac{{{latex(num1 * num2 * x)}}}{{{latex(denom1 * denom2 * x)}}}$",
+                f"Cancel common factor $x$",
+                f"${latex(ans)}$"
+            ),
+        )
+    
+    else:
+        # Type 4: Divide two simple rational expressions
+        # ELO 1200-1300: Divide (multiply by reciprocal)
+        num1 = nonzero(2, 6)
+        denom1 = nonzero(2, 6)
+        num2 = nonzero(2, 6)
+        denom2 = nonzero(2, 6)
+        
+        expr = (num1 * x / denom1) / (num2 * x / denom2)
+        ans = simplify(expr)
+        
+        return problem(
+            question=f"Divide and simplify: $\\frac{{{latex(num1 * x)}}}{{{denom1}}} \\div \\frac{{{latex(num2 * x)}}}{{{denom2}}}$",
+            answer=ans,
+            difficulty=(1200, 1300),
+            topic="algebra2/rational_expressions",
+            solution=steps(
+                f"Multiply by the reciprocal",
+                f"$\\frac{{{latex(num1 * x)}}}{{{denom1}}} \\cdot \\frac{{{denom2}}}{{{latex(num2 * x)}}}$",
+                f"$\\frac{{{latex(num1 * x)} \\cdot {denom2}}}{{{denom1} \\cdot {latex(num2 * x)}}}$",
+                f"Cancel common factor $x$",
+                f"${latex(ans)}$"
+            ),
+        )
 
-problem = generate_problem()
-print(json.dumps(problem))
+emit(generate())

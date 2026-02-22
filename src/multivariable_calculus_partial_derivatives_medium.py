@@ -1,99 +1,161 @@
 """
 multivariable_calculus - partial_derivatives (medium)
-Generated: 2026-02-11T22:03:21.058101
+Generated: 2026-02-22T05:33:55.748810
 """
 
-import sympy as sp
-import random
-import json
+from problem_utils import *
 
-def generate_partial_derivative_problem():
-    x, y, z = sp.symbols('x y z')
+def generate():
+    problem_type = choice(['first_order', 'second_order', 'mixed', 'evaluate'])
     
-    problem_type = random.choice([
-        'basic_polynomial',
-        'product_rule',
-        'chain_rule',
-        'mixed_partial',
-        'second_order'
-    ])
+    if problem_type == 'first_order':
+        # Simple first-order partial derivatives
+        base_func = choice([
+            x**2 + y**2,
+            x**3 + y**2,
+            x*y**2,
+            x**2 * y,
+            x**3 + x*y + y**2,
+            x**2 - y**2,
+        ])
+        coeff = nonzero(-5, 5)
+        func = coeff * base_func
+        
+        var_choice = choice([x, y])
+        
+        ans = diff(func, var_choice)
+        
+        return problem(
+            question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right)$",
+            answer=ans,
+            difficulty=(1300, 1400),
+            topic="multivariable_calculus/partial_derivatives",
+            solution=steps(
+                f"Treat all variables except ${latex(var_choice)}$ as constants",
+                f"Differentiate with respect to ${latex(var_choice)}$",
+                f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right) = {latex(ans)}$"
+            )
+        )
     
-    if problem_type == 'basic_polynomial':
-        # ELO: 1200-1400 - Direct partial differentiation
-        coeff1 = random.randint(1, 5)
-        coeff2 = random.randint(1, 5)
-        power_x = random.randint(2, 4)
-        power_y = random.randint(2, 4)
-        constant = random.randint(-10, 10)
+    elif problem_type == 'second_order':
+        # Second-order partial derivatives
+        base_func = choice([
+            x**3 * y,
+            x**2 * y**2,
+            x**3 + y**3,
+            x**2 * y + x * y**2,
+        ])
+        coeff = nonzero(-3, 3)
+        func = coeff * base_func
         
-        f = coeff1 * x**power_x + coeff2 * y**power_y + constant
-        var = random.choice([x, y])
-        answer = sp.diff(f, var)
+        var1 = choice([x, y])
+        var2 = choice([x, y])
         
-        question = f"\\text{{Find }} \\frac{{\\partial f}}{{\\partial {sp.latex(var)}}} \\text{{ where }} f(x,y) = {sp.latex(f)}"
-        difficulty = 1300
+        ans = diff(diff(func, var1), var2)
         
-    elif problem_type == 'product_rule':
-        # ELO: 1400-1500 - Requires product rule
-        power1 = random.randint(2, 3)
-        power2 = random.randint(2, 3)
-        coeff = random.randint(2, 5)
+        if var1 == var2:
+            notation = f"\\frac{{\\partial^2}}{{\\partial {latex(var1)}^2}}"
+        else:
+            notation = f"\\frac{{\\partial^2}}{{\\partial {latex(var2)} \\partial {latex(var1)}}}"
         
-        f = x**power1 * y**power2
-        var = random.choice([x, y])
-        answer = sp.diff(f, var)
+        first_deriv = diff(func, var1)
         
-        question = f"\\text{{Find }} \\frac{{\\partial f}}{{\\partial {sp.latex(var)}}} \\text{{ where }} f(x,y) = {sp.latex(f)}"
-        difficulty = 1450
-        
-    elif problem_type == 'chain_rule':
-        # ELO: 1500-1600 - Requires chain rule
-        inner_power = random.randint(2, 3)
-        outer_power = random.randint(2, 3)
-        coeff = random.randint(1, 4)
-        
-        inner = x**2 + y**2
-        f = (coeff * inner)**outer_power
-        var = random.choice([x, y])
-        answer = sp.diff(f, var)
-        
-        question = f"\\text{{Find }} \\frac{{\\partial f}}{{\\partial {sp.latex(var)}}} \\text{{ where }} f(x,y) = {sp.latex(f)}"
-        difficulty = 1550
-        
-    elif problem_type == 'mixed_partial':
-        # ELO: 1500-1600 - Mixed partial derivatives
-        coeff = random.randint(2, 5)
-        power_x = random.randint(2, 4)
-        power_y = random.randint(2, 4)
-        
-        f = coeff * x**power_x * y**power_y
-        answer = sp.diff(f, x, y)
-        
-        question = f"\\text{{Find }} \\frac{{\\partial^2 f}}{{\\partial x \\partial y}} \\text{{ where }} f(x,y) = {sp.latex(f)}"
-        difficulty = 1520
-        
-    else:  # second_order
-        # ELO: 1400-1500 - Second order partial derivatives
-        coeff1 = random.randint(2, 5)
-        coeff2 = random.randint(2, 5)
-        power_x = random.randint(2, 4)
-        power_y = random.randint(2, 4)
-        
-        f = coeff1 * x**power_x + coeff2 * y**power_y
-        var = random.choice([x, y])
-        answer = sp.diff(f, var, 2)
-        
-        question = f"\\text{{Find }} \\frac{{\\partial^2 f}}{{\\partial {sp.latex(var)}^2}} \\text{{ where }} f(x,y) = {sp.latex(f)}"
-        difficulty = 1450
+        return problem(
+            question=f"Find ${notation}\\left({latex(func)}\\right)$",
+            answer=ans,
+            difficulty=(1400, 1550),
+            topic="multivariable_calculus/partial_derivatives",
+            solution=steps(
+                f"First find $\\frac{{\\partial}}{{\\partial {latex(var1)}}}\\left({latex(func)}\\right) = {latex(first_deriv)}$",
+                f"Then differentiate with respect to ${latex(var2)}$",
+                f"${notation}\\left({latex(func)}\\right) = {latex(ans)}$"
+            )
+        )
     
-    return {
-        "question_latex": question,
-        "answer_key": str(answer),
-        "difficulty": difficulty,
-        "main_topic": "multivariable_calculus",
-        "subtopic": "partial_derivatives",
-        "grading_mode": "equivalent"
-    }
+    elif problem_type == 'mixed':
+        # Mixed partial derivatives with exponentials or trig
+        func_type = choice(['exp', 'trig', 'product'])
+        
+        if func_type == 'exp':
+            a_val = nonzero(-3, 3)
+            b_val = nonzero(-3, 3)
+            func = exp(a_val*x + b_val*y)
+            
+            var_choice = choice([x, y])
+            ans = diff(func, var_choice)
+            
+            return problem(
+                question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right)$",
+                answer=ans,
+                difficulty=(1350, 1500),
+                topic="multivariable_calculus/partial_derivatives",
+                solution=steps(
+                    f"Use the chain rule for exponential functions",
+                    f"Treat variables other than ${latex(var_choice)}$ as constants",
+                    f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right) = {latex(ans)}$"
+                )
+            )
+        
+        elif func_type == 'trig':
+            a_val = nonzero(-3, 3)
+            b_val = nonzero(-3, 3)
+            trig_func = choice([sin, cos])
+            func = trig_func(a_val*x + b_val*y)
+            
+            var_choice = choice([x, y])
+            ans = diff(func, var_choice)
+            
+            return problem(
+                question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right)$",
+                answer=ans,
+                difficulty=(1400, 1550),
+                topic="multivariable_calculus/partial_derivatives",
+                solution=steps(
+                    f"Use the chain rule for trigonometric functions",
+                    f"Treat variables other than ${latex(var_choice)}$ as constants",
+                    f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right) = {latex(ans)}$"
+                )
+            )
+        
+        else:  # product
+            func = x**2 * sin(y)
+            var_choice = choice([x, y])
+            ans = diff(func, var_choice)
+            
+            return problem(
+                question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right)$",
+                answer=ans,
+                difficulty=(1450, 1600),
+                topic="multivariable_calculus/partial_derivatives",
+                solution=steps(
+                    f"Treat variables other than ${latex(var_choice)}$ as constants",
+                    f"Apply differentiation rules",
+                    f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right) = {latex(ans)}$"
+                )
+            )
+    
+    else:  # evaluate
+        # Evaluate partial derivative at a point
+        func = x**2 * y + x * y**2
+        var_choice = choice([x, y])
+        
+        x_val = nonzero(-3, 3)
+        y_val = nonzero(-3, 3)
+        
+        partial_deriv = diff(func, var_choice)
+        ans = partial_deriv.subs([(x, x_val), (y, y_val)])
+        
+        return problem(
+            question=f"Evaluate $\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}}$ at $({x_val}, {y_val})$ where $f(x,y) = {latex(func)}$",
+            answer=ans,
+            difficulty=(1400, 1550),
+            topic="multivariable_calculus/partial_derivatives",
+            solution=steps(
+                f"First find $\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}} = {latex(partial_deriv)}$",
+                f"Substitute $x = {x_val}$ and $y = {y_val}$",
+                f"$\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}}({x_val}, {y_val}) = {latex(ans)}$"
+            ),
+            calculator="scientific"
+        )
 
-problem = generate_partial_derivative_problem()
-print(json.dumps(problem))
+emit(generate())
