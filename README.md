@@ -2,10 +2,22 @@
 
 Math problem generation scripts for [Locus](https://locusmath.org).
 
+## Pre-generated databases
+
+Ready-to-use SQLite databases with 200,000+ problems are published as [GitHub Releases](https://github.com/FizzWizZleDazzle/locus-scripts/releases).
+
+```bash
+# Download the latest release
+gh release download --repo FizzWizZleDazzle/locus-scripts -p '*.db'
+
+# Or a specific version
+gh release download problems-v1 --repo FizzWizZleDazzle/locus-scripts -p '*.db'
+```
+
 ## Structure
 
 ```
-src/           # 150 generation scripts (one per topic/difficulty)
+src/               # 324 generation scripts (easy/medium/hard per topic)
 problem_utils.py   # shared helpers (problem builder, formatters, SymPy re-exports)
 svg_utils.py       # SVG diagram builders (Diagram, Graph)
 ```
