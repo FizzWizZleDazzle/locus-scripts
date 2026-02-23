@@ -201,6 +201,16 @@ def compress_svg(svg: str) -> str:
         out = out.replace(expansion, token)
     return "s1:" + out
 
+
+def decompress_svg(s: str) -> str:
+    """Expand a compressed SVG string (s1:... prefix) back to a full SVG."""
+    if not s:
+        return ""
+    body = s[3:] if s.startswith("s1:") else s
+    for token, expansion in _SVG_DICT:
+        body = body.replace(token, expansion)
+    return body
+
 # ---------------------------------------------------------------------------
 # Main API
 # ---------------------------------------------------------------------------

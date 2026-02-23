@@ -14,6 +14,23 @@ gh release download --repo FizzWizZleDazzle/locus-scripts -p '*.db'
 gh release download problems-v1 --repo FizzWizZleDazzle/locus-scripts -p '*.db'
 ```
 
+### Working with the database
+
+```python
+import sqlite3
+from problem_utils import decompress_svg
+
+conn = sqlite3.connect("problems-v1.db")
+for row in conn.execute("SELECT * FROM problems LIMIT 10"):
+    problem = dict(row)
+    # question_image is a compressed SVG string — decompress before rendering
+    if problem["question_image"]:
+        problem["question_image"] = decompress_svg(problem["question_image"])
+    print(problem["question_latex"], "→", problem["answer_key"])
+```
+
+The `question_image` column stores SVG diagrams in a compact token-compressed format (prefix `s1:`). Use `decompress_svg()` from `problem_utils.py` to get a renderable SVG string. All other columns are plain text/integers.
+
 ## Structure
 
 ```
