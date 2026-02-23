@@ -5,114 +5,93 @@ Generated: 2026-02-22T04:02:09.307734
 
 from problem_utils import *
 
+def _latex_eq(a, b, c):
+    """Build readable LaTeX string for ax^2 + bx + c = 0."""
+    terms = []
+    if a == 1:
+        terms.append("x^2")
+    elif a == -1:
+        terms.append("-x^2")
+    else:
+        terms.append(f"{a}x^2")
+    if b > 0:
+        terms.append(f"+ {b}x")
+    elif b < 0:
+        terms.append(f"- {abs(b)}x")
+    if c > 0:
+        terms.append(f"+ {c}")
+    elif c < 0:
+        terms.append(f"- {abs(c)}")
+    return " ".join(terms) + " = 0"
+
 def generate():
-    # Pick target difficulty within standard range
     target_elo = randint(1300, 1600)
-    
-    # For quadratic formula problems, we'll reverse engineer from clean roots
-    # Difficulty levels:
-    # 1300-1400: a=1, integer roots, discriminant is perfect square
-    # 1400-1500: a≠1, or irrational roots (simple surds)
-    # 1500-1600: a≠1 with irrational roots, or complex roots
-    
+
     if target_elo < 1400:
-        # Simple case: a=1, integer roots
+        # a=1, integer roots, wide coefficient range
         a_val = 1
-        r1 = randint(-8, 8)
-        r2 = randint(-8, 8)
-        # Build quadratic from roots
+        r1 = randint(-10, 10)
+        r2 = randint(-10, 10)
         b_val = -(r1 + r2)
         c_val = r1 * r2
-        roots = sorted([r1, r2])
         difficulty = (1300, 1400)
-        
+
     elif target_elo < 1500:
-        # Medium: a≠1 or irrational roots
-        if choice([True, False]):
-            # a≠1 with integer roots
-            a_val = choice([2, 3, 4])
-            r1 = randint(-5, 5)
-            r2 = randint(-5, 5)
-            # a(x - r1)(x - r2) = ax^2 - a(r1+r2)x + a*r1*r2
+        if randint(0,1):
+            # a∈{2,3,4,5}, integer roots
+            a_val = choice([2, 3, 4, 5])
+            r1 = randint(-6, 6)
+            r2 = randint(-6, 6)
             b_val = -a_val * (r1 + r2)
             c_val = a_val * r1 * r2
-            roots = sorted([r1, r2])
         else:
-            # a=1 with simple irrational roots
+            # a=1, irrational roots from varied b,c
             a_val = 1
-            b_val = choice([2, 4, 6])
-            c_val = choice([-1, -2, -3])
-            # Use quadratic formula to find roots
-            disc = b_val**2 - 4*a_val*c_val
-            roots = [(-b_val + sqrt(disc))/(2*a_val), (-b_val - sqrt(disc))/(2*a_val)]
-            roots = sorted(roots, key=lambda r: float(r.evalf()))
+            b_val = choice([-8,-6,-4,-2,2,4,6,8])
+            c_val = choice([-5,-4,-3,-2,-1,1,2])
         difficulty = (1400, 1500)
-        
+
     else:
-        # Hard: complex roots or a≠1 with irrational
-        if choice([True, False]):
-            # Complex roots
-            a_val = 1
-            b_val = choice([2, 4, 6])
-            c_val = choice([5, 10, 13, 17])
-            disc = b_val**2 - 4*a_val*c_val
-            if disc >= 0:
-                c_val = c_val + abs(disc) + 1  # Force negative discriminant
-            disc = b_val**2 - 4*a_val*c_val
-            roots = [(-b_val + sqrt(disc))/(2*a_val), (-b_val - sqrt(disc))/(2*a_val)]
-            roots = sorted(roots, key=lambda r: str(r))
+        if randint(0,1):
+            # Complex roots: force disc < 0
+            a_val = choice([1, 2, 3])
+            b_val = choice([-4,-2,2,4,6])
+            c_val = choice([5, 8, 10, 13, 17, 20])
+            disc_check = b_val**2 - 4*a_val*c_val
+            if disc_check >= 0:
+                c_val += abs(disc_check)//a_val + 1
         else:
-            # a≠1 with irrational roots
-            a_val = choice([2, 3])
-            b_val = choice([3, 5, 7])
-            c_val = choice([-2, -3, -5])
-            disc = b_val**2 - 4*a_val*c_val
-            roots = [(-b_val + sqrt(disc))/(2*a_val), (-b_val - sqrt(disc))/(2*a_val)]
-            roots = sorted(roots, key=lambda r: float(r.evalf()))
+            # a≠1, irrational roots
+            a_val = choice([2, 3, 4])
+            b_val = choice([-7,-5,-3,3,5,7])
+            c_val = choice([-5,-4,-3,-2,2,3])
         difficulty = (1500, 1600)
-    
-    # Build the equation
-    if a_val == 1:
-        if b_val >= 0:
-            eq_str = f"x^2 + {b_val}x + {c_val} = 0"
-        else:
-            eq_str = f"x^2 {b_val}x + {c_val} = 0"
-    else:
-        if b_val >= 0:
-            eq_str = f"{a_val}x^2 + {b_val}x + {c_val} = 0"
-        else:
-            eq_str = f"{a_val}x^2 {b_val}x + {c_val} = 0"
-    
-    # Clean up equation display
-    eq_str = eq_str.replace("+ -", "- ").replace("+ 1x", "+ x").replace("^2 1x", "^2 + x")
-    if "- -" in eq_str:
-        eq_str = eq_str.replace("- -", "+ ")
-    
-    # Answer is a set of roots
-    ans = FiniteSet(*roots)
-    
-    # Solution steps
+
     disc_val = b_val**2 - 4*a_val*c_val
-    
-    solution_steps = [
-        f"Use the quadratic formula: $x = \\frac{{-b \\pm \\sqrt{{b^2 - 4ac}}}}{{2a}}$",
-        f"Here $a = {a_val}$, $b = {b_val}$, $c = {c_val}$",
-        f"Calculate discriminant: $b^2 - 4ac = ({b_val})^2 - 4({a_val})({c_val}) = {disc_val}$",
+    roots_syms = [(-b_val + sqrt(disc_val))/(2*a_val),
+                  (-b_val - sqrt(disc_val))/(2*a_val)]
+    roots_syms_sorted = sorted(roots_syms, key=lambda r: str(r))
+    ans = FiniteSet(*roots_syms_sorted)
+
+    eq_str = _latex_eq(a_val, b_val, c_val)
+
+    sol_steps = [
+        f"$a={a_val}$, $b={b_val}$, $c={c_val}$",
+        f"Discriminant: $\\Delta = ({b_val})^2 - 4({a_val})({c_val}) = {disc_val}$",
     ]
-    
     if disc_val < 0:
-        solution_steps.append(f"$x = \\frac{{{-b_val} \\pm \\sqrt{{{disc_val}}}}}{{{2*a_val}}} = \\frac{{{-b_val} \\pm {latex(sqrt(disc_val))}}}{{{2*a_val}}}$")
+        sol_steps.append(f"$x = \\frac{{{-b_val} \\pm {latex(sqrt(disc_val))}}}{{{2*a_val}}}$")
     else:
-        solution_steps.append(f"$x = \\frac{{{-b_val} \\pm \\sqrt{{{disc_val}}}}}{{{2*a_val}}}$")
-    
-    solution_steps.append(f"Solutions: $x = {latex(roots[0])}$ and $x = {latex(roots[1])}$")
-    
+        sol_steps.append(f"$x = \\frac{{{-b_val} \\pm \\sqrt{{{disc_val}}}}}{{{2*a_val}}}$")
+    sol_steps.append(f"Solutions: $x = {latex(roots_syms_sorted[0])}$ and $x = {latex(roots_syms_sorted[1])}$")
+
     return problem(
         question=f"Solve using the quadratic formula: ${eq_str}$",
         answer=ans,
         difficulty=difficulty,
         topic="algebra1/quadratic_formula",
-        solution=steps(*solution_steps),
+        solution=steps(*sol_steps),
+        calculator="scientific"
     )
 
 emit(generate())

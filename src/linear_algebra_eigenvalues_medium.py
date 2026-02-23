@@ -6,162 +6,182 @@ Generated: 2026-02-22T05:58:43.499052
 from problem_utils import *
 
 def generate():
-    difficulty_choice = randint(1, 3)
-    
-    if difficulty_choice == 1:
-        # 1300-1400: 2x2 matrix with integer eigenvalues, simple characteristic polynomial
-        # Construct from eigenvalues
-        lambda1 = randint(-3, 3)
-        lambda2 = randint(-3, 3)
+    problem_type = randint(1, 6)
+
+    if problem_type == 1:
+        # 2x2 matrix with distinct integer eigenvalues (diagonal or upper triangular)
+        lambda1 = randint(-6, 6)
+        lambda2 = randint(-6, 6)
         while lambda2 == lambda1:
-            lambda2 = randint(-3, 3)
-        
-        # Simple diagonal matrix or nearly diagonal
+            lambda2 = randint(-6, 6)
         if randint(0, 1) == 0:
-            # Diagonal matrix
             M = Matrix([[lambda1, 0], [0, lambda2]])
         else:
-            # Upper triangular
-            off_diag = nonzero(-2, 2)
+            off_diag = nonzero(-4, 4)
             M = Matrix([[lambda1, off_diag], [0, lambda2]])
-        
-        eigenvals = sorted([lambda1, lambda2])
-        ans = FiniteSet(*eigenvals)
-        
-        M_latex = latex(M)
+        ans = FiniteSet(*sorted([lambda1, lambda2]))
         char_poly = M.charpoly(x)
-        
-        solution_steps = steps(
-            f"Find the characteristic polynomial: $\\det(A - \\lambda I) = 0$",
-            f"$\\det\\left({latex(M - x*eye(2))}\\right) = 0$",
-            f"${latex(char_poly.as_expr())} = 0$",
-            f"Solve for $\\lambda$: ${latex(eigenvals[0])}, {latex(eigenvals[1])}$"
-        )
-        
         return problem(
-            question=f"Find all eigenvalues of the matrix $A = {M_latex}$",
+            question=f"Find all eigenvalues of $A = {latex(M)}$.",
             answer=ans,
-            difficulty=(1300, 1400),
+            difficulty=(1300, 1420),
             topic="linear_algebra/eigenvalues",
-            solution=solution_steps,
+            solution=steps(
+                f"Characteristic polynomial: ${latex(char_poly.as_expr())} = 0$",
+                f"Eigenvalues: $\\lambda = {lambda1}$, $\\lambda = {lambda2}$"
+            ),
             answer_type="set"
         )
-    
-    elif difficulty_choice == 2:
-        # 1400-1500: 2x2 matrix requiring characteristic polynomial factoring
-        # Build from eigenvalues
-        lambda1 = nonzero(-4, 4)
-        lambda2 = nonzero(-4, 4)
-        
-        # Create a general 2x2 matrix with these eigenvalues
-        # Use trace and determinant relationships
+
+    elif problem_type == 2:
+        # 2x2 general matrix with integer eigenvalues (need to factor char poly)
+        lambda1 = nonzero(-5, 5)
+        lambda2 = nonzero(-5, 5)
         trace_val = lambda1 + lambda2
         det_val = lambda1 * lambda2
-        
-        # Random 2x2 with prescribed trace and determinant
         a_val = randint(-3, 3)
         d_val = trace_val - a_val
-        # det = ad - bc, so bc = ad - det
         bc_product = a_val * d_val - det_val
-        
-        # Find b, c such that bc = bc_product
         if bc_product == 0:
             b_val = 0
             c_val = nonzero(-3, 3)
         else:
-            divisors = [i for i in range(1, abs(bc_product) + 1) if bc_product % i == 0]
-            if divisors:
-                b_val = choice(divisors) * (1 if bc_product > 0 else -1)
+            divs = [i for i in range(1, abs(bc_product) + 1) if bc_product % i == 0]
+            if divs:
+                b_val = choice(divs) * (1 if bc_product > 0 else -1)
                 c_val = bc_product // b_val
             else:
                 b_val = 1
                 c_val = bc_product
-        
         M = Matrix([[a_val, b_val], [c_val, d_val]])
-        
-        # Verify eigenvalues
-        actual_eigenvals = M.eigenvals()
-        eigenvals_list = sorted([k for k in actual_eigenvals.keys()])
-        ans = FiniteSet(*eigenvals_list)
-        
-        M_latex = latex(M)
+        actual = sorted([k for k in M.eigenvals().keys()])
+        ans = FiniteSet(*actual)
         char_poly = M.charpoly(x)
-        
-        solution_steps = steps(
-            f"Compute the characteristic polynomial: $\\det(A - \\lambda I) = 0$",
-            f"$\\det\\left({latex(M - x*eye(2))}\\right) = 0$",
-            f"${latex(char_poly.as_expr())} = 0$",
-            f"${latex(factor(char_poly.as_expr()))} = 0$",
-            f"Eigenvalues: $\\lambda = {latex(eigenvals_list[0])}, {latex(eigenvals_list[1])}$"
-        )
-        
         return problem(
-            question=f"Find all eigenvalues of $A = {M_latex}$",
+            question=f"Find all eigenvalues of $A = {latex(M)}$.",
             answer=ans,
-            difficulty=(1400, 1500),
+            difficulty=(1380, 1520),
             topic="linear_algebra/eigenvalues",
-            solution=solution_steps,
+            solution=steps(
+                f"Characteristic polynomial: ${latex(char_poly.as_expr())} = 0$",
+                f"Factor: ${latex(factor(char_poly.as_expr()))} = 0$",
+                f"Eigenvalues: $\\lambda = {latex(actual[0])}$, $\\lambda = {latex(actual[1])}$"
+            ),
             answer_type="set"
         )
-    
+
+    elif problem_type == 3:
+        # 3x3 upper triangular with distinct eigenvalues
+        lambda1 = randint(-5, 5)
+        lambda2 = randint(-5, 5)
+        lambda3 = randint(-5, 5)
+        while lambda2 == lambda1 or lambda3 == lambda1 or lambda3 == lambda2:
+            lambda2 = randint(-5, 5)
+            lambda3 = randint(-5, 5)
+        M = Matrix([
+            [lambda1, nonzero(-3, 3), nonzero(-3, 3)],
+            [0, lambda2, nonzero(-3, 3)],
+            [0, 0, lambda3]
+        ])
+        ans = FiniteSet(*sorted([lambda1, lambda2, lambda3]))
+        return problem(
+            question=f"Find all eigenvalues of $A = {latex(M)}$.",
+            answer=ans,
+            difficulty=(1450, 1580),
+            topic="linear_algebra/eigenvalues",
+            solution=steps(
+                f"For a triangular matrix, eigenvalues are the diagonal entries.",
+                f"Eigenvalues: ${lambda1}$, ${lambda2}$, ${lambda3}$"
+            ),
+            answer_type="set"
+        )
+
+    elif problem_type == 4:
+        # 2x2 with one repeated eigenvalue
+        lambda_val = nonzero(-5, 5)
+        off_diag = nonzero(-4, 4)
+        M = Matrix([[lambda_val, off_diag], [0, lambda_val]])
+        ans = FiniteSet(lambda_val)
+        char_poly = M.charpoly(x)
+        return problem(
+            question=f"Find all distinct eigenvalues of $A = {latex(M)}$.",
+            answer=ans,
+            difficulty=(1450, 1580),
+            topic="linear_algebra/eigenvalues",
+            solution=steps(
+                f"Characteristic polynomial: ${latex(char_poly.as_expr())} = 0$",
+                f"Repeated eigenvalue: $\\lambda = {lambda_val}$ (multiplicity 2)"
+            ),
+            answer_type="set"
+        )
+
+    elif problem_type == 5:
+        # 2x2 symmetric: [[a, b], [b, d]]
+        lambda1 = randint(-5, 5)
+        lambda2 = randint(-5, 5)
+        while lambda2 == lambda1:
+            lambda2 = randint(-5, 5)
+        tr = lambda1 + lambda2
+        det = lambda1 * lambda2
+        a_val = randint(-3, 3)
+        d_val = tr - a_val
+        # for symmetric: b^2 = a*d - det
+        b_sq = a_val * d_val - det
+        if b_sq > 0:
+            import math
+            b_approx = int(math.isqrt(b_sq))
+            if b_approx * b_approx == b_sq:
+                b_val = b_approx
+            else:
+                # fallback to upper triangular
+                M = Matrix([[lambda1, nonzero(-3, 3)], [0, lambda2]])
+        else:
+            M = Matrix([[lambda1, nonzero(-3, 3)], [0, lambda2]])
+        if 'b_val' in dir():
+            M = Matrix([[a_val, b_val], [b_val, d_val]])
+        actual = sorted([k for k in M.eigenvals().keys()])
+        ans = FiniteSet(*actual)
+        char_poly = M.charpoly(x)
+        return problem(
+            question=f"Find all eigenvalues of the symmetric matrix $A = {latex(M)}$.",
+            answer=ans,
+            difficulty=(1400, 1540),
+            topic="linear_algebra/eigenvalues",
+            solution=steps(
+                f"Characteristic polynomial: ${latex(char_poly.as_expr())} = 0$",
+                f"$\\Rightarrow$ Eigenvalues: $\\lambda = {latex(actual[0])}$, $\\lambda = {latex(actual[-1])}$"
+            ),
+            answer_type="set"
+        )
+
     else:
-        # 1500-1600: 3x3 matrix with integer eigenvalues, or 2x2 with one repeated eigenvalue
-        if randint(0, 1) == 0:
-            # 3x3 diagonal or triangular
-            lambda1 = randint(-3, 3)
-            lambda2 = randint(-3, 3)
-            lambda3 = randint(-3, 3)
-            
-            # Upper triangular for simplicity
-            M = Matrix([
-                [lambda1, nonzero(-2, 2), nonzero(-2, 2)],
-                [0, lambda2, nonzero(-2, 2)],
-                [0, 0, lambda3]
-            ])
-            
-            eigenvals = sorted([lambda1, lambda2, lambda3])
-            ans = FiniteSet(*eigenvals)
-            
-            M_latex = latex(M)
-            
-            solution_steps = steps(
-                f"For a triangular matrix, eigenvalues are the diagonal entries",
-                f"Eigenvalues: ${latex(lambda1)}, {latex(lambda2)}, {latex(lambda3)}$"
-            )
-            
+        # Find trace or determinant given eigenvalues
+        lambda1 = randint(-6, 6)
+        lambda2 = randint(-6, 6)
+        while lambda2 == lambda1:
+            lambda2 = randint(-6, 6)
+        ask_type = choice(["trace", "det"])
+        if ask_type == "trace":
+            ans = lambda1 + lambda2
             return problem(
-                question=f"Find all eigenvalues of $A = {M_latex}$",
+                question=f"A $2\\times2$ matrix has eigenvalues ${lambda1}$ and ${lambda2}$. Find the trace.",
                 answer=ans,
-                difficulty=(1500, 1600),
+                difficulty=(1350, 1480),
                 topic="linear_algebra/eigenvalues",
-                solution=solution_steps,
-                answer_type="set"
+                solution=steps(
+                    f"Trace $= \\lambda_1 + \\lambda_2 = {lambda1} + {lambda2} = {ans}$"
+                ),
             )
         else:
-            # 2x2 with repeated eigenvalue
-            lambda_val = nonzero(-4, 4)
-            off_diag = nonzero(-3, 3)
-            
-            # Matrix with repeated eigenvalue
-            M = Matrix([[lambda_val, off_diag], [0, lambda_val]])
-            
-            ans = FiniteSet(lambda_val)
-            M_latex = latex(M)
-            char_poly = M.charpoly(x)
-            
-            solution_steps = steps(
-                f"Compute characteristic polynomial: $\\det(A - \\lambda I) = 0$",
-                f"${latex(char_poly.as_expr())} = 0$",
-                f"This gives a repeated eigenvalue: $\\lambda = {latex(lambda_val)}$ (multiplicity 2)"
-            )
-            
+            ans = lambda1 * lambda2
             return problem(
-                question=f"Find all distinct eigenvalues of $A = {M_latex}$",
+                question=f"A $2\\times2$ matrix has eigenvalues ${lambda1}$ and ${lambda2}$. Find the determinant.",
                 answer=ans,
-                difficulty=(1500, 1600),
+                difficulty=(1350, 1480),
                 topic="linear_algebra/eigenvalues",
-                solution=solution_steps,
-                answer_type="set"
+                solution=steps(
+                    f"Determinant $= \\lambda_1 \\cdot \\lambda_2 = {lambda1} \\cdot {lambda2} = {ans}$"
+                ),
             )
 
 emit(generate())

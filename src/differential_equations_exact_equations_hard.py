@@ -6,150 +6,149 @@ Generated: 2026-02-22T05:22:36.394900
 from problem_utils import *
 
 def generate():
-    # For exact equations (1600-1900 ELO), we need complex problems involving:
-    # - Non-trivial exactness checking
-    # - Integration that requires careful path selection
-    # - Problems requiring integrating factors
-    # - Mixed partial derivatives verification
-    
     problem_type = randint(1, 4)
-    
+
     if problem_type == 1:
-        # Type 1: Exact equation with trigonometric and polynomial terms (1600-1700)
-        # M(x,y)dx + N(x,y)dy = 0 where M_y = N_x
-        
-        # Build from a potential function F(x,y)
-        # F = x^2*y + sin(y) + x*y^2
-        a_coef = nonzero(-3, 3)
-        b_coef = nonzero(-3, 3)
-        
-        F = a_coef*x**2*y + sin(y) + b_coef*x*y**2
+        # F = a*x^n*y + b*x*y^m + sin/cos term
+        a_coef = nonzero(-4, 4)
+        b_coef = nonzero(-4, 4)
+        n = randint(2, 4)
+        m = randint(2, 4)
+        trig_choice = choice(['sin_y', 'cos_y', 'none'])
+
+        if trig_choice == 'sin_y':
+            F = a_coef * x**n * y + b_coef * x * y**m + sin(y)
+        elif trig_choice == 'cos_y':
+            F = a_coef * x**n * y + b_coef * x * y**m + cos(y)
+        else:
+            F = a_coef * x**n * y + b_coef * x * y**m + x**2
+
         M = diff(F, x)
         N = diff(F, y)
-        
+
         ans = simplify(F)
-        
+        integral_M = integrate(M, x)
+        g_prime = simplify(N - diff(integral_M, y))
+
         return problem(
-            question=f"Solve the exact differential equation: $\\left({latex(M)}\\right)dx + \\left({latex(N)}\\right)dy = 0$",
+            question=f"Solve the exact DE: $\\left({latex(M)}\\right)dx + \\left({latex(N)}\\right)dy = 0$",
             answer=fmt_equation(ans, "C"),
-            difficulty=(1600, 1700),
+            difficulty=(1600, 1720),
             topic="differential_equations/exact_equations",
             answer_type="equation",
             solution=steps(
-                f"Check if exact: $M = {latex(M)}$, $N = {latex(N)}$",
-                f"$\\frac{{\\partial M}}{{\\partial y}} = {latex(diff(M, y))}$",
-                f"$\\frac{{\\partial N}}{{\\partial x}} = {latex(diff(N, x))}$",
-                f"Since $\\frac{{\\partial M}}{{\\partial y}} = \\frac{{\\partial N}}{{\\partial x}}$, the equation is exact.",
-                f"Find $F(x,y)$ where $\\frac{{\\partial F}}{{\\partial x}} = {latex(M)}$",
-                f"Integrate: $F = \\int {latex(M)} \\, dx = {latex(integrate(M, x))} + g(y)$",
-                f"Take $\\frac{{\\partial F}}{{\\partial y}} = {latex(diff(integrate(M, x), y))} + g'(y) = {latex(N)}$",
-                f"So $g'(y) = {latex(simplify(N - diff(integrate(M, x), y)))}$",
-                f"Integrate: $g(y) = {latex(integrate(simplify(N - diff(integrate(M, x), y)), y))}$",
-                f"Therefore, $F(x,y) = {latex(ans)} = C$"
-            )
-        )
-    
-    elif problem_type == 2:
-        # Type 2: Equation requiring integrating factor mu(x) (1700-1800)
-        # Start with exact equation and multiply by e^(-kx) to get non-exact
-        k = nonzero(-2, 2)
-        a_coef = nonzero(-3, 3)
-        
-        # Original exact: (2xy + y^2)dx + (x^2 + 2xy)dy = 0
-        # Make non-exact by construction
-        M = 2*x*y + a_coef*y**2
-        N = x**2 + 2*x*y - a_coef*y**2
-        
-        # Check (M_y - N_x)/N to find integrating factor
-        M_y = diff(M, y)
-        N_x = diff(N, x)
-        
-        ratio = simplify((M_y - N_x)/N)
-        
-        # If ratio is function of x only, mu = exp(integral of ratio)
-        if y not in ratio.free_symbols:
-            mu = exp(integrate(ratio, x))
-            M_new = simplify(mu * M)
-            N_new = simplify(mu * N)
-            
-            F = simplify(integrate(M_new, x) + integrate(N_new - diff(integrate(M_new, x), y), y))
-            
-            return problem(
-                question=f"Solve the differential equation: $\\left({latex(M)}\\right)dx + \\left({latex(N)}\\right)dy = 0$",
-                answer=fmt_equation(F, "C"),
-                difficulty=(1700, 1800),
-                topic="differential_equations/exact_equations",
-                answer_type="equation",
-                solution=steps(
-                    f"Check exactness: $\\frac{{\\partial M}}{{\\partial y}} = {latex(M_y)}$, $\\frac{{\\partial N}}{{\\partial x}} = {latex(N_x)}$",
-                    f"Not exact since $\\frac{{\\partial M}}{{\\partial y}} \\neq \\frac{{\\partial N}}{{\\partial x}}$",
-                    f"Check $\\frac{{M_y - N_x}}{{N}} = {latex(ratio)}$ (function of $x$ only)",
-                    f"Integrating factor: $\\mu(x) = e^{{\\int {latex(ratio)} dx}} = {latex(mu)}$",
-                    f"Multiply equation by $\\mu$: $\\left({latex(M_new)}\\right)dx + \\left({latex(N_new)}\\right)dy = 0$",
-                    f"Now exact. Solution: ${latex(F)} = C$"
-                )
-            )
-    
-    elif problem_type == 3:
-        # Type 3: Exact equation with exponential terms (1650-1750)
-        a = nonzero(-2, 2)
-        b = nonzero(-2, 2)
-        
-        # F = e^x * y + x^a * y^b
-        F = exp(x)*y + x**2*y**b
-        M = diff(F, x)
-        N = diff(F, y)
-        
-        ans = simplify(F)
-        
-        return problem(
-            question=f"Solve the exact differential equation: $\\left({latex(M)}\\right)dx + \\left({latex(N)}\\right)dy = 0$",
-            answer=fmt_equation(ans, "C"),
-            difficulty=(1650, 1750),
-            topic="differential_equations/exact_equations",
-            answer_type="equation",
-            solution=steps(
-                f"Verify exactness: $M = {latex(M)}$, $N = {latex(N)}$",
-                f"$M_y = {latex(diff(M, y))}$, $N_x = {latex(diff(N, x))}$",
-                f"Exact since $M_y = N_x$",
-                f"Integrate $M$ with respect to $x$: $\\int {latex(M)} \\, dx = {latex(integrate(M, x))} + h(y)$",
-                f"Differentiate with respect to $y$: ${latex(diff(integrate(M, x), y))} + h'(y) = {latex(N)}$",
-                f"Solve for $h'(y)$: $h'(y) = {latex(simplify(N - diff(integrate(M, x), y)))}$",
-                f"Integrate: $h(y) = {latex(integrate(simplify(N - diff(integrate(M, x), y)), y))}$",
+                f"$M_y = {latex(diff(M, y))}$, $N_x = {latex(diff(N, x))}$ — equal, exact",
+                f"$\\int M\\,dx = {latex(integral_M)} + g(y)$",
+                f"$g'(y) = {latex(g_prime)}$, $g(y) = {latex(integrate(g_prime, y))}$",
                 f"Solution: ${latex(ans)} = C$"
             )
         )
-    
-    else:
-        # Type 4: Complex exact equation with rational terms (1750-1900)
-        a = choice([2, 3])
-        b = choice([2, 3])
-        
-        # F = x^a*y^b + ln(x)*y + x/y
-        F = x**a * y**b + log(x)*y + x/y
+
+    elif problem_type == 2:
+        # Non-exact -> integrating factor mu(x) = e^(int R dx), R = (M_y - N_x)/N
+        for _ in range(30):
+            a_coef = nonzero(-3, 3)
+            b_coef = nonzero(-3, 3)
+            c_coef = nonzero(-3, 3)
+
+            M = a_coef * y + b_coef * x
+            N = c_coef * x
+
+            M_y = diff(M, y)
+            N_x = diff(N, x)
+
+            if simplify(M_y - N_x) == 0:
+                continue
+
+            ratio = simplify((M_y - N_x) / N)
+            if y in ratio.free_symbols:
+                continue
+
+            mu = exp(integrate(ratio, x))
+            M_new = simplify(mu * M)
+            N_new = simplify(mu * N)
+
+            dM_new_dy = diff(M_new, y)
+            dN_new_dx = diff(N_new, x)
+            if simplify(dM_new_dy - dN_new_dx) != 0:
+                continue
+
+            F = simplify(integrate(M_new, x) + integrate(N_new - diff(integrate(M_new, x), y), y))
+
+            return problem(
+                question=f"Solve: $\\left({latex(M)}\\right)dx + \\left({latex(N)}\\right)dy = 0$ (find an integrating factor if needed)",
+                answer=fmt_equation(F, "C"),
+                difficulty=(1700, 1820),
+                topic="differential_equations/exact_equations",
+                answer_type="equation",
+                solution=steps(
+                    f"$M_y = {latex(M_y)}$, $N_x = {latex(N_x)}$ — not equal",
+                    f"$R = (M_y - N_x)/N = {latex(ratio)}$ (function of $x$ only)",
+                    f"$\\mu(x) = e^{{\\int {latex(ratio)}dx}} = {latex(mu)}$",
+                    f"Multiply through by $\\mu$; new equation is exact",
+                    f"Solution: ${latex(F)} = C$"
+                )
+            )
+
+    if problem_type == 3:
+        # F = a*e^x*y + b*x^n*y^m
+        a = nonzero(-3, 3)
+        b = nonzero(-3, 3)
+        n = randint(2, 4)
+        m = randint(2, 4)
+
+        F = a * exp(x) * y + b * x**n * y**m
         M = diff(F, x)
         N = diff(F, y)
-        
+
         ans = simplify(F)
-        
+        integral_M = integrate(M, x)
+        g_prime = simplify(N - diff(integral_M, y))
+
         return problem(
-            question=f"Solve the exact differential equation: $\\left({latex(M)}\\right)dx + \\left({latex(N)}\\right)dy = 0$",
+            question=f"Solve the exact DE: $\\left({latex(M)}\\right)dx + \\left({latex(N)}\\right)dy = 0$",
             answer=fmt_equation(ans, "C"),
-            difficulty=(1750, 1900),
+            difficulty=(1680, 1800),
             topic="differential_equations/exact_equations",
             answer_type="equation",
             solution=steps(
-                f"Check exactness for $M = {latex(M)}$ and $N = {latex(N)}$",
-                f"Compute $\\frac{{\\partial M}}{{\\partial y}} = {latex(diff(M, y))}$",
-                f"Compute $\\frac{{\\partial N}}{{\\partial x}} = {latex(diff(N, x))}$",
-                f"Since $M_y = N_x$, the equation is exact",
-                f"Find potential function: $F(x,y) = \\int M \\, dx = {latex(integrate(M, x))} + g(y)$",
-                f"Use condition $\\frac{{\\partial F}}{{\\partial y}} = N$:",
-                f"${latex(diff(integrate(M, x), y))} + g'(y) = {latex(N)}$",
-                f"Therefore $g'(y) = {latex(simplify(N - diff(integrate(M, x), y)))}$",
-                f"Integrating: $g(y) = {latex(integrate(simplify(N - diff(integrate(M, x), y)), y))}$",
-                f"Final solution: ${latex(ans)} = C$"
+                f"$M_y = {latex(diff(M,y))}$, $N_x = {latex(diff(N,x))}$ — exact",
+                f"$\\int M\\,dx = {latex(integral_M)} + g(y)$",
+                f"$g'(y) = {latex(g_prime)}$, $g(y) = {latex(integrate(g_prime, y))}$",
+                f"${latex(ans)} = C$"
             )
         )
+
+    else:
+        # F = a*x^p*y^q + b*ln(x)*y + c*x/y
+        a = nonzero(-3, 3)
+        b = nonzero(-3, 3)
+        c = nonzero(-3, 3)
+        p = choice([2, 3])
+        q = choice([2, 3])
+
+        F = a * x**p * y**q + b * log(x) * y + c * x / y
+        M = diff(F, x)
+        N = diff(F, y)
+
+        ans = simplify(F)
+        integral_M = integrate(M, x)
+        g_prime = simplify(N - diff(integral_M, y))
+
+        return problem(
+            question=f"Solve the exact DE: $\\left({latex(M)}\\right)dx + \\left({latex(N)}\\right)dy = 0$",
+            answer=fmt_equation(ans, "C"),
+            difficulty=(1780, 1950),
+            topic="differential_equations/exact_equations",
+            answer_type="equation",
+            solution=steps(
+                f"$M = {latex(M)}$, $N = {latex(N)}$",
+                f"$M_y = {latex(diff(M,y))}$, $N_x = {latex(diff(N,x))}$ — exact",
+                f"$\\int M\\,dx = {latex(integral_M)} + g(y)$",
+                f"$g'(y) = {latex(g_prime)}$, $g(y) = {latex(integrate(g_prime, y))}$",
+                f"${latex(ans)} = C$"
+            )
+        )
+
 
 emit(generate())

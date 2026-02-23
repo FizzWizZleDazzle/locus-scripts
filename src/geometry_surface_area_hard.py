@@ -6,128 +6,162 @@ Generated: 2026-02-22T04:15:34.529430
 from problem_utils import *
 
 def generate():
-    problem_type = randint(1, 5)
-    
+    problem_type = randint(1, 6)
+
     if problem_type == 1:
-        # Composite solid: cylinder with hemisphere on top
-        r = randint(3, 8)
-        h = randint(8, 15)
-        
-        cylinder_lateral = 2 * pi * r * h
-        cylinder_base = pi * r**2
-        hemisphere = 2 * pi * r**2
-        
-        total_sa = cylinder_lateral + cylinder_base + hemisphere
-        total_sa = simplify(total_sa)
-        
+        # Composite: cylinder + hemisphere
+        r = randint(2, 10)
+        h = randint(4, 15)
+        lateral = 2*pi*r*h
+        base = pi*r**2
+        hemi = 2*pi*r**2
+        total = simplify(lateral + base + hemi)
+
         return problem(
-            question=f"A solid consists of a cylinder with radius ${r}$ cm and height ${h}$ cm, topped with a hemisphere of the same radius. Find the total surface area of the composite solid in terms of $\\pi$.",
-            answer=total_sa,
+            question=f"A composite solid consists of a cylinder (radius ${r}$, height ${h}$) topped with a hemisphere of the same radius. Find the total surface area in terms of $\\pi$.",
+            answer=total,
             difficulty=(1650, 1750),
             topic="geometry/surface_area",
             solution=steps(
-                f"The surface area consists of three parts:",
-                f"1. Lateral surface of cylinder: $2\\pi rh = 2\\pi({r})({h}) = {latex(cylinder_lateral)}$ cm²",
-                f"2. Base of cylinder: $\\pi r^2 = \\pi({r})^2 = {latex(cylinder_base)}$ cm²",
-                f"3. Hemisphere (half of sphere): $2\\pi r^2 = 2\\pi({r})^2 = {latex(hemisphere)}$ cm²",
-                f"Total surface area = ${latex(cylinder_lateral)} + {latex(cylinder_base)} + {latex(hemisphere)} = {latex(total_sa)}$ cm²"
+                f"Cylinder lateral: $2\\pi rh = 2\\pi({r})({h}) = {2*r*h}\\pi$",
+                f"Cylinder base: $\\pi r^2 = {r**2}\\pi$",
+                f"Hemisphere curved: $2\\pi r^2 = {2*r**2}\\pi$",
+                f"Total $= {latex(total)}$"
             ),
             calculator="scientific"
         )
-    
+
     elif problem_type == 2:
-        # Cone with slant height given, find surface area
-        r = randint(5, 12)
-        l = randint(r + 3, r + 10)  # slant height must be > radius
-        
-        lateral_sa = pi * r * l
-        base_sa = pi * r**2
-        total_sa = simplify(lateral_sa + base_sa)
-        
+        # Cone: given slant height (no computation needed)
+        r = randint(3, 12)
+        l = randint(r+2, r+12)
+        lateral = pi*r*l
+        base = pi*r**2
+        total = simplify(lateral + base)
+
         return problem(
-            question=f"A cone has a base radius of ${r}$ units and a slant height of ${l}$ units. Find the total surface area of the cone in terms of $\\pi$.",
-            answer=total_sa,
+            question=f"A cone has base radius ${r}$ and slant height ${l}$. Find the total surface area in terms of $\\pi$.",
+            answer=total,
             difficulty=(1600, 1700),
             topic="geometry/surface_area",
             solution=steps(
-                f"Total surface area of cone = lateral area + base area",
-                f"Lateral area = $\\pi r \\ell = \\pi({r})({l}) = {latex(lateral_sa)}$ square units",
-                f"Base area = $\\pi r^2 = \\pi({r})^2 = {latex(base_sa)}$ square units",
-                f"Total surface area = ${latex(lateral_sa)} + {latex(base_sa)} = {latex(total_sa)}$ square units"
+                f"Lateral area $= \\pi r l = \\pi({r})({l}) = {r*l}\\pi$",
+                f"Base area $= \\pi r^2 = {r**2}\\pi$",
+                f"Total $= ({r*l} + {r**2})\\pi = {latex(total)}$"
             ),
             calculator="scientific"
         )
-    
+
     elif problem_type == 3:
-        # Rectangular prism with constraint: surface area given, find dimension
-        l = randint(6, 12)
-        w = randint(4, 10)
-        h = randint(5, 10)
-        
-        sa_value = 2 * (l * w + l * h + w * h)
-        
-        # Now present it as finding h given SA, l, and w
-        return problem(
-            question=f"A rectangular prism has length ${l}$ cm, width ${w}$ cm, and total surface area ${sa_value}$ cm². Find the height of the prism.",
-            answer=h,
-            difficulty=(1650, 1750),
-            topic="geometry/surface_area",
-            solution=steps(
-                f"Surface area formula: $SA = 2(lw + lh + wh)$",
-                f"Substitute known values: ${sa_value} = 2({l} \\cdot {w} + {l}h + {w}h)$",
-                f"${sa_value} = 2({l * w} + {l}h + {w}h)$",
-                f"${sa_value} = {2 * l * w} + {2 * l}h + {2 * w}h$",
-                f"${sa_value - 2 * l * w} = {2 * l + 2 * w}h$",
-                f"$h = \\frac{{{sa_value - 2 * l * w}}}{{{2 * l + 2 * w}}} = {h}$ cm"
-            ),
-            calculator="scientific"
-        )
-    
-    elif problem_type == 4:
-        # Square pyramid with given base side and slant height
-        s = randint(6, 14)
-        l = randint(s, s + 8)  # slant height
-        
+        # Square pyramid
+        s = randint(4, 14)
+        l = randint(s, s+10)
         base_area = s**2
-        lateral_area = 2 * s * l  # 4 triangles, each (1/2)*s*l
-        total_sa = base_area + lateral_area
-        
+        lateral_area = 2*s*l
+        total = base_area + lateral_area
+
         return problem(
-            question=f"A square pyramid has a base with side length ${s}$ meters and a slant height of ${l}$ meters. Find the total surface area of the pyramid.",
-            answer=total_sa,
+            question=f"A square pyramid has base side length ${s}$ and slant height ${l}$. Find the total surface area.",
+            answer=total,
             difficulty=(1650, 1750),
             topic="geometry/surface_area",
             solution=steps(
-                f"Surface area = base area + lateral area",
-                f"Base area = $s^2 = {s}^2 = {base_area}$ m²",
-                f"The pyramid has 4 congruent triangular faces",
-                f"Each triangle has area $\\frac{{1}}{{2}} \\times \\text{{base}} \\times \\text{{slant height}} = \\frac{{1}}{{2}} \\times {s} \\times {l} = {Rational(s * l, 2)}$ m²",
-                f"Lateral area = $4 \\times {Rational(s * l, 2)} = {lateral_area}$ m²",
-                f"Total surface area = ${base_area} + {lateral_area} = {total_sa}$ m²"
+                f"Base area $= s^2 = {s}^2 = {base_area}$",
+                f"4 triangular faces, each area $= \\frac{{1}}{{2}} \\cdot {s} \\cdot {l} = {Rational(s*l,2)}$",
+                f"Lateral area $= 4 \\cdot {Rational(s*l,2)} = {lateral_area}$",
+                f"Total $= {base_area} + {lateral_area} = {total}$"
             ),
             calculator="scientific"
         )
-    
-    else:  # problem_type == 5
-        # Sphere with changed radius - compare surface areas
-        r1 = randint(3, 8)
-        scale = choice([2, 3])
+
+    elif problem_type == 4:
+        # Sphere scale factor / area ratio
+        r1 = randint(2, 8)
+        scale = randint(2, 5)
         r2 = r1 * scale
-        
-        sa1 = 4 * pi * r1**2
-        sa2 = 4 * pi * r2**2
-        ratio = simplify(sa2 / sa1)
-        
+        sa1 = 4*pi*r1**2
+        sa2 = 4*pi*r2**2
+        ratio = simplify(sa2/sa1)
+
         return problem(
-            question=f"A sphere has radius ${r1}$ cm. If the radius is increased to ${r2}$ cm, by what factor does the surface area increase?",
+            question=f"A sphere has radius ${r1}$. The radius is increased to ${r2}$. By what factor does the surface area increase?",
             answer=ratio,
             difficulty=(1700, 1800),
             topic="geometry/surface_area",
             solution=steps(
-                f"Original surface area: $SA_1 = 4\\pi r_1^2 = 4\\pi({r1})^2 = {latex(sa1)}$ cm²",
-                f"New surface area: $SA_2 = 4\\pi r_2^2 = 4\\pi({r2})^2 = {latex(sa2)}$ cm²",
-                f"Factor of increase = $\\frac{{SA_2}}{{SA_1}} = \\frac{{{latex(sa2)}}}{{{latex(sa1)}}} = {latex(ratio)}$",
-                f"When radius is multiplied by ${scale}$, surface area is multiplied by ${scale}^2 = {scale**2}$"
+                f"$SA_1 = 4\\pi({r1})^2 = {4*r1**2}\\pi$",
+                f"$SA_2 = 4\\pi({r2})^2 = {4*r2**2}\\pi$",
+                f"Factor $= \\frac{{SA_2}}{{SA_1}} = \\frac{{{4*r2**2}}}{{{4*r1**2}}} = {latex(ratio)}$",
+                f"(Radius scaled by ${scale}$ → area scaled by ${scale}^2 = {scale**2}$)"
+            ),
+            calculator="scientific"
+        )
+
+    elif problem_type == 5:
+        # Rectangular prism: find dimension given surface area
+        l = randint(3, 14)
+        w = randint(3, 14)
+        h = randint(3, 14)
+        sa = 2*(l*w + l*h + w*h)
+
+        # Vary which dimension to find
+        which = choice(['l', 'w', 'h'])
+        if which == 'h':
+            given1, given2, unknown = l, w, h
+            q = f"A rectangular prism has length ${given1}$, width ${given2}$, and surface area ${sa}$. Find the height."
+            sol = steps(
+                f"$SA = 2(lw+lh+wh) \\Rightarrow {sa} = 2({given1}\\cdot{given2} + {given1}h + {given2}h)$",
+                f"${sa} = {2*given1*given2} + {2*(given1+given2)}h$",
+                f"$h = \\frac{{{sa - 2*given1*given2}}}{{{2*(given1+given2)}}} = {unknown}$"
+            )
+        elif which == 'w':
+            given1, given2, unknown = l, h, w
+            q = f"A rectangular prism has length ${given1}$, height ${given2}$, and surface area ${sa}$. Find the width."
+            sol = steps(
+                f"$SA = 2(lw+lh+wh) \\Rightarrow {sa} = 2({given1}w + {given1}\\cdot{given2} + w\\cdot{given2})$",
+                f"${sa} = {2*given1*given2} + {2*(given1+given2)}w$",
+                f"$w = \\frac{{{sa - 2*given1*given2}}}{{{2*(given1+given2)}}} = {unknown}$"
+            )
+        else:
+            given1, given2, unknown = w, h, l
+            q = f"A rectangular prism has width ${given1}$, height ${given2}$, and surface area ${sa}$. Find the length."
+            sol = steps(
+                f"$SA = 2(lw+lh+wh) \\Rightarrow {sa} = 2(l\\cdot{given1} + l\\cdot{given2} + {given1}\\cdot{given2})$",
+                f"${sa} = {2*given1*given2} + {2*(given1+given2)}l$",
+                f"$l = \\frac{{{sa - 2*given1*given2}}}{{{2*(given1+given2)}}} = {unknown}$"
+            )
+
+        return problem(
+            question=q,
+            answer=unknown,
+            difficulty=(1650, 1750),
+            topic="geometry/surface_area",
+            solution=sol,
+            calculator="scientific"
+        )
+
+    else:
+        # Composite: rectangular prism with cylindrical hole (lateral only)
+        l = randint(5, 12)
+        w = randint(5, 12)
+        h = randint(5, 12)
+        r = randint(1, min(l,w)//2)
+        # SA = box outer SA - 2 circles (top+bottom of hole) + cylinder inner lateral
+        box_sa = 2*(l*w + l*h + w*h)
+        hole_circles = 2*pi*r**2
+        inner_lateral = 2*pi*r*h
+        total = simplify(box_sa - hole_circles + inner_lateral)
+
+        return problem(
+            question=f"A rectangular box with dimensions ${l} \\times {w} \\times {h}$ has a cylindrical hole of radius ${r}$ drilled completely through the height. Find the total surface area of the resulting solid in terms of $\\pi$.",
+            answer=total,
+            difficulty=(1750, 1900),
+            topic="geometry/surface_area",
+            solution=steps(
+                f"Start with the box surface area: $SA_{{box}} = 2({l}\\cdot{w}+{l}\\cdot{h}+{w}\\cdot{h}) = {box_sa}$",
+                f"Subtract the two circular openings (top and bottom): $-2\\pi r^2 = -{2*r**2}\\pi$",
+                f"Add the inner cylindrical surface: $+2\\pi rh = {2*r*h}\\pi$",
+                f"Total $= {box_sa} - {2*r**2}\\pi + {2*r*h}\\pi = {latex(total)}$"
             ),
             calculator="scientific"
         )

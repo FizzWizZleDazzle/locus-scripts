@@ -7,131 +7,146 @@ from problem_utils import *
 
 def generate():
     problem_type = randint(1, 5)
-    
+
     if problem_type == 1:
-        # Type 1: Trigonometric substitution with polynomial inside
-        # Difficulty: 1600-1750
-        power = choice([2, 3])
-        coeff = randint(2, 5)
-        inner_linear = choice([2*x, 3*x, x + 1, 2*x - 1])
-        
-        if power == 2:
-            trig_func = choice([sin, cos])
-            integrand = trig_func(inner_linear)**power * diff(inner_linear, x)
+        # ∫ trig^n(ax+b) * trig'(ax+b) dx  with power n in {2..4}
+        a = nonzero(-4, 4)
+        b = randint(-5, 5)
+        n = randint(2, 4)
+        trig_choice = choice(['sin', 'cos'])
+        inner = a * x + b
+
+        if trig_choice == 'sin':
+            integrand = sin(inner)**n * cos(inner) * a
+            ans = sin(inner)**(n + 1) / (n + 1)
+            u_str = f"\\sin({latex(inner)})"
         else:
-            trig_func = choice([sin, cos])
-            integrand = trig_func(inner_linear)**power * diff(inner_linear, x)
-        
-        # Clean it up
+            integrand = cos(inner)**n * sin(inner) * (-a)
+            ans = cos(inner)**(n + 1) / (n + 1)
+            u_str = f"\\cos({latex(inner)})"
+
         integrand = expand(integrand)
-        ans = integrate(integrand, x)
-        
+        ans_check = simplify(integrate(integrand, x))
+
         return problem(
             question=f"Evaluate $\\int {latex(integrand)} \\, dx$",
-            answer=ans,
+            answer=ans_check,
             difficulty=(1600, 1750),
             topic="calculus/u_substitution",
             solution=steps(
-                f"Let $u = {latex(inner_linear)}$, then $du = {latex(diff(inner_linear, x))} dx$",
-                f"The integral becomes $\\int {latex(trig_func(Symbol('u'))**power)} \\, du$",
-                f"Integrate to get ${latex(integrate(trig_func(Symbol('u'))**power, Symbol('u')))}$",
-                f"Substitute back: ${latex(ans)} + C$"
+                f"Let $u = {u_str}$, then $du = \\pm {abs(a)} \\cdot \\text{{trig}}({latex(inner)}) dx$",
+                f"The integral becomes $\\int u^{{{n}}} \\, du$",
+                f"$= \\frac{{u^{{{n+1}}}}}{{{n+1}}} + C$",
+                f"Substitute back: ${latex(ans_check)} + C$"
             ),
             calculator="none"
         )
-    
+
     elif problem_type == 2:
-        # Type 2: Exponential with linear substitution
-        # Difficulty: 1650-1800
-        a = nonzero(-4, 4)
-        b = nonzero(-5, 5)
-        linear = a*x + b
-        
-        integrand = exp(linear) * a
-        ans = integrate(integrand, x)
-        
+        # ∫ k * exp(ax² + bx) * (2ax + b) dx  — u = ax²+bx
+        a = nonzero(-3, 3)
+        b = randint(-5, 5)
+        k = nonzero(-3, 3)
+        inner = a * x**2 + b * x
+
+        integrand = k * exp(inner) * diff(inner, x)
+        ans = k * exp(inner)
+
         return problem(
             question=f"Evaluate $\\int {latex(integrand)} \\, dx$",
             answer=ans,
             difficulty=(1650, 1800),
             topic="calculus/u_substitution",
             solution=steps(
-                f"Let $u = {latex(linear)}$, then $du = {latex(a)} dx$",
-                f"The integral becomes $\\int e^u \\, du$",
-                f"Integrate to get $e^u + C$",
+                f"Let $u = {latex(inner)}$, then $du = {latex(diff(inner, x))} dx$",
+                f"The integral becomes $\\int {k} e^u \\, du = {k} e^u + C$",
                 f"Substitute back: ${latex(ans)} + C$"
             ),
             calculator="none"
         )
-    
+
     elif problem_type == 3:
-        # Type 3: Rational function requiring substitution
-        # Difficulty: 1700-1850
-        a = randint(2, 5)
-        b = nonzero(-4, 4)
-        inner = a*x + b
-        
-        integrand = a / inner
-        ans = integrate(integrand, x)
-        
+        # ∫ k / (ax² + b) dx  using the arctan form: (k/a) * arctan(x/√(b/a))
+        # For simplicity use b=a so √(b/a)=1: ∫ k/(a(x²+1)) = (k/a)*arctan(x) + C
+        # More general: let b divisible nicely
+        a = randint(1, 5)
+        k = nonzero(-4, 4)
+
+        # ∫ k / (a + x²) dx  = (k/√a) arctan(x/√a) when a is perfect square
+        a_sq = choice([1, 4, 9, 16])
+
+        integrand = k / (a_sq + x**2)
+        ans = k * atan(x / sqrt(a_sq)) / sqrt(a_sq)
+
         return problem(
             question=f"Evaluate $\\int {latex(integrand)} \\, dx$",
             answer=ans,
             difficulty=(1700, 1850),
             topic="calculus/u_substitution",
             solution=steps(
-                f"Let $u = {latex(inner)}$, then $du = {latex(a)} dx$",
-                f"The integral becomes $\\int \\frac{{1}}{{u}} \\, du$",
-                f"Integrate to get $\\ln|u| + C$",
-                f"Substitute back: ${latex(ans)} + C$"
+                f"Recall $\\int \\frac{{1}}{{a^2 + x^2}} dx = \\frac{{1}}{{a}} \\arctan\\left(\\frac{{x}}{{a}}\\right) + C$",
+                f"Here $a^2 = {a_sq}$, so $a = {int(a_sq**0.5)}$",
+                f"$= \\frac{{{k}}}{{{int(a_sq**0.5)}}} \\arctan\\left(\\frac{{x}}{{{int(a_sq**0.5)}}}\\right) + C$",
+                f"$= {latex(ans)} + C$"
             ),
             calculator="none"
         )
-    
+
     elif problem_type == 4:
-        # Type 4: Product requiring u-substitution with chain rule reversal
-        # Difficulty: 1750-1900
-        a = randint(2, 4)
-        inner = x**2 + randint(1, 5)
-        
-        integrand = x * sin(inner)
-        ans = integrate(integrand, x)
-        
+        # ∫ x^(m-1) * f(ax^m + b)  →  u = ax^m + b
+        m = randint(2, 4)
+        a = randint(1, 5)
+        b = randint(-5, 5)
+        inner = a * x**m + b
+
+        func_type = choice(['sin', 'cos', 'exp'])
+
+        if func_type == 'sin':
+            integrand = x**(m - 1) * sin(inner)
+            # du = m*a*x^(m-1) dx  →  integral = -cos(u)/(m*a)
+            ans = -cos(inner) / (m * a)
+        elif func_type == 'cos':
+            integrand = x**(m - 1) * cos(inner)
+            ans = sin(inner) / (m * a)
+        else:
+            integrand = x**(m - 1) * exp(inner)
+            ans = exp(inner) / (m * a)
+
+        ans_check = simplify(integrate(integrand, x))
+
         return problem(
             question=f"Evaluate $\\int {latex(integrand)} \\, dx$",
-            answer=ans,
+            answer=ans_check,
             difficulty=(1750, 1900),
             topic="calculus/u_substitution",
             solution=steps(
                 f"Let $u = {latex(inner)}$, then $du = {latex(diff(inner, x))} dx$",
-                f"Notice that $x \\, dx = \\frac{{1}}{{2}} du$",
-                f"The integral becomes $\\frac{{1}}{{2}} \\int \\sin(u) \\, du$",
-                f"Integrate to get $-\\frac{{1}}{{2}} \\cos(u) + C$",
-                f"Substitute back: ${latex(ans)} + C$"
+                f"Notice $x^{{{m-1}}} dx = \\frac{{1}}{{{m*a}}} du$",
+                f"The integral becomes $\\frac{{1}}{{{m*a}}} \\int {func_type}(u) \\, du$",
+                f"$= {latex(ans)} + C$"
             ),
             calculator="none"
         )
-    
+
     else:
-        # Type 5: Composite function with power and inner function
-        # Difficulty: 1700-1850
-        a = randint(2, 4)
-        b = nonzero(-3, 3)
-        power = randint(2, 4)
-        inner = a*x + b
-        
-        integrand = inner**power * a
-        ans = integrate(integrand, x)
-        
+        # ∫ (ax+b)^n dx with large n in {5..9}  — power rule after substitution
+        a = nonzero(-5, 5)
+        b = randint(-8, 8)
+        n = randint(5, 9)
+
+        inner = a * x + b
+        integrand = inner**n * a
+        ans = inner**(n + 1) / (n + 1)
+
         return problem(
             question=f"Evaluate $\\int {latex(integrand)} \\, dx$",
             answer=ans,
             difficulty=(1700, 1850),
             topic="calculus/u_substitution",
             solution=steps(
-                f"Let $u = {latex(inner)}$, then $du = {latex(a)} dx$",
-                f"The integral becomes $\\int u^{{{power}}} \\, du$",
-                f"Integrate to get $\\frac{{u^{{{power+1}}}}}{{{power+1}}} + C$",
+                f"Let $u = {latex(inner)}$, then $du = {a} dx$",
+                f"The integral becomes $\\int u^{{{n}}} \\, du$",
+                f"$= \\frac{{u^{{{n+1}}}}}{{{n+1}}} + C$",
                 f"Substitute back: ${latex(ans)} + C$"
             ),
             calculator="none"

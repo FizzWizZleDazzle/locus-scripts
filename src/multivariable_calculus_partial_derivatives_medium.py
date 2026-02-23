@@ -6,156 +6,139 @@ Generated: 2026-02-22T05:33:55.748810
 from problem_utils import *
 
 def generate():
-    problem_type = choice(['first_order', 'second_order', 'mixed', 'evaluate'])
-    
-    if problem_type == 'first_order':
-        # Simple first-order partial derivatives
-        base_func = choice([
-            x**2 + y**2,
-            x**3 + y**2,
-            x*y**2,
-            x**2 * y,
-            x**3 + x*y + y**2,
-            x**2 - y**2,
-        ])
-        coeff = nonzero(-5, 5)
-        func = coeff * base_func
-        
+    problem_type = randint(1, 6)
+
+    if problem_type == 1:
+        # First-order partial of polynomial with randomized coefficients
+        a = nonzero(-6, 6)
+        b = nonzero(-6, 6)
+        c = nonzero(-6, 6)
+        xp = randint(2, 4)
+        yp = randint(2, 4)
+        f = a * x**xp * y**yp + b * x**3 + c * y**3
         var_choice = choice([x, y])
-        
-        ans = diff(func, var_choice)
-        
+        ans = diff(f, var_choice)
         return problem(
-            question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right)$",
+            question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(f)}\\right)$",
             answer=ans,
-            difficulty=(1300, 1400),
+            difficulty=(1300, 1420),
             topic="multivariable_calculus/partial_derivatives",
             solution=steps(
                 f"Treat all variables except ${latex(var_choice)}$ as constants",
-                f"Differentiate with respect to ${latex(var_choice)}$",
-                f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right) = {latex(ans)}$"
+                f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(f)}\\right) = {latex(ans)}$"
             )
         )
-    
-    elif problem_type == 'second_order':
-        # Second-order partial derivatives
-        base_func = choice([
-            x**3 * y,
-            x**2 * y**2,
-            x**3 + y**3,
-            x**2 * y + x * y**2,
-        ])
-        coeff = nonzero(-3, 3)
-        func = coeff * base_func
-        
+
+    elif problem_type == 2:
+        # Second-order partial derivative
+        a = nonzero(-4, 4)
+        b = nonzero(-4, 4)
+        xp = randint(2, 4)
+        yp = randint(2, 4)
+        f = a * x**xp * y**yp + b * x * y
         var1 = choice([x, y])
         var2 = choice([x, y])
-        
-        ans = diff(diff(func, var1), var2)
-        
+        ans = simplify(diff(diff(f, var1), var2))
         if var1 == var2:
             notation = f"\\frac{{\\partial^2}}{{\\partial {latex(var1)}^2}}"
         else:
             notation = f"\\frac{{\\partial^2}}{{\\partial {latex(var2)} \\partial {latex(var1)}}}"
-        
-        first_deriv = diff(func, var1)
-        
+        first_deriv = diff(f, var1)
         return problem(
-            question=f"Find ${notation}\\left({latex(func)}\\right)$",
+            question=f"Find ${notation}\\left({latex(f)}\\right)$",
             answer=ans,
             difficulty=(1400, 1550),
             topic="multivariable_calculus/partial_derivatives",
             solution=steps(
-                f"First find $\\frac{{\\partial}}{{\\partial {latex(var1)}}}\\left({latex(func)}\\right) = {latex(first_deriv)}$",
+                f"First: $\\frac{{\\partial}}{{\\partial {latex(var1)}}}\\left({latex(f)}\\right) = {latex(first_deriv)}$",
                 f"Then differentiate with respect to ${latex(var2)}$",
-                f"${notation}\\left({latex(func)}\\right) = {latex(ans)}$"
+                f"${notation} = {latex(ans)}$"
             )
         )
-    
-    elif problem_type == 'mixed':
-        # Mixed partial derivatives with exponentials or trig
-        func_type = choice(['exp', 'trig', 'product'])
-        
-        if func_type == 'exp':
-            a_val = nonzero(-3, 3)
-            b_val = nonzero(-3, 3)
-            func = exp(a_val*x + b_val*y)
-            
-            var_choice = choice([x, y])
-            ans = diff(func, var_choice)
-            
-            return problem(
-                question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right)$",
-                answer=ans,
-                difficulty=(1350, 1500),
-                topic="multivariable_calculus/partial_derivatives",
-                solution=steps(
-                    f"Use the chain rule for exponential functions",
-                    f"Treat variables other than ${latex(var_choice)}$ as constants",
-                    f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right) = {latex(ans)}$"
-                )
-            )
-        
-        elif func_type == 'trig':
-            a_val = nonzero(-3, 3)
-            b_val = nonzero(-3, 3)
-            trig_func = choice([sin, cos])
-            func = trig_func(a_val*x + b_val*y)
-            
-            var_choice = choice([x, y])
-            ans = diff(func, var_choice)
-            
-            return problem(
-                question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right)$",
-                answer=ans,
-                difficulty=(1400, 1550),
-                topic="multivariable_calculus/partial_derivatives",
-                solution=steps(
-                    f"Use the chain rule for trigonometric functions",
-                    f"Treat variables other than ${latex(var_choice)}$ as constants",
-                    f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right) = {latex(ans)}$"
-                )
-            )
-        
-        else:  # product
-            func = x**2 * sin(y)
-            var_choice = choice([x, y])
-            ans = diff(func, var_choice)
-            
-            return problem(
-                question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right)$",
-                answer=ans,
-                difficulty=(1450, 1600),
-                topic="multivariable_calculus/partial_derivatives",
-                solution=steps(
-                    f"Treat variables other than ${latex(var_choice)}$ as constants",
-                    f"Apply differentiation rules",
-                    f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(func)}\\right) = {latex(ans)}$"
-                )
-            )
-    
-    else:  # evaluate
-        # Evaluate partial derivative at a point
-        func = x**2 * y + x * y**2
+
+    elif problem_type == 3:
+        # Partial of exp(ax + by)
+        a = nonzero(-4, 4)
+        b = nonzero(-4, 4)
+        f = exp(a*x + b*y)
         var_choice = choice([x, y])
-        
-        x_val = nonzero(-3, 3)
-        y_val = nonzero(-3, 3)
-        
-        partial_deriv = diff(func, var_choice)
-        ans = partial_deriv.subs([(x, x_val), (y, y_val)])
-        
+        ans = diff(f, var_choice)
         return problem(
-            question=f"Evaluate $\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}}$ at $({x_val}, {y_val})$ where $f(x,y) = {latex(func)}$",
+            question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(f)}\\right)$",
+            answer=ans,
+            difficulty=(1350, 1500),
+            topic="multivariable_calculus/partial_derivatives",
+            solution=steps(
+                f"Use the chain rule: $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}} e^{{{latex(a*x + b*y)}}} = e^{{{latex(a*x + b*y)}}} \\cdot \\frac{{\\partial}}{{\\partial {latex(var_choice)}}}({latex(a*x + b*y)})$",
+                f"$= {latex(ans)}$"
+            )
+        )
+
+    elif problem_type == 4:
+        # Partial of sin or cos
+        a = nonzero(-3, 3)
+        b = nonzero(-3, 3)
+        trig_func = choice([sin, cos])
+        f = trig_func(a*x + b*y)
+        var_choice = choice([x, y])
+        ans = diff(f, var_choice)
+        return problem(
+            question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(f)}\\right)$",
             answer=ans,
             difficulty=(1400, 1550),
             topic="multivariable_calculus/partial_derivatives",
             solution=steps(
-                f"First find $\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}} = {latex(partial_deriv)}$",
-                f"Substitute $x = {x_val}$ and $y = {y_val}$",
-                f"$\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}}({x_val}, {y_val}) = {latex(ans)}$"
-            ),
-            calculator="scientific"
+                f"Use the chain rule for trig functions",
+                f"Treat variables other than ${latex(var_choice)}$ as constants",
+                f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(f)}\\right) = {latex(ans)}$"
+            )
+        )
+
+    elif problem_type == 5:
+        # Evaluate partial at a point
+        a = nonzero(-4, 4)
+        b = nonzero(-4, 4)
+        c = nonzero(-4, 4)
+        f = a * x**2 * y + b * x * y**2 + c * x * y
+        var_choice = choice([x, y])
+        x0 = nonzero(-3, 3)
+        y0 = nonzero(-3, 3)
+        partial_deriv = diff(f, var_choice)
+        ans = partial_deriv.subs([(x, x0), (y, y0)])
+        return problem(
+            question=f"Evaluate $\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}}$ at $({x0}, {y0})$ where $f(x,y) = {latex(f)}$",
+            answer=ans,
+            difficulty=(1400, 1550),
+            topic="multivariable_calculus/partial_derivatives",
+            solution=steps(
+                f"$\\frac{{\\partial f}}{{\\partial {latex(var_choice)}}} = {latex(partial_deriv)}$",
+                f"Substitute $x={x0},\\ y={y0}$: $= {latex(ans)}$"
+            )
+        )
+
+    else:
+        # Product rule partial: f = x^a * sin(by) or similar
+        a = randint(2, 4)
+        b = nonzero(-3, 3)
+        variant = choice(['sin', 'cos', 'exp'])
+        if variant == 'sin':
+            f = x**a * sin(b*y)
+        elif variant == 'cos':
+            f = x**a * cos(b*y)
+        else:
+            f = x**a * exp(b*y)
+        var_choice = choice([x, y])
+        ans = diff(f, var_choice)
+        return problem(
+            question=f"Find $\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(f)}\\right)$",
+            answer=ans,
+            difficulty=(1450, 1600),
+            topic="multivariable_calculus/partial_derivatives",
+            solution=steps(
+                f"Treat the other variable as a constant",
+                f"Apply differentiation rules",
+                f"$\\frac{{\\partial}}{{\\partial {latex(var_choice)}}}\\left({latex(f)}\\right) = {latex(ans)}$"
+            )
         )
 
 emit(generate())

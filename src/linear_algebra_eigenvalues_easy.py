@@ -6,101 +6,119 @@ Generated: 2026-02-22T05:58:19.889862
 from problem_utils import *
 
 def generate():
-    problem_type = randint(1, 4)
-    
+    problem_type = randint(1, 6)
+
     if problem_type == 1:
-        # 2x2 diagonal matrix - easiest (1000-1100)
-        eig1 = randint(-5, 5)
-        eig2 = randint(-5, 5)
+        # 2x2 diagonal matrix
+        eig1 = randint(-8, 8)
+        eig2 = randint(-8, 8)
         M = Matrix([[eig1, 0], [0, eig2]])
         ans = FiniteSet(eig1, eig2)
-        
         return problem(
-            question=f"Find the eigenvalues of the matrix $A = {latex(M)}$",
+            question=f"Find the eigenvalues of $A = {latex(M)}$.",
             answer=ans,
             difficulty=(1000, 1100),
             topic="linear_algebra/eigenvalues",
             solution=steps(
-                f"For a diagonal matrix, the eigenvalues are the diagonal entries.",
-                f"Therefore, the eigenvalues are ${eig1}$ and ${eig2}$.",
-                f"Answer: ${latex(ans)}$"
+                f"For a diagonal matrix, eigenvalues are the diagonal entries.",
+                f"Eigenvalues: ${eig1}$ and ${eig2}$."
             ),
+            answer_type="set"
         )
-    
+
     elif problem_type == 2:
-        # 2x2 upper triangular matrix (1050-1150)
+        # 2x2 upper triangular matrix
+        eig1 = randint(-7, 7)
+        eig2 = randint(-7, 7)
+        off_diag = nonzero(-5, 5)
+        M = Matrix([[eig1, off_diag], [0, eig2]])
+        ans = FiniteSet(eig1, eig2)
+        return problem(
+            question=f"Find the eigenvalues of $A = {latex(M)}$.",
+            answer=ans,
+            difficulty=(1050, 1150),
+            topic="linear_algebra/eigenvalues",
+            solution=steps(
+                f"For a triangular matrix, eigenvalues are the diagonal entries.",
+                f"Eigenvalues: ${eig1}$ and ${eig2}$."
+            ),
+            answer_type="set"
+        )
+
+    elif problem_type == 3:
+        # 2x2 lower triangular matrix
+        eig1 = randint(-7, 7)
+        eig2 = randint(-7, 7)
+        off_diag = nonzero(-5, 5)
+        M = Matrix([[eig1, 0], [off_diag, eig2]])
+        ans = FiniteSet(eig1, eig2)
+        return problem(
+            question=f"Find the eigenvalues of $A = {latex(M)}$.",
+            answer=ans,
+            difficulty=(1050, 1150),
+            topic="linear_algebra/eigenvalues",
+            solution=steps(
+                f"For a triangular matrix, eigenvalues are the diagonal entries.",
+                f"Eigenvalues: ${eig1}$ and ${eig2}$."
+            ),
+            answer_type="set"
+        )
+
+    elif problem_type == 4:
+        # 2x2 requiring characteristic polynomial (upper triangular)
         eig1 = randint(-5, 5)
         eig2 = randint(-5, 5)
         off_diag = nonzero(-4, 4)
         M = Matrix([[eig1, off_diag], [0, eig2]])
         ans = FiniteSet(eig1, eig2)
-        
-        return problem(
-            question=f"Find the eigenvalues of the matrix $A = {latex(M)}$",
-            answer=ans,
-            difficulty=(1050, 1150),
-            topic="linear_algebra/eigenvalues",
-            solution=steps(
-                f"For a triangular matrix, the eigenvalues are the diagonal entries.",
-                f"Therefore, the eigenvalues are ${eig1}$ and ${eig2}$.",
-                f"Answer: ${latex(ans)}$"
-            ),
-        )
-    
-    elif problem_type == 3:
-        # 2x2 with trace and determinant given (1100-1200)
-        eig1 = randint(-4, 4)
-        eig2 = randint(-4, 4)
-        trace_val = eig1 + eig2
-        det_val = eig1 * eig2
-        
-        # Construct matrix with this trace and determinant
-        a_val = eig1
-        d_val = eig2
-        b_val = randint(1, 3)
-        c_val = (trace_val - a_val - d_val + a_val*d_val - det_val) // b_val if b_val != 0 else 0
-        
-        # Use simpler form: [[a, b], [c, d]] where ad - bc = det and a+d = trace
-        M = Matrix([[eig1, 0], [0, eig2]])
-        ans = FiniteSet(eig1, eig2)
-        
-        return problem(
-            question=f"Find the eigenvalues of the matrix $A = {latex(M)}$",
-            answer=ans,
-            difficulty=(1100, 1200),
-            topic="linear_algebra/eigenvalues",
-            solution=steps(
-                f"For a diagonal matrix, the eigenvalues are the diagonal entries.",
-                f"The eigenvalues are ${eig1}$ and ${eig2}$.",
-                f"Answer: ${latex(ans)}$"
-            ),
-        )
-    
-    else:
-        # 2x2 simple matrix requiring characteristic polynomial (1200-1300)
-        eig1 = randint(-3, 3)
-        eig2 = randint(-3, 3)
-        
-        # Construct matrix as [[a, b], [c, d]] where eigenvalues are known
-        # Use form [[a, 1], [0, d]] for simplicity
-        a_val = eig1
-        d_val = eig2
-        M = Matrix([[a_val, 1], [0, d_val]])
-        ans = FiniteSet(eig1, eig2)
-        
         char_poly = M.charpoly(x)
-        
         return problem(
-            question=f"Find the eigenvalues of the matrix $A = {latex(M)}$",
+            question=f"Find the eigenvalues of $A = {latex(M)}$ using $\\det(A-\\lambda I)=0$.",
             answer=ans,
-            difficulty=(1200, 1300),
+            difficulty=(1150, 1280),
             topic="linear_algebra/eigenvalues",
             solution=steps(
-                f"The eigenvalues satisfy $\\det(A - \\lambda I) = 0$.",
-                f"Since the matrix is upper triangular, the eigenvalues are the diagonal entries.",
-                f"Therefore, $\\lambda_1 = {eig1}$ and $\\lambda_2 = {eig2}$.",
-                f"Answer: ${latex(ans)}$"
+                f"$\\det(A - \\lambda I) = {latex(char_poly.as_expr())} = 0$",
+                f"The matrix is triangular, so eigenvalues are diagonal: $\\lambda_1 = {eig1}$, $\\lambda_2 = {eig2}$."
             ),
+            answer_type="set"
+        )
+
+    elif problem_type == 5:
+        # 3x3 diagonal matrix
+        eig1 = randint(-6, 6)
+        eig2 = randint(-6, 6)
+        eig3 = randint(-6, 6)
+        M = Matrix([[eig1, 0, 0], [0, eig2, 0], [0, 0, eig3]])
+        ans = FiniteSet(eig1, eig2, eig3)
+        return problem(
+            question=f"Find the eigenvalues of $A = {latex(M)}$.",
+            answer=ans,
+            difficulty=(1100, 1220),
+            topic="linear_algebra/eigenvalues",
+            solution=steps(
+                f"For a diagonal matrix, eigenvalues are the diagonal entries.",
+                f"Eigenvalues: ${eig1}$, ${eig2}$, ${eig3}$."
+            ),
+            answer_type="set"
+        )
+
+    else:
+        # 2x2 with repeated eigenvalue (Jordan block)
+        eig = nonzero(-6, 6)
+        off_diag = nonzero(-5, 5)
+        M = Matrix([[eig, off_diag], [0, eig]])
+        ans = FiniteSet(eig)
+        return problem(
+            question=f"Find all distinct eigenvalues of $A = {latex(M)}$.",
+            answer=ans,
+            difficulty=(1100, 1230),
+            topic="linear_algebra/eigenvalues",
+            solution=steps(
+                f"For a triangular matrix, eigenvalues are the diagonal entries.",
+                f"Both diagonal entries are ${eig}$, so the only eigenvalue is ${eig}$."
+            ),
+            answer_type="set"
         )
 
 emit(generate())

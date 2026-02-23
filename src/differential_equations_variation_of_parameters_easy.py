@@ -6,104 +6,99 @@ Generated: 2026-02-22T05:28:46.441851
 from problem_utils import *
 
 def generate():
-    # For variation of parameters at 1000-1300 ELO, we want the simplest cases:
-    # - First-order linear ODEs with constant coefficients
-    # - Simplest possible particular solutions
-    # - Minimal computation required
-    
-    problem_type = randint(1, 3)
-    
+    problem_type = randint(1, 4)
+
     if problem_type == 1:
-        # Type 1: y' + ay = g(x) where g(x) is a simple polynomial
-        # and the homogeneous solution is straightforward
-        a_coeff = choice([1, 2])
-        const = choice([1, 2, 3, 4, 6])
-        
-        # The ODE is y' + a*y = const
-        # Homogeneous solution: y_h = C*e^(-a*x)
-        # For variation of parameters: y_p = u(x)*e^(-a*x)
-        # u'(x) = const*e^(a*x)
-        # u(x) = (const/a)*e^(a*x)
-        # y_p = (const/a)*e^(-a*x)*e^(a*x) = const/a
-        
+        # y' + a*y = const  =>  y_p = const/a
+        a_coeff = choice([1, 2, 3, 4, 5])
+        const = nonzero(-8, 8)
+
         particular = Rational(const, a_coeff)
-        
+
         return problem(
             question=f"Find the particular solution to $y' + {a_coeff}y = {const}$ using variation of parameters.",
             answer=particular,
-            difficulty=(1000, 1200),
+            difficulty=(1000, 1150),
             topic="differential_equations/variation_of_parameters",
             solution=steps(
-                f"The homogeneous solution is $y_h = Ce^{{-{a_coeff}x}}$",
-                f"For variation of parameters, let $y_p = u(x)e^{{-{a_coeff}x}}$",
-                f"Then $y_p' = u'e^{{-{a_coeff}x}} - {a_coeff}ue^{{-{a_coeff}x}}$",
-                f"Substituting: $u'e^{{-{a_coeff}x}} - {a_coeff}ue^{{-{a_coeff}x}} + {a_coeff}ue^{{-{a_coeff}x}} = {const}$",
-                f"Simplifying: $u'e^{{-{a_coeff}x}} = {const}$",
-                f"So $u' = {const}e^{{{a_coeff}x}}$",
-                f"Integrating: $u = {latex(Rational(const, a_coeff))}e^{{{a_coeff}x}}$",
-                f"Therefore $y_p = {latex(Rational(const, a_coeff))}e^{{{a_coeff}x}} \\cdot e^{{-{a_coeff}x}} = {latex(particular)}$"
+                f"Homogeneous solution: $y_h = Ce^{{-{a_coeff}x}}$",
+                f"Let $y_p = u(x)e^{{-{a_coeff}x}}$; substitute into ODE",
+                f"$u'e^{{-{a_coeff}x}} = {const}$, so $u' = {const}e^{{{a_coeff}x}}$",
+                f"Integrate: $u = \\frac{{{const}}}{{{a_coeff}}}e^{{{a_coeff}x}}$",
+                f"$y_p = \\frac{{{const}}}{{{a_coeff}}}e^{{{a_coeff}x}} \\cdot e^{{-{a_coeff}x}} = {latex(particular)}$"
             ),
             grading_mode="equivalent"
         )
-    
+
     elif problem_type == 2:
-        # Type 2: y' - ay = g(x) with simple exponential on right side
-        a_coeff = choice([1, 2])
-        const = choice([1, 2, 3])
-        
-        # The ODE is y' - a*y = const*e^(a*x)
-        # Homogeneous solution: y_h = C*e^(a*x)
-        # For variation of parameters: y_p = u(x)*e^(a*x)
-        # u'(x) = const
-        # u(x) = const*x
-        # y_p = const*x*e^(a*x)
-        
-        particular = const * x * exp(a_coeff * x)
-        
+        # y' - a*y = b*e^(a*x)  =>  y_p = b*x*e^(a*x)
+        a_coeff = choice([1, 2, 3, 4])
+        b_coeff = nonzero(-6, 6)
+
+        particular = b_coeff * x * exp(a_coeff * x)
+
         return problem(
-            question=f"Find the particular solution to $y' - {a_coeff}y = {const}e^{{{a_coeff}x}}$ using variation of parameters.",
+            question=f"Find the particular solution to $y' - {a_coeff}y = {b_coeff}e^{{{a_coeff}x}}$ using variation of parameters.",
             answer=particular,
-            difficulty=(1100, 1300),
+            difficulty=(1100, 1250),
             topic="differential_equations/variation_of_parameters",
             solution=steps(
-                f"The homogeneous solution is $y_h = Ce^{{{a_coeff}x}}$",
-                f"For variation of parameters, let $y_p = u(x)e^{{{a_coeff}x}}$",
-                f"Then $y_p' = u'e^{{{a_coeff}x}} + {a_coeff}ue^{{{a_coeff}x}}$",
-                f"Substituting: $u'e^{{{a_coeff}x}} + {a_coeff}ue^{{{a_coeff}x}} - {a_coeff}ue^{{{a_coeff}x}} = {const}e^{{{a_coeff}x}}$",
-                f"Simplifying: $u'e^{{{a_coeff}x}} = {const}e^{{{a_coeff}x}}$",
-                f"So $u' = {const}$",
-                f"Integrating: $u = {const}x$",
-                f"Therefore $y_p = {latex(particular)}$"
+                f"Homogeneous solution: $y_h = Ce^{{{a_coeff}x}}$",
+                f"Let $y_p = u(x)e^{{{a_coeff}x}}$; then $u'e^{{{a_coeff}x}} = {b_coeff}e^{{{a_coeff}x}}$",
+                f"$u' = {b_coeff}$, so $u = {b_coeff}x$",
+                f"$y_p = {b_coeff}x \\cdot e^{{{a_coeff}x}} = {latex(particular)}$"
             ),
             grading_mode="equivalent"
         )
-    
+
+    elif problem_type == 3:
+        # y' + a*y = b*x  =>  y_p = b*x/a - b/a^2
+        a_coeff = choice([1, 2, 3, 4])
+        b_coeff = nonzero(-5, 5)
+
+        # IF: e^(a*x); d/dx[y*e^(a*x)] = b*x*e^(a*x)
+        # y*e^(a*x) = b * integral(x*e^(a*x)) = b*(x/a - 1/a^2)*e^(a*x) + C
+        # y_p = b*(x/a - 1/a^2)
+        particular = b_coeff * (x / a_coeff - Rational(1, a_coeff**2))
+        particular = simplify(particular)
+
+        return problem(
+            question=f"Find the particular solution to $y' + {a_coeff}y = {b_coeff}x$ using variation of parameters.",
+            answer=particular,
+            difficulty=(1150, 1300),
+            topic="differential_equations/variation_of_parameters",
+            solution=steps(
+                f"Homogeneous solution: $y_h = Ce^{{-{a_coeff}x}}$",
+                f"Let $y_p = u(x)e^{{-{a_coeff}x}}$; $u' = {b_coeff}x \\cdot e^{{{a_coeff}x}}$",
+                f"Integrate by parts: $u = {b_coeff}\\left(\\frac{{x}}{{{a_coeff}}} - \\frac{{1}}{{{a_coeff**2}}}\\right)e^{{{a_coeff}x}}$",
+                f"$y_p = {latex(particular)}$"
+            ),
+            grading_mode="equivalent"
+        )
+
     else:
-        # Type 3: y' + y = simple function (easiest case with a=1)
-        const = choice([2, 3, 4, 5])
-        
-        # The ODE is y' + y = const
-        # Homogeneous solution: y_h = C*e^(-x)
-        # Particular solution: y_p = const
-        
-        particular = const
-        
+        # y' + a*y = b*e^(c*x) with c != -a  =>  y_p = b/(a+c) * e^(c*x)
+        a_coeff = choice([1, 2, 3])
+        c_val = nonzero(-4, 4)
+        while c_val == -a_coeff:
+            c_val = nonzero(-4, 4)
+        b_coeff = nonzero(-5, 5)
+
+        particular = Rational(b_coeff, a_coeff + c_val) * exp(c_val * x)
+
         return problem(
-            question=f"Find the particular solution to $y' + y = {const}$ using variation of parameters.",
+            question=f"Find the particular solution to $y' + {a_coeff}y = {b_coeff}e^{{{c_val}x}}$ using variation of parameters.",
             answer=particular,
-            difficulty=(1000, 1100),
+            difficulty=(1100, 1250),
             topic="differential_equations/variation_of_parameters",
             solution=steps(
-                f"The homogeneous solution is $y_h = Ce^{{-x}}$",
-                f"For variation of parameters, let $y_p = u(x)e^{{-x}}$",
-                f"Then $y_p' = u'e^{{-x}} - ue^{{-x}}$",
-                f"Substituting: $u'e^{{-x}} - ue^{{-x}} + ue^{{-x}} = {const}$",
-                f"Simplifying: $u'e^{{-x}} = {const}$",
-                f"So $u' = {const}e^x$",
-                f"Integrating: $u = {const}e^x$",
-                f"Therefore $y_p = {const}e^x \\cdot e^{{-x}} = {const}$"
+                f"Homogeneous solution: $y_h = Ce^{{-{a_coeff}x}}$",
+                f"Let $y_p = u(x)e^{{-{a_coeff}x}}$; $u' = {b_coeff}e^{{{c_val}x}} \\cdot e^{{{a_coeff}x}} = {b_coeff}e^{{{a_coeff + c_val}x}}$",
+                f"Integrate: $u = \\frac{{{b_coeff}}}{{{a_coeff + c_val}}}e^{{{a_coeff + c_val}x}}$",
+                f"$y_p = \\frac{{{b_coeff}}}{{{a_coeff + c_val}}}e^{{{c_val}x}} = {latex(particular)}$"
             ),
             grading_mode="equivalent"
         )
+
 
 emit(generate())

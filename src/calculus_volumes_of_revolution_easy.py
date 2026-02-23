@@ -6,32 +6,25 @@ Generated: 2026-02-22T05:17:11.456789
 from problem_utils import *
 
 def generate():
-    # For easier volumes of revolution (1000-1300 ELO), focus on:
-    # - Simple functions (linear, quadratic)
-    # - Disk method with axis of rotation
-    # - Clean bounds that make integration straightforward
-    
-    problem_type = randint(1, 3)
-    
+    problem_type = randint(1, 4)
+
     if problem_type == 1:
-        # Disk method: revolve y = constant around x-axis
-        # V = π∫[a,b] y² dx
-        height = randint(1, 4)
-        a_bound = 0
-        b_bound = randint(2, 5)
-        
-        # Volume = π * height² * (b - a)
-        volume = pi * height**2 * (b_bound - a_bound)
-        
-        question = f"Find the volume when the region bounded by $y = {height}$, $y = 0$, $x = {a_bound}$, and $x = {b_bound}$ is revolved around the $x$-axis."
-        
+        # Disk method: revolve y = h (constant) around x-axis from 0 to b
+        height = randint(1, 8)
+        b_bound = randint(1, 8)
+
+        volume = pi * height**2 * b_bound
+
+        question = (f"Find the volume when the region bounded by $y = {height}$, $y = 0$, "
+                    f"$x = 0$, and $x = {b_bound}$ is revolved around the $x$-axis.")
+
         solution = steps(
-            f"Using the disk method: $V = \\pi \\int_{{{a_bound}}}^{{{b_bound}}} y^2 \\, dx$",
-            f"$V = \\pi \\int_{{{a_bound}}}^{{{b_bound}}} {height**2} \\, dx$",
-            f"$V = \\pi \\cdot {height**2} \\cdot [{b_bound} - {a_bound}]$",
+            f"Using the disk method: $V = \\pi \\int_{{0}}^{{{b_bound}}} [{height}]^2 \\, dx$",
+            f"$V = \\pi \\cdot {height**2} \\int_{{0}}^{{{b_bound}}} dx$",
+            f"$V = \\pi \\cdot {height**2} \\cdot {b_bound}$",
             f"$V = {latex(volume)}$"
         )
-        
+
         return problem(
             question=question,
             answer=volume,
@@ -39,32 +32,28 @@ def generate():
             topic="calculus/volumes_of_revolution",
             solution=solution
         )
-    
+
     elif problem_type == 2:
         # Disk method: revolve y = mx around x-axis from 0 to b
-        # V = π∫[0,b] (mx)² dx = π∫[0,b] m²x² dx
-        m_val = randint(1, 3)
-        b_bound = randint(2, 4)
-        
+        m_val = randint(1, 5)
+        b_bound = randint(1, 8)
+
         # V = π * m² * b³/3
         volume = pi * m_val**2 * b_bound**3 / 3
-        
-        if m_val == 1:
-            func_str = "y = x"
-        else:
-            func_str = f"y = {m_val}x"
-        
-        question = f"Find the volume when the region bounded by ${func_str}$, $y = 0$, and $x = {b_bound}$ is revolved around the $x$-axis."
-        
+
+        func_str = f"y = {m_val}x" if m_val != 1 else "y = x"
+
+        question = (f"Find the volume when the region bounded by ${func_str}$, $y = 0$, "
+                    f"and $x = {b_bound}$ is revolved around the $x$-axis.")
+
         solution = steps(
-            f"Using the disk method: $V = \\pi \\int_{{0}}^{{{b_bound}}} y^2 \\, dx$",
-            f"$V = \\pi \\int_{{0}}^{{{b_bound}}} ({m_val}x)^2 \\, dx$",
-            f"$V = \\pi \\int_{{0}}^{{{b_bound}}} {m_val**2}x^2 \\, dx$",
+            f"Using the disk method: $V = \\pi \\int_{{0}}^{{{b_bound}}} ({m_val}x)^2 \\, dx$",
+            f"$V = \\pi \\cdot {m_val**2} \\int_{{0}}^{{{b_bound}}} x^2 \\, dx$",
             f"$V = \\pi \\cdot {m_val**2} \\cdot \\left[\\frac{{x^3}}{{3}}\\right]_{{0}}^{{{b_bound}}}$",
             f"$V = \\pi \\cdot {m_val**2} \\cdot \\frac{{{b_bound**3}}}{{3}}$",
             f"$V = {latex(volume)}$"
         )
-        
+
         return problem(
             question=question,
             answer=volume,
@@ -72,27 +61,56 @@ def generate():
             topic="calculus/volumes_of_revolution",
             solution=solution
         )
-    
-    else:
-        # Disk method: revolve y = √x around x-axis
-        # V = π∫[a,b] (√x)² dx = π∫[a,b] x dx
-        a_bound = 0
-        b_bound = randint(2, 6)
-        
-        # V = π * (b²/2 - a²/2) = π * b²/2
+
+    elif problem_type == 3:
+        # Disk method: revolve y = √x around x-axis from 0 to b
+        b_bound = randint(1, 8)
+
         volume = pi * b_bound**2 / 2
-        
-        question = f"Find the volume when the region bounded by $y = \\sqrt{{x}}$, $y = 0$, and $x = {b_bound}$ is revolved around the $x$-axis."
-        
+
+        question = (f"Find the volume when the region bounded by $y = \\sqrt{{x}}$, $y = 0$, "
+                    f"and $x = {b_bound}$ is revolved around the $x$-axis.")
+
         solution = steps(
-            f"Using the disk method: $V = \\pi \\int_{{0}}^{{{b_bound}}} y^2 \\, dx$",
-            f"$V = \\pi \\int_{{0}}^{{{b_bound}}} (\\sqrt{{x}})^2 \\, dx$",
+            f"Using the disk method: $V = \\pi \\int_{{0}}^{{{b_bound}}} (\\sqrt{{x}})^2 \\, dx$",
             f"$V = \\pi \\int_{{0}}^{{{b_bound}}} x \\, dx$",
             f"$V = \\pi \\left[\\frac{{x^2}}{{2}}\\right]_{{0}}^{{{b_bound}}}$",
             f"$V = \\pi \\cdot \\frac{{{b_bound**2}}}{{2}}$",
             f"$V = {latex(volume)}$"
         )
-        
+
+        return problem(
+            question=question,
+            answer=volume,
+            difficulty=(1200, 1300),
+            topic="calculus/volumes_of_revolution",
+            solution=solution
+        )
+
+    else:
+        # Disk method: revolve y = x^(1/n) around x-axis from 0 to b
+        # n in {3, 4} so the exponent is 1/3 or 1/4
+        n = choice([3, 4])
+        b_bound = randint(1, 6)
+
+        # y^2 = x^(2/n), ∫₀ᵇ x^(2/n) dx = b^(2/n+1)/(2/n+1)
+        from sympy import Rational as Rat
+        exp_sq = Rat(2, n)
+        volume = pi * b_bound**(exp_sq + 1) / (exp_sq + 1)
+        volume = simplify(volume)
+
+        root_str = f"\\sqrt[{n}]{{x}}"
+
+        question = (f"Find the volume when the region bounded by $y = {root_str}$, $y = 0$, "
+                    f"and $x = {b_bound}$ is revolved around the $x$-axis.")
+
+        solution = steps(
+            f"Using the disk method: $V = \\pi \\int_{{0}}^{{{b_bound}}} \\left({root_str}\\right)^2 \\, dx$",
+            f"$V = \\pi \\int_{{0}}^{{{b_bound}}} x^{{2/{n}}} \\, dx$",
+            f"$V = \\pi \\left[\\frac{{x^{{2/{n}+1}}}}{{2/{n}+1}}\\right]_{{0}}^{{{b_bound}}}$",
+            f"$V = {latex(volume)}$"
+        )
+
         return problem(
             question=question,
             answer=volume,

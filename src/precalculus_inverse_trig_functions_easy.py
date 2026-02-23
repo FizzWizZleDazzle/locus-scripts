@@ -1,232 +1,267 @@
 """
 precalculus - inverse_trig_functions (easy)
-Generated: 2026-02-22T04:48:08.827818
 """
 
 from problem_utils import *
 
+# Full tables of exact inverse-trig values
+ARCSIN_TABLE = [
+    (0, 0),
+    (Rational(1, 2), pi/6),
+    (sqrt(2)/2, pi/4),
+    (sqrt(3)/2, pi/3),
+    (1, pi/2),
+    (-Rational(1, 2), -pi/6),
+    (-sqrt(2)/2, -pi/4),
+    (-sqrt(3)/2, -pi/3),
+    (-1, -pi/2),
+]
+
+ARCCOS_TABLE = [
+    (1, 0),
+    (sqrt(3)/2, pi/6),
+    (sqrt(2)/2, pi/4),
+    (Rational(1, 2), pi/3),
+    (0, pi/2),
+    (-Rational(1, 2), 2*pi/3),
+    (-sqrt(2)/2, 3*pi/4),
+    (-sqrt(3)/2, 5*pi/6),
+    (-1, pi),
+]
+
+ARCTAN_TABLE = [
+    (0, 0),
+    (1, pi/4),
+    (sqrt(3), pi/3),
+    (sqrt(3)/3, pi/6),
+    (-1, -pi/4),
+    (-sqrt(3), -pi/3),
+    (-sqrt(3)/3, -pi/6),
+    (2, atan(2)),
+    (3, atan(3)),
+    (-2, -atan(2)),
+    (-3, -atan(3)),
+]
+
+# Values safe for sin(arcsin) / cos(arccos) composition problems
+COMP_VALS = [Rational(1, 3), Rational(2, 5), Rational(3, 7), Rational(4, 9),
+             Rational(1, 4), Rational(3, 5), Rational(5, 8), Rational(2, 7),
+             -Rational(1, 3), -Rational(2, 5), -Rational(3, 7), -Rational(4, 9)]
+
+
 def generate():
-    problem_type = randint(1, 4)
-    
+    problem_type = randint(1, 5)
+
     if problem_type == 1:
-        # Direct evaluation of arcsin, arccos, arctan at standard values
+        # Direct evaluation of arcsin / arccos / arctan at standard values
         func_choice = randint(1, 3)
-        
+
         if func_choice == 1:
-            # arcsin
-            values = [
-                (0, 0),
-                (Rational(1, 2), pi/6),
-                (sqrt(2)/2, pi/4),
-                (sqrt(3)/2, pi/3),
-                (1, pi/2),
-                (-Rational(1, 2), -pi/6),
-                (-sqrt(2)/2, -pi/4),
-                (-sqrt(3)/2, -pi/3),
-                (-1, -pi/2)
-            ]
-            val, ans = choice(values)
-            
+            val, ans = choice(ARCSIN_TABLE)
             return problem(
-                question=f"Evaluate $\\arcsin\\left({latex(val)}\\right)$",
+                question=f"Evaluate $\\arcsin\\!\\left({latex(val)}\\right)$",
                 answer=ans,
                 difficulty=(1000, 1200),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"We need to find the angle $\\theta$ such that $\\sin(\\theta) = {latex(val)}$ where $\\theta \\in \\left[-\\frac{{\\pi}}{{2}}, \\frac{{\\pi}}{{2}}\\right]$",
-                    f"$\\arcsin\\left({latex(val)}\\right) = {latex(ans)}$"
+                    f"Find $\\theta \\in \\left[-\\tfrac{{\\pi}}{{2}}, \\tfrac{{\\pi}}{{2}}\\right]$ with $\\sin\\theta = {latex(val)}$",
+                    f"$\\arcsin\\!\\left({latex(val)}\\right) = {latex(ans)}$"
                 ),
             )
-        
         elif func_choice == 2:
-            # arccos
-            values = [
-                (0, pi/2),
-                (Rational(1, 2), pi/3),
-                (sqrt(2)/2, pi/4),
-                (sqrt(3)/2, pi/6),
-                (1, 0),
-                (-Rational(1, 2), 2*pi/3),
-                (-sqrt(2)/2, 3*pi/4),
-                (-sqrt(3)/2, 5*pi/6),
-                (-1, pi)
-            ]
-            val, ans = choice(values)
-            
+            val, ans = choice(ARCCOS_TABLE)
             return problem(
-                question=f"Evaluate $\\arccos\\left({latex(val)}\\right)$",
+                question=f"Evaluate $\\arccos\\!\\left({latex(val)}\\right)$",
                 answer=ans,
                 difficulty=(1000, 1200),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"We need to find the angle $\\theta$ such that $\\cos(\\theta) = {latex(val)}$ where $\\theta \\in [0, \\pi]$",
-                    f"$\\arccos\\left({latex(val)}\\right) = {latex(ans)}$"
+                    f"Find $\\theta \\in [0, \\pi]$ with $\\cos\\theta = {latex(val)}$",
+                    f"$\\arccos\\!\\left({latex(val)}\\right) = {latex(ans)}$"
                 ),
             )
-        
         else:
-            # arctan
-            values = [
-                (0, 0),
-                (1, pi/4),
-                (sqrt(3), pi/3),
-                (sqrt(3)/3, pi/6),
-                (-1, -pi/4),
-                (-sqrt(3), -pi/3),
-                (-sqrt(3)/3, -pi/6)
-            ]
-            val, ans = choice(values)
-            
+            val, ans = choice(ARCTAN_TABLE)
             return problem(
-                question=f"Evaluate $\\arctan\\left({latex(val)}\\right)$",
+                question=f"Evaluate $\\arctan\\!\\left({latex(val)}\\right)$",
                 answer=ans,
                 difficulty=(1000, 1200),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"We need to find the angle $\\theta$ such that $\\tan(\\theta) = {latex(val)}$ where $\\theta \\in \\left(-\\frac{{\\pi}}{{2}}, \\frac{{\\pi}}{{2}}\\right)$",
-                    f"$\\arctan\\left({latex(val)}\\right) = {latex(ans)}$"
+                    f"Find $\\theta \\in \\left(-\\tfrac{{\\pi}}{{2}}, \\tfrac{{\\pi}}{{2}}\\right)$ with $\\tan\\theta = {latex(val)}$",
+                    f"$\\arctan\\!\\left({latex(val)}\\right) = {latex(ans)}$"
                 ),
             )
-    
+
     elif problem_type == 2:
-        # Composition: sin(arcsin(x)), cos(arccos(x)), tan(arctan(x))
+        # Composition f(f^{-1}(val)) = val
         func_choice = randint(1, 3)
-        val = choice([Rational(1, 3), Rational(2, 5), Rational(3, 7), Rational(4, 9)])
-        
-        if randint(0, 1):
-            val = -val
-        
+        val = choice(COMP_VALS)
+
         if func_choice == 1:
             return problem(
-                question=f"Evaluate $\\sin\\left(\\arcsin\\left({latex(val)}\\right)\\right)$",
+                question=f"Evaluate $\\sin\\!\\left(\\arcsin\\!\\left({latex(val)}\\right)\\right)$",
                 answer=val,
                 difficulty=(1100, 1250),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"Since $\\arcsin$ and $\\sin$ are inverse functions,",
-                    f"$\\sin\\left(\\arcsin\\left({latex(val)}\\right)\\right) = {latex(val)}$ for ${latex(val)} \\in [-1, 1]$"
+                    "$\\sin$ and $\\arcsin$ are inverses, so $\\sin(\\arcsin(u)) = u$ for $u \\in [-1,1]$",
+                    f"Answer: ${latex(val)}$"
                 ),
             )
         elif func_choice == 2:
             val_pos = abs(val)
             return problem(
-                question=f"Evaluate $\\cos\\left(\\arccos\\left({latex(val_pos)}\\right)\\right)$",
+                question=f"Evaluate $\\cos\\!\\left(\\arccos\\!\\left({latex(val_pos)}\\right)\\right)$",
                 answer=val_pos,
                 difficulty=(1100, 1250),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"Since $\\arccos$ and $\\cos$ are inverse functions,",
-                    f"$\\cos\\left(\\arccos\\left({latex(val_pos)}\\right)\\right) = {latex(val_pos)}$ for ${latex(val_pos)} \\in [-1, 1]$"
+                    "$\\cos$ and $\\arccos$ are inverses, so $\\cos(\\arccos(u)) = u$ for $u \\in [-1,1]$",
+                    f"Answer: ${latex(val_pos)}$"
                 ),
             )
         else:
             return problem(
-                question=f"Evaluate $\\tan\\left(\\arctan\\left({latex(val)}\\right)\\right)$",
+                question=f"Evaluate $\\tan\\!\\left(\\arctan\\!\\left({latex(val)}\\right)\\right)$",
                 answer=val,
                 difficulty=(1100, 1250),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"Since $\\arctan$ and $\\tan$ are inverse functions,",
-                    f"$\\tan\\left(\\arctan\\left({latex(val)}\\right)\\right) = {latex(val)}$ for all real ${latex(val)}$"
+                    "$\\tan$ and $\\arctan$ are inverses for all real $u$",
+                    f"Answer: ${latex(val)}$"
                 ),
             )
-    
+
     elif problem_type == 3:
-        # Reverse composition: arcsin(sin(theta)), arccos(cos(theta)), arctan(tan(theta))
-        # for angles in the principal range
+        # arcsin(sin(theta)) / arccos(cos(theta)) / arctan(tan(theta))
+        # where theta is already in the principal range
         func_choice = randint(1, 3)
-        
+
         if func_choice == 1:
-            # arcsin(sin(theta)) where theta in [-pi/2, pi/2]
-            angles = [0, pi/6, pi/4, pi/3, -pi/6, -pi/4, -pi/3]
+            angles = [0, pi/6, pi/4, pi/3, pi/2, -pi/6, -pi/4, -pi/3, -pi/2]
             theta = choice(angles)
-            
             return problem(
-                question=f"Evaluate $\\arcsin\\left(\\sin\\left({latex(theta)}\\right)\\right)$",
+                question=f"Evaluate $\\arcsin\\!\\left(\\sin\\!\\left({latex(theta)}\\right)\\right)$",
                 answer=theta,
                 difficulty=(1200, 1300),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"Since ${latex(theta)} \\in \\left[-\\frac{{\\pi}}{{2}}, \\frac{{\\pi}}{{2}}\\right]$, it is in the range of $\\arcsin$",
-                    f"Therefore, $\\arcsin\\left(\\sin\\left({latex(theta)}\\right)\\right) = {latex(theta)}$"
+                    f"${latex(theta)} \\in \\left[-\\tfrac{{\\pi}}{{2}}, \\tfrac{{\\pi}}{{2}}\\right]$, so it is in the range of $\\arcsin$",
+                    f"$\\arcsin(\\sin({latex(theta)})) = {latex(theta)}$"
                 ),
             )
-        
         elif func_choice == 2:
-            # arccos(cos(theta)) where theta in [0, pi]
-            angles = [0, pi/6, pi/4, pi/3, pi/2, 2*pi/3, 3*pi/4, 5*pi/6]
+            angles = [0, pi/6, pi/4, pi/3, pi/2, 2*pi/3, 3*pi/4, 5*pi/6, pi]
             theta = choice(angles)
-            
             return problem(
-                question=f"Evaluate $\\arccos\\left(\\cos\\left({latex(theta)}\\right)\\right)$",
+                question=f"Evaluate $\\arccos\\!\\left(\\cos\\!\\left({latex(theta)}\\right)\\right)$",
                 answer=theta,
                 difficulty=(1200, 1300),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"Since ${latex(theta)} \\in [0, \\pi]$, it is in the range of $\\arccos$",
-                    f"Therefore, $\\arccos\\left(\\cos\\left({latex(theta)}\\right)\\right) = {latex(theta)}$"
+                    f"${latex(theta)} \\in [0, \\pi]$, so it is in the range of $\\arccos$",
+                    f"$\\arccos(\\cos({latex(theta)})) = {latex(theta)}$"
                 ),
             )
-        
         else:
-            # arctan(tan(theta)) where theta in (-pi/2, pi/2)
             angles = [0, pi/6, pi/4, pi/3, -pi/6, -pi/4, -pi/3]
             theta = choice(angles)
-            
             return problem(
-                question=f"Evaluate $\\arctan\\left(\\tan\\left({latex(theta)}\\right)\\right)$",
+                question=f"Evaluate $\\arctan\\!\\left(\\tan\\!\\left({latex(theta)}\\right)\\right)$",
                 answer=theta,
                 difficulty=(1200, 1300),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"Since ${latex(theta)} \\in \\left(-\\frac{{\\pi}}{{2}}, \\frac{{\\pi}}{{2}}\\right)$, it is in the range of $\\arctan$",
-                    f"Therefore, $\\arctan\\left(\\tan\\left({latex(theta)}\\right)\\right) = {latex(theta)}$"
+                    f"${latex(theta)} \\in \\left(-\\tfrac{{\\pi}}{{2}}, \\tfrac{{\\pi}}{{2}}\\right)$, so it is in the range of $\\arctan$",
+                    f"$\\arctan(\\tan({latex(theta)})) = {latex(theta)}$"
                 ),
             )
-    
-    else:
-        # Simple domain questions
+
+    elif problem_type == 4:
+        # Domain questions: is a value in the domain?
         func_choice = randint(1, 3)
-        
+
         if func_choice == 1:
-            val = choice([Rational(3, 2), 2, Rational(5, 3), -Rational(3, 2), -2])
-            
+            # Outside domain: |val| > 1
+            val = choice([Rational(3, 2), 2, Rational(5, 3), Rational(7, 4), -Rational(3, 2), -2])
             return problem(
                 question=f"Is ${latex(val)}$ in the domain of $\\arcsin(x)$?",
                 answer=False,
                 difficulty=(1000, 1150),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"The domain of $\\arcsin(x)$ is $[-1, 1]$",
-                    f"Since $|{latex(val)}| > 1$, ${latex(val)}$ is not in the domain"
+                    "Domain of $\\arcsin$ is $[-1, 1]$",
+                    f"$|{latex(val)}| > 1$, so ${latex(val)}$ is NOT in the domain"
                 ),
+                answer_type="boolean"
             )
-        
         elif func_choice == 2:
-            val = choice([Rational(1, 2), Rational(3, 4), Rational(4, 5), -Rational(1, 2)])
-            
+            # Inside domain of arccos
+            val = choice([Rational(1, 2), Rational(3, 4), Rational(4, 5), -Rational(1, 2),
+                          Rational(1, 3), Rational(2, 3), -Rational(3, 4), 0, 1, -1])
             return problem(
                 question=f"Is ${latex(val)}$ in the domain of $\\arccos(x)$?",
                 answer=True,
                 difficulty=(1000, 1150),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"The domain of $\\arccos(x)$ is $[-1, 1]$",
-                    f"Since ${latex(val)} \\in [-1, 1]$, it is in the domain"
+                    "Domain of $\\arccos$ is $[-1, 1]$",
+                    f"${latex(val)} \\in [-1,1]$, so it IS in the domain"
                 ),
+                answer_type="boolean"
             )
-        
         else:
-            val = nonzero(-5, 5)
-            
+            # arctan domain is all reals
+            val = nonzero(-10, 10)
             return problem(
                 question=f"Is ${val}$ in the domain of $\\arctan(x)$?",
                 answer=True,
                 difficulty=(1000, 1150),
                 topic="precalculus/inverse_trig_functions",
                 solution=steps(
-                    f"The domain of $\\arctan(x)$ is all real numbers $(-\\infty, \\infty)$",
-                    f"Therefore, ${val}$ is in the domain"
+                    "Domain of $\\arctan$ is all real numbers $(-\\infty, \\infty)$",
+                    f"Therefore ${val}$ IS in the domain"
+                ),
+                answer_type="boolean"
+            )
+
+    else:
+        # Identify range of arcsin / arccos / arctan
+        func_choice = randint(1, 3)
+
+        if func_choice == 1:
+            ans = fmt_interval(-pi/2, pi/2, False, False)
+            return problem(
+                question="State the range of $y = \\arcsin(x)$.",
+                answer=ans,
+                difficulty=(1050, 1200),
+                topic="precalculus/inverse_trig_functions",
+                answer_type="interval",
+                solution=steps(
+                    "The range of $\\arcsin$ is $\\left[-\\dfrac{\\pi}{2}, \\dfrac{\\pi}{2}\\right]$"
+                ),
+            )
+        elif func_choice == 2:
+            ans = fmt_interval(0, pi, False, False)
+            return problem(
+                question="State the range of $y = \\arccos(x)$.",
+                answer=ans,
+                difficulty=(1050, 1200),
+                topic="precalculus/inverse_trig_functions",
+                answer_type="interval",
+                solution=steps("The range of $\\arccos$ is $[0, \\pi]$"),
+            )
+        else:
+            ans = fmt_interval(-pi/2, pi/2, True, True)
+            return problem(
+                question="State the range of $y = \\arctan(x)$.",
+                answer=ans,
+                difficulty=(1050, 1200),
+                topic="precalculus/inverse_trig_functions",
+                answer_type="interval",
+                solution=steps(
+                    "The range of $\\arctan$ is $\\left(-\\dfrac{\\pi}{2}, \\dfrac{\\pi}{2}\\right)$ (open interval)"
                 ),
             )
 

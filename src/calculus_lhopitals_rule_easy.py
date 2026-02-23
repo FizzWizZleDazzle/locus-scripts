@@ -6,52 +6,44 @@ Generated: 2026-02-22T05:10:08.721512
 from problem_utils import *
 
 def generate():
-    # For easier L'Hopital problems (1000-1300), we want indeterminate forms 0/0 or ∞/∞
-    # that resolve with a single application of L'Hopital's rule
-    
-    problem_type = randint(1, 4)
-    
+    # Easy L'Hopital: single application, clear 0/0 forms
+    # Large parameter spaces: a_val in {±1..±8}, k in {±1..±6}, etc.
+
+    problem_type = randint(1, 5)
+
     if problem_type == 1:
-        # Type 1: Simple polynomial 0/0 form
-        # lim (x->a) (x-a)/(x-a) or variations
-        a_val = nonzero(-5, 5)
-        k = nonzero(-3, 3)
-        
-        # numerator: k(x - a)
-        # denominator: (x - a)
+        # lim(x→a) k(x-a) / (x-a) = k
+        a_val = nonzero(-8, 8)
+        k = nonzero(-6, 6)
+
         numerator = k * (x - a_val)
         denominator = x - a_val
-        
-        # After L'Hopital: k/1 = k
         ans = k
-        
+
         return problem(
             question=f"\\lim_{{x \\to {a_val}}} \\frac{{{latex(expand(numerator))}}}{{{latex(denominator)}}}",
             answer=ans,
             difficulty=(1000, 1150),
             topic="calculus/lhopitals_rule",
             solution=steps(
-                f"Direct substitution gives $\\frac{{{k*(a_val-a_val)}}}{{{a_val-a_val}}} = \\frac{{0}}{{0}}$ (indeterminate)",
+                f"Direct substitution gives $\\frac{{0}}{{0}}$ (indeterminate)",
                 f"Apply L'Hôpital's rule: differentiate numerator and denominator",
-                f"$\\lim_{{x \\to {a_val}}} \\frac{{{latex(diff(numerator, x))}}}{{{latex(diff(denominator, x))}}}$",
-                f"$= \\frac{{{k}}}{{1}} = {ans}$"
+                f"$\\lim_{{x \\to {a_val}}} \\frac{{{latex(diff(numerator, x))}}}{{{latex(diff(denominator, x))}}} = \\frac{{{k}}}{{1}} = {ans}$"
             ),
             calculator="scientific"
         )
-    
+
     elif problem_type == 2:
-        # Type 2: Polynomial with (x-a)^2 factors
-        # lim (x->a) (x-a)^2 / (x-a)
-        a_val = nonzero(-4, 4)
-        
+        # lim(x→a) (x-a)^2 / (m*(x-a)) = 0
+        a_val = nonzero(-6, 6)
+        m = nonzero(-5, 5)
+
         numerator = (x - a_val)**2
-        denominator = x - a_val
-        
-        # After L'Hopital: 2(x-a)/1, then substitute x=a gives 0
+        denominator = m * (x - a_val)
         ans = 0
-        
+
         return problem(
-            question=f"\\lim_{{x \\to {a_val}}} \\frac{{{latex(expand(numerator))}}}{{{latex(denominator)}}}",
+            question=f"\\lim_{{x \\to {a_val}}} \\frac{{{latex(expand(numerator))}}}{{{latex(expand(denominator))}}}",
             answer=ans,
             difficulty=(1100, 1200),
             topic="calculus/lhopitals_rule",
@@ -59,22 +51,24 @@ def generate():
                 f"Direct substitution gives $\\frac{{0}}{{0}}$ (indeterminate)",
                 f"Apply L'Hôpital's rule",
                 f"$\\lim_{{x \\to {a_val}}} \\frac{{{latex(diff(numerator, x))}}}{{{latex(diff(denominator, x))}}}$",
-                f"$= \\lim_{{x \\to {a_val}}} \\frac{{{latex(simplify(diff(numerator, x)))}}}{{{latex(diff(denominator, x))}}}$",
-                f"$= \\frac{{{2*(a_val - a_val)}}}{{1}} = {ans}$"
+                f"$= \\frac{{2({a_val} - {a_val})}}{{{m}}} = \\frac{{0}}{{{m}}} = {ans}$"
             ),
             calculator="scientific"
         )
-    
+
     elif problem_type == 3:
-        # Type 3: sin(x)/x type at x->0
-        k = nonzero(-3, 3)
-        
-        # lim (x->0) k*sin(x) / x = k
-        numerator = k * sin(x)
-        denominator = x
-        
-        ans = k
-        
+        # lim(x→0) k*sin(bx) / (cx)  = kb/c
+        k = nonzero(-5, 5)
+        b = nonzero(-5, 5)
+        c = nonzero(-5, 5)
+
+        numerator = k * sin(b * x)
+        denominator = c * x
+        ans = Rational(k * b, c)
+
+        num_prime = diff(numerator, x)
+        den_prime = diff(denominator, x)
+
         return problem(
             question=f"\\lim_{{x \\to 0}} \\frac{{{latex(numerator)}}}{{{latex(denominator)}}}",
             answer=ans,
@@ -83,34 +77,59 @@ def generate():
             solution=steps(
                 f"Direct substitution gives $\\frac{{0}}{{0}}$ (indeterminate)",
                 f"Apply L'Hôpital's rule",
-                f"$\\lim_{{x \\to 0}} \\frac{{{latex(diff(numerator, x))}}}{{{latex(diff(denominator, x))}}}$",
-                f"$= \\lim_{{x \\to 0}} \\frac{{{latex(diff(numerator, x))}}}{{1}}$",
-                f"$= {k} \\cdot \\cos(0) = {k} \\cdot 1 = {ans}$"
+                f"$\\lim_{{x \\to 0}} \\frac{{{latex(num_prime)}}}{{{latex(den_prime)}}}$",
+                f"$= \\frac{{{k*b} \\cos(0)}}{{{c}}} = \\frac{{{k*b}}}{{{c}}} = {latex(ans)}$"
             ),
             calculator="scientific"
         )
-    
-    else:
-        # Type 4: (e^x - 1)/x type at x->0
-        k = nonzero(-3, 3)
-        
-        # lim (x->0) (e^(kx) - 1) / x = k
-        numerator = exp(k*x) - 1
-        denominator = x
-        
-        ans = k
-        
+
+    elif problem_type == 4:
+        # lim(x→0) (e^(kx) - 1) / (mx)  = k/m
+        k = nonzero(-5, 5)
+        m = nonzero(-5, 5)
+
+        numerator = exp(k * x) - 1
+        denominator = m * x
+        ans = Rational(k, m)
+
+        num_prime = diff(numerator, x)
+        den_prime = diff(denominator, x)
+
         return problem(
             question=f"\\lim_{{x \\to 0}} \\frac{{{latex(numerator)}}}{{{latex(denominator)}}}",
             answer=ans,
             difficulty=(1200, 1300),
             topic="calculus/lhopitals_rule",
             solution=steps(
-                f"Direct substitution gives $\\frac{{e^0 - 1}}{{0}} = \\frac{{0}}{{0}}$ (indeterminate)",
+                f"Direct substitution gives $\\frac{{0}}{{0}}$ (indeterminate)",
                 f"Apply L'Hôpital's rule",
-                f"$\\lim_{{x \\to 0}} \\frac{{{latex(diff(numerator, x))}}}{{{latex(diff(denominator, x))}}}$",
-                f"$= \\lim_{{x \\to 0}} \\frac{{{latex(diff(numerator, x))}}}{{1}}$",
-                f"$= {k} e^0 = {ans}$"
+                f"$\\lim_{{x \\to 0}} \\frac{{{latex(num_prime)}}}{{{latex(den_prime)}}}$",
+                f"$= \\frac{{{k} e^0}}{{{m}}} = \\frac{{{k}}}{{{m}}} = {latex(ans)}$"
+            ),
+            calculator="scientific"
+        )
+
+    else:
+        # lim(x→a) (x² - a²) / (x - a)  = 2a   (simple factoring disguised)
+        a_val = nonzero(-7, 7)
+
+        numerator = x**2 - a_val**2
+        denominator = x - a_val
+        ans = 2 * a_val
+
+        num_prime = diff(numerator, x)
+        den_prime = diff(denominator, x)
+
+        return problem(
+            question=f"\\lim_{{x \\to {a_val}}} \\frac{{{latex(numerator)}}}{{{latex(denominator)}}}",
+            answer=ans,
+            difficulty=(1050, 1200),
+            topic="calculus/lhopitals_rule",
+            solution=steps(
+                f"Direct substitution gives $\\frac{{0}}{{0}}$ (indeterminate)",
+                f"Apply L'Hôpital's rule",
+                f"$\\lim_{{x \\to {a_val}}} \\frac{{{latex(num_prime)}}}{{{latex(den_prime)}}}$",
+                f"$= \\lim_{{x \\to {a_val}}} 2x = 2({a_val}) = {ans}$"
             ),
             calculator="scientific"
         )

@@ -6,15 +6,15 @@ Generated: 2026-02-22T04:30:37.362415
 from problem_utils import *
 
 def generate():
-    problem_type = randint(1, 5)
-    
+    problem_type = randint(1, 6)
+
     if problem_type == 1:
-        # Simple logarithm evaluation: log_b(b^n) = n
-        base = choice([2, 3, 5, 10])
-        exponent = randint(2, 4)
+        # log_b(b^n) = n  with varied base and exponent
+        base = choice([2, 3, 5, 7, 10])
+        exponent = randint(1, 6)
         value = base ** exponent
         ans = exponent
-        
+
         return problem(
             question=f"Evaluate $\\log_{{{base}}}({value})$",
             answer=ans,
@@ -26,13 +26,13 @@ def generate():
                 f"$\\log_{{{base}}}({base}^{{{exponent}}}) = {exponent}$"
             ),
         )
-    
+
     elif problem_type == 2:
-        # Product rule: log_b(mn) = log_b(m) + log_b(n)
-        base = choice([2, 3, 5, 10])
-        m = randint(2, 5)
-        n = randint(2, 5)
-        
+        # Product rule: log_b(m) + log_b(n) = log_b(mn)
+        base = choice([2, 3, 5, 7, 10])
+        m = randint(2, 12)
+        n = randint(2, 12)
+
         return problem(
             question=f"Simplify $\\log_{{{base}}}({m}) + \\log_{{{base}}}({n})$",
             answer=f"log({m*n}, {base})",
@@ -44,13 +44,13 @@ def generate():
                 f"$= \\log_{{{base}}}({m*n})$"
             ),
         )
-    
+
     elif problem_type == 3:
-        # Quotient rule: log_b(m/n) = log_b(m) - log_b(n)
-        base = choice([2, 3, 5, 10])
-        m = randint(3, 9)
-        n = randint(2, m-1)
-        
+        # Quotient rule: log_b(m) - log_b(n)
+        base = choice([2, 3, 5, 7, 10])
+        m = randint(4, 20)
+        n = randint(2, m - 1)
+
         return problem(
             question=f"Simplify $\\log_{{{base}}}({m}) - \\log_{{{base}}}({n})$",
             answer=f"log({m}/{n}, {base})",
@@ -61,14 +61,13 @@ def generate():
                 f"$\\log_{{{base}}}({m}) - \\log_{{{base}}}({n}) = \\log_{{{base}}}\\left(\\frac{{{m}}}{{{n}}}\\right)$"
             ),
         )
-    
+
     elif problem_type == 4:
-        # Power rule: log_b(m^n) = n*log_b(m)
-        base = choice([2, 3, 5, 10])
-        m = randint(2, 9)
-        n = randint(2, 4)
-        ans = n
-        
+        # Power rule: n*log_b(m) = log_b(m^n)
+        base = choice([2, 3, 5, 7, 10])
+        m = randint(2, 12)
+        n = randint(2, 5)
+
         return problem(
             question=f"Simplify ${n} \\log_{{{base}}}({m})$",
             answer=f"{n}*log({m}, {base})",
@@ -80,20 +79,34 @@ def generate():
                 f"$= \\log_{{{base}}}({m**n})$"
             ),
         )
-    
-    else:
-        # Basic property: log_b(1) = 0
+
+    elif problem_type == 5:
+        # log_b(1) = 0
         base = choice([2, 3, 5, 7, 10])
-        ans = 0
-        
+
         return problem(
             question=f"Evaluate $\\log_{{{base}}}(1)$",
-            answer=ans,
+            answer=0,
             difficulty=(1000, 1100),
             topic="algebra2/logarithm_properties",
             solution=steps(
                 f"Recall that any base raised to the power 0 equals 1: ${base}^0 = 1$",
                 f"Therefore, $\\log_{{{base}}}(1) = 0$"
+            ),
+        )
+
+    else:
+        # log_b(b) = 1
+        base = choice([2, 3, 5, 7, 10])
+
+        return problem(
+            question=f"Evaluate $\\log_{{{base}}}({base})$",
+            answer=1,
+            difficulty=(1000, 1100),
+            topic="algebra2/logarithm_properties",
+            solution=steps(
+                f"Recall that $b^1 = b$ for any base $b$",
+                f"Therefore, $\\log_{{{base}}}({base}) = 1$"
             ),
         )
 

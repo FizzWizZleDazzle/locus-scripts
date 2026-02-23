@@ -6,230 +6,176 @@ Generated: 2026-02-22T04:18:52.199856
 from problem_utils import *
 from svg_utils import Diagram
 
+# Special angles with exact trig values
+SPECIAL_ANGLES = {
+    30: {'sin': Rational(1,2), 'cos': sqrt(3)/2, 'tan': 1/sqrt(3)},
+    45: {'sin': sqrt(2)/2, 'cos': sqrt(2)/2, 'tan': Integer(1)},
+    60: {'sin': sqrt(3)/2, 'cos': Rational(1,2), 'tan': sqrt(3)},
+}
+
 def generate():
     problem_type = randint(1, 4)
-    
+
     if problem_type == 1:
-        # Finding a side using a single trig ratio (1000-1200)
+        # Find a side using sin/cos/tan with a special angle
         angle = choice([30, 45, 60])
-        if angle == 30:
-            ratio_type = choice(['sin', 'cos'])
-            if ratio_type == 'sin':
-                hypotenuse = choice([10, 20, 30, 40, 50])
-                ans = hypotenuse / 2
-                question_text = f"In a right triangle, if the hypotenuse is ${hypotenuse}$ and one angle is $30°$, find the length of the side opposite to the $30°$ angle."
-                solution_text = steps(
-                    f"Use $\\sin(30°) = \\frac{{\\text{{opposite}}}}{{\\text{{hypotenuse}}}}$",
-                    f"$\\sin(30°) = \\frac{{1}}{{2}}$",
-                    f"$\\frac{{1}}{{2}} = \\frac{{\\text{{opposite}}}}{{{hypotenuse}}}$",
-                    f"opposite $= {hypotenuse} \\cdot \\frac{{1}}{{2}} = {ans}$"
-                )
-            else:
-                hypotenuse = choice([10, 20, 30, 40])
-                ans = hypotenuse * sqrt(3) / 2
-                question_text = f"In a right triangle, if the hypotenuse is ${hypotenuse}$ and one angle is $30°$, find the length of the side adjacent to the $30°$ angle."
-                solution_text = steps(
-                    f"Use $\\cos(30°) = \\frac{{\\text{{adjacent}}}}{{\\text{{hypotenuse}}}}$",
-                    f"$\\cos(30°) = \\frac{{\\sqrt{{3}}}}{{2}}$",
-                    f"$\\frac{{\\sqrt{{3}}}}{{2}} = \\frac{{\\text{{adjacent}}}}{{{hypotenuse}}}$",
-                    f"adjacent $= {hypotenuse} \\cdot \\frac{{\\sqrt{{3}}}}{{2}} = {latex(ans)}$"
-                )
-        elif angle == 45:
-            hypotenuse = choice([10, 20, 30, 40])
-            ans = hypotenuse * sqrt(2) / 2
-            question_text = f"In a $45°$-$45°$-$90°$ triangle, if the hypotenuse is ${hypotenuse}$, find the length of one leg."
-            solution_text = steps(
-                f"Use $\\sin(45°) = \\frac{{\\text{{leg}}}}{{\\text{{hypotenuse}}}}$",
-                f"$\\sin(45°) = \\frac{{\\sqrt{{2}}}}{{2}}$",
-                f"$\\frac{{\\sqrt{{2}}}}{{2}} = \\frac{{\\text{{leg}}}}{{{hypotenuse}}}$",
-                f"leg $= {hypotenuse} \\cdot \\frac{{\\sqrt{{2}}}}{{2}} = {latex(ans)}$"
+        trig_name = choice(['sin', 'cos', 'tan'])
+        scale = choice([2, 3, 4, 5, 6, 8, 10, 12, 15, 20])
+        ratios = SPECIAL_ANGLES[angle]
+        ratio_val = ratios[trig_name]
+
+        if trig_name == 'sin':
+            hyp = scale
+            opp = simplify(ratio_val * hyp)
+            question_text = f"In a right triangle, if the hypotenuse is ${hyp}$ and one angle is ${angle}°$, find the side opposite to the ${angle}°$ angle."
+            ans = opp
+            sol = steps(
+                f"Use $\\sin({angle}°) = \\frac{{\\text{{opposite}}}}{{\\text{{hypotenuse}}}}$",
+                f"$\\sin({angle}°) = {latex(ratio_val)}$",
+                f"$\\text{{opposite}} = {hyp} \\cdot {latex(ratio_val)} = {latex(ans)}$"
             )
-        else:  # 60
-            ratio_type = choice(['sin', 'cos'])
-            if ratio_type == 'sin':
-                hypotenuse = choice([10, 20, 30, 40])
-                ans = hypotenuse * sqrt(3) / 2
-                question_text = f"In a right triangle, if the hypotenuse is ${hypotenuse}$ and one angle is $60°$, find the length of the side opposite to the $60°$ angle."
-                solution_text = steps(
-                    f"Use $\\sin(60°) = \\frac{{\\text{{opposite}}}}{{\\text{{hypotenuse}}}}$",
-                    f"$\\sin(60°) = \\frac{{\\sqrt{{3}}}}{{2}}$",
-                    f"$\\frac{{\\sqrt{{3}}}}{{2}} = \\frac{{\\text{{opposite}}}}{{{hypotenuse}}}$",
-                    f"opposite $= {hypotenuse} \\cdot \\frac{{\\sqrt{{3}}}}{{2}} = {latex(ans)}$"
-                )
-            else:
-                hypotenuse = choice([10, 20, 30, 40, 50])
-                ans = hypotenuse / 2
-                question_text = f"In a right triangle, if the hypotenuse is ${hypotenuse}$ and one angle is $60°$, find the length of the side adjacent to the $60°$ angle."
-                solution_text = steps(
-                    f"Use $\\cos(60°) = \\frac{{\\text{{adjacent}}}}{{\\text{{hypotenuse}}}}$",
-                    f"$\\cos(60°) = \\frac{{1}}{{2}}$",
-                    f"$\\frac{{1}}{{2}} = \\frac{{\\text{{adjacent}}}}{{{hypotenuse}}}$",
-                    f"adjacent $= {hypotenuse} \\cdot \\frac{{1}}{{2}} = {ans}$"
-                )
-        
+        elif trig_name == 'cos':
+            hyp = scale
+            adj = simplify(ratio_val * hyp)
+            question_text = f"In a right triangle, if the hypotenuse is ${hyp}$ and one angle is ${angle}°$, find the side adjacent to the ${angle}°$ angle."
+            ans = adj
+            sol = steps(
+                f"Use $\\cos({angle}°) = \\frac{{\\text{{adjacent}}}}{{\\text{{hypotenuse}}}}$",
+                f"$\\cos({angle}°) = {latex(ratio_val)}$",
+                f"$\\text{{adjacent}} = {hyp} \\cdot {latex(ratio_val)} = {latex(ans)}$"
+            )
+        else:  # tan
+            adj = scale
+            opp = simplify(ratio_val * adj)
+            question_text = f"In a right triangle, if the side adjacent to a ${angle}°$ angle is ${adj}$, find the side opposite to the ${angle}°$ angle."
+            ans = opp
+            sol = steps(
+                f"Use $\\tan({angle}°) = \\frac{{\\text{{opposite}}}}{{\\text{{adjacent}}}}$",
+                f"$\\tan({angle}°) = {latex(ratio_val)}$",
+                f"$\\text{{opposite}} = {adj} \\cdot {latex(ratio_val)} = {latex(ans)}$"
+            )
+
         return problem(
             question=question_text,
-            answer=ans,
+            answer=simplify(ans),
             difficulty=(1000, 1200),
             topic="geometry/right_triangle_trig",
-            solution=solution_text
+            solution=sol
         )
-    
+
     elif problem_type == 2:
-        # Finding an angle given a simple ratio (1100-1250)
+        # Find an angle given a ratio that matches a special angle
         angle = choice([30, 45, 60])
-        trig_func = choice(['sin', 'cos', 'tan'])
-        
-        if angle == 30:
-            if trig_func == 'sin':
-                opp = randint(1, 5)
-                hyp = 2 * opp
-                question_text = f"In a right triangle, the side opposite an angle is ${opp}$ and the hypotenuse is ${hyp}$. Find the angle in degrees."
-                ans = 30
-                solution_text = steps(
-                    f"$\\sin(\\theta) = \\frac{{{opp}}}{{{hyp}}} = \\frac{{1}}{{2}}$",
-                    f"$\\theta = \\sin^{{-1}}\\left(\\frac{{1}}{{2}}\\right) = 30°$"
-                )
-            elif trig_func == 'cos':
-                adj = randint(1, 5) * sqrt(3)
-                hyp = 2 * randint(1, 5)
-                question_text = f"In a right triangle, the side adjacent to an angle is ${latex(adj)}$ and the hypotenuse is ${hyp}$. Find the angle in degrees."
-                ans = 30
-                solution_text = steps(
-                    f"$\\cos(\\theta) = \\frac{{{latex(adj)}}}{{{hyp}}} = \\frac{{\\sqrt{{3}}}}{{2}}$",
-                    f"$\\theta = \\cos^{{-1}}\\left(\\frac{{\\sqrt{{3}}}}{{2}}\\right) = 30°$"
-                )
-            else:
-                opp = randint(1, 5)
-                adj = opp * sqrt(3)
-                question_text = f"In a right triangle, the side opposite an angle is ${opp}$ and the side adjacent is ${latex(adj)}$. Find the angle in degrees."
-                ans = 30
-                solution_text = steps(
-                    f"$\\tan(\\theta) = \\frac{{{opp}}}{{{latex(adj)}}} = \\frac{{1}}{{\\sqrt{{3}}}}$",
-                    f"$\\theta = \\tan^{{-1}}\\left(\\frac{{1}}{{\\sqrt{{3}}}}\\right) = 30°$"
-                )
-        elif angle == 45:
-            leg = randint(2, 8)
-            if trig_func == 'tan':
-                question_text = f"In a right triangle, both legs have length ${leg}$. Find one of the non-right angles in degrees."
-                ans = 45
-                solution_text = steps(
-                    f"$\\tan(\\theta) = \\frac{{{leg}}}{{{leg}}} = 1$",
-                    f"$\\theta = \\tan^{{-1}}(1) = 45°$"
-                )
-            else:
-                hyp = leg * sqrt(2)
-                question_text = f"In a right triangle, one leg is ${leg}$ and the hypotenuse is ${latex(hyp)}$. Find the angle opposite this leg in degrees."
-                ans = 45
-                solution_text = steps(
-                    f"$\\sin(\\theta) = \\frac{{{leg}}}{{{latex(hyp)}}} = \\frac{{1}}{{\\sqrt{{2}}}}$",
-                    f"$\\theta = \\sin^{{-1}}\\left(\\frac{{1}}{{\\sqrt{{2}}}}\\right) = 45°$"
-                )
-        else:  # 60
-            if trig_func == 'sin':
-                opp = randint(1, 5) * sqrt(3)
-                hyp = 2 * randint(1, 5)
-                question_text = f"In a right triangle, the side opposite an angle is ${latex(opp)}$ and the hypotenuse is ${hyp}$. Find the angle in degrees."
-                ans = 60
-                solution_text = steps(
-                    f"$\\sin(\\theta) = \\frac{{{latex(opp)}}}{{{hyp}}} = \\frac{{\\sqrt{{3}}}}{{2}}$",
-                    f"$\\theta = \\sin^{{-1}}\\left(\\frac{{\\sqrt{{3}}}}{{2}}\\right) = 60°$"
-                )
-            elif trig_func == 'cos':
-                adj = randint(1, 5)
-                hyp = 2 * adj
-                question_text = f"In a right triangle, the side adjacent to an angle is ${adj}$ and the hypotenuse is ${hyp}$. Find the angle in degrees."
-                ans = 60
-                solution_text = steps(
-                    f"$\\cos(\\theta) = \\frac{{{adj}}}{{{hyp}}} = \\frac{{1}}{{2}}$",
-                    f"$\\theta = \\cos^{{-1}}\\left(\\frac{{1}}{{2}}\\right) = 60°$"
-                )
-            else:
-                opp = randint(1, 5) * sqrt(3)
-                adj = randint(1, 5)
-                question_text = f"In a right triangle, the side opposite an angle is ${latex(opp)}$ and the side adjacent is ${adj}$. Find the angle in degrees."
-                ans = 60
-                solution_text = steps(
-                    f"$\\tan(\\theta) = \\frac{{{latex(opp)}}}{{{adj}}} = \\sqrt{{3}}$",
-                    f"$\\theta = \\tan^{{-1}}(\\sqrt{{3}}) = 60°$"
-                )
-        
-        return problem(
-            question=question_text,
-            answer=ans,
-            difficulty=(1100, 1250),
-            topic="geometry/right_triangle_trig",
-            solution=solution_text
-        )
-    
-    elif problem_type == 3:
-        # Simple SOH-CAH-TOA identification (1000-1150)
-        angle_label = choice(['A', 'B', 'C'])
-        side1 = randint(3, 10)
-        side2 = randint(3, 10)
-        ratio_type = choice(['sin', 'cos', 'tan'])
-        
-        if ratio_type == 'sin':
-            question_text = f"In a right triangle, the side opposite angle ${angle_label}$ is ${side1}$ and the hypotenuse is ${side2}$. Write the value of $\\sin({angle_label})$ as a fraction."
-            ans = Rational(side1, side2)
-            solution_text = steps(
-                f"$\\sin({angle_label}) = \\frac{{\\text{{opposite}}}}{{\\text{{hypotenuse}}}}$",
-                f"$\\sin({angle_label}) = \\frac{{{side1}}}{{{side2}}}$"
+        trig_name = choice(['sin', 'cos', 'tan'])
+        ratio_val = SPECIAL_ANGLES[angle][trig_name]
+        scale = randint(1, 6)
+
+        if trig_name == 'sin':
+            opp = simplify(ratio_val * scale * 2) if angle in [30,60] else simplify(ratio_val * scale)
+            hyp = simplify(scale * 2) if angle in [30,60] else simplify(sqrt(2) * scale)
+            question_text = f"In a right triangle, the side opposite an angle is ${latex(simplify(ratio_val * scale * 2 if angle in [30,60] else ratio_val*scale))}$ and the hypotenuse is ${latex(simplify(2*scale if angle in [30,60] else sqrt(2)*scale))}$. Find the angle in degrees."
+            sol = steps(
+                f"$\\sin(\\theta) = \\frac{{\\text{{opposite}}}}{{\\text{{hypotenuse}}}} = {latex(ratio_val)}$",
+                f"$\\theta = \\sin^{{-1}}({latex(ratio_val)}) = {angle}°$"
             )
-        elif ratio_type == 'cos':
-            question_text = f"In a right triangle, the side adjacent to angle ${angle_label}$ is ${side1}$ and the hypotenuse is ${side2}$. Write the value of $\\cos({angle_label})$ as a fraction."
-            ans = Rational(side1, side2)
-            solution_text = steps(
-                f"$\\cos({angle_label}) = \\frac{{\\text{{adjacent}}}}{{\\text{{hypotenuse}}}}$",
-                f"$\\cos({angle_label}) = \\frac{{{side1}}}{{{side2}}}$"
+        elif trig_name == 'cos':
+            adj = simplify(ratio_val * scale * 2) if angle in [30,60] else simplify(ratio_val * scale)
+            hyp = simplify(scale * 2) if angle in [30,60] else simplify(sqrt(2) * scale)
+            question_text = f"In a right triangle, the side adjacent to an angle is ${latex(simplify(ratio_val * scale * 2 if angle in [30,60] else ratio_val*scale))}$ and the hypotenuse is ${latex(simplify(2*scale if angle in [30,60] else sqrt(2)*scale))}$. Find the angle in degrees."
+            sol = steps(
+                f"$\\cos(\\theta) = \\frac{{\\text{{adjacent}}}}{{\\text{{hypotenuse}}}} = {latex(ratio_val)}$",
+                f"$\\theta = \\cos^{{-1}}({latex(ratio_val)}) = {angle}°$"
             )
         else:
-            question_text = f"In a right triangle, the side opposite angle ${angle_label}$ is ${side1}$ and the side adjacent is ${side2}$. Write the value of $\\tan({angle_label})$ as a fraction."
-            ans = Rational(side1, side2)
-            solution_text = steps(
-                f"$\\tan({angle_label}) = \\frac{{\\text{{opposite}}}}{{\\text{{adjacent}}}}$",
-                f"$\\tan({angle_label}) = \\frac{{{side1}}}{{{side2}}}$"
+            opp_scale = scale
+            adj_scale = simplify(opp_scale / ratio_val)
+            question_text = f"In a right triangle, the side opposite an angle is ${opp_scale}$ and the side adjacent is ${latex(simplify(adj_scale))}$. Find the angle in degrees."
+            sol = steps(
+                f"$\\tan(\\theta) = \\frac{{\\text{{opposite}}}}{{\\text{{adjacent}}}} = \\frac{{{opp_scale}}}{{{latex(simplify(adj_scale))}}} = {latex(ratio_val)}$",
+                f"$\\theta = \\tan^{{-1}}({latex(ratio_val)}) = {angle}°$"
             )
-        
+
         return problem(
             question=question_text,
+            answer=angle,
+            difficulty=(1100, 1250),
+            topic="geometry/right_triangle_trig",
+            solution=sol
+        )
+
+    elif problem_type == 3:
+        # SOH-CAH-TOA identification: write trig ratio as fraction
+        angle_label = choice(['A', 'B', 'C', 'D', 'E'])
+        # Pick non-equal coprime sides
+        side1 = randint(2, 15)
+        side2 = randint(2, 15)
+        while side1 == side2:
+            side2 = randint(2, 15)
+        ratio_type = choice(['sin', 'cos', 'tan'])
+        ans = Rational(side1, side2)
+
+        if ratio_type == 'sin':
+            q = f"In a right triangle, the side opposite angle ${angle_label}$ is ${side1}$ and the hypotenuse is ${side2}$. Write $\\sin({angle_label})$ as a fraction."
+            sol = steps(
+                f"$\\sin({angle_label}) = \\frac{{\\text{{opposite}}}}{{\\text{{hypotenuse}}}} = \\frac{{{side1}}}{{{side2}}}$"
+            )
+        elif ratio_type == 'cos':
+            q = f"In a right triangle, the side adjacent to angle ${angle_label}$ is ${side1}$ and the hypotenuse is ${side2}$. Write $\\cos({angle_label})$ as a fraction."
+            sol = steps(
+                f"$\\cos({angle_label}) = \\frac{{\\text{{adjacent}}}}{{\\text{{hypotenuse}}}} = \\frac{{{side1}}}{{{side2}}}$"
+            )
+        else:
+            q = f"In a right triangle, the side opposite angle ${angle_label}$ is ${side1}$ and the side adjacent is ${side2}$. Write $\\tan({angle_label})$ as a fraction."
+            sol = steps(
+                f"$\\tan({angle_label}) = \\frac{{\\text{{opposite}}}}{{\\text{{adjacent}}}} = \\frac{{{side1}}}{{{side2}}}$"
+            )
+
+        return problem(
+            question=q,
             answer=ans,
             difficulty=(1000, 1150),
             topic="geometry/right_triangle_trig",
-            solution=solution_text
+            solution=sol
         )
-    
+
     else:
-        # Two-step: find one side, then use it to find another (1200-1300)
-        angle = choice([30, 60])
-        hypotenuse = choice([10, 20, 30])
-        
-        if angle == 30:
-            short_leg = hypotenuse / 2
-            long_leg = hypotenuse * sqrt(3) / 2
-            question_text = f"In a $30°$-$60°$-$90°$ triangle, the hypotenuse is ${hypotenuse}$. Find the length of the longer leg."
-            ans = long_leg
-            solution_text = steps(
-                f"In a $30°$-$60°$-$90°$ triangle, the sides are in ratio $1 : \\sqrt{{3}} : 2$",
-                f"The shorter leg (opposite $30°$) is $\\frac{{{hypotenuse}}}{{2}} = {latex(short_leg)}$",
-                f"The longer leg (opposite $60°$) is $\\frac{{{hypotenuse}} \\sqrt{{3}}}}{{2}} = {latex(long_leg)}$"
+        # 30-60-90 and 45-45-90 triangles, given hypotenuse find legs
+        triangle_type = choice(['30-60-90', '45-45-90'])
+        hypotenuse = choice([2, 4, 6, 8, 10, 12, 14, 16, 20])
+
+        if triangle_type == '30-60-90':
+            short_leg = simplify(hypotenuse * Rational(1,2))
+            long_leg = simplify(hypotenuse * sqrt(3) / 2)
+            which = choice(['short', 'long'])
+            if which == 'short':
+                ans = short_leg
+                q = f"In a $30°$-$60°$-$90°$ triangle, the hypotenuse is ${hypotenuse}$. Find the length of the shorter leg (opposite $30°$)."
+                sol = steps(
+                    f"In a $30°$-$60°$-$90°$ triangle, the sides are in ratio $1:\\sqrt{{3}}:2$",
+                    f"Shorter leg $= \\frac{{\\text{{hypotenuse}}}}{{2}} = \\frac{{{hypotenuse}}}{{2}} = {latex(short_leg)}$"
+                )
+            else:
+                ans = long_leg
+                q = f"In a $30°$-$60°$-$90°$ triangle, the hypotenuse is ${hypotenuse}$. Find the length of the longer leg (opposite $60°$)."
+                sol = steps(
+                    f"In a $30°$-$60°$-$90°$ triangle, sides are in ratio $1:\\sqrt{{3}}:2$",
+                    f"Longer leg $= \\frac{{\\sqrt{{3}}}}{{2}} \\cdot {hypotenuse} = {latex(long_leg)}$"
+                )
+        else:
+            leg = simplify(hypotenuse * sqrt(2) / 2)
+            ans = leg
+            q = f"In a $45°$-$45°$-$90°$ triangle, the hypotenuse is ${hypotenuse}$. Find the length of one leg."
+            sol = steps(
+                f"In a $45°$-$45°$-$90°$ triangle, the sides are in ratio $1:1:\\sqrt{{2}}$",
+                f"Leg $= \\frac{{\\text{{hypotenuse}}}}{{\\sqrt{{2}}}} = \\frac{{{hypotenuse}}}{{\\sqrt{{2}}}} = {latex(leg)}$"
             )
-        else:  # 60 degree case
-            short_leg = hypotenuse / 2
-            long_leg = hypotenuse * sqrt(3) / 2
-            question_text = f"In a $30°$-$60°$-$90°$ triangle, the hypotenuse is ${hypotenuse}$. Find the length of the shorter leg."
-            ans = short_leg
-            solution_text = steps(
-                f"In a $30°$-$60°$-$90°$ triangle, the sides are in ratio $1 : \\sqrt{{3}} : 2$",
-                f"The shorter leg (opposite $30°$) is $\\frac{{{hypotenuse}}}{{2}} = {latex(short_leg)}$"
-            )
-        
+
         return problem(
-            question=question_text,
+            question=q,
             answer=ans,
             difficulty=(1200, 1300),
             topic="geometry/right_triangle_trig",
-            solution=solution_text
+            solution=sol
         )
 
 emit(generate())

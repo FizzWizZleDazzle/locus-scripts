@@ -6,162 +6,156 @@ Generated: 2026-02-22T05:44:47.706376
 from problem_utils import *
 
 def generate():
-    problem_type = randint(1, 5)
-    
+    problem_type = randint(1, 6)
+
     if problem_type == 1:
-        # Line integral of a vector field along a parametric curve (conservative field check)
-        # Difficulty: 1600-1750
-        a_val = nonzero(-3, 3)
-        b_val = nonzero(-3, 3)
-        c_val = nonzero(-3, 3)
-        
-        # Conservative field: F = grad(f) where f = a*x*y + b*y*z + c*x*z
-        # So F = (a*y + c*z, a*x + b*z, b*y + c*x)
-        F_x = a_val*y + c_val*z
-        F_y = a_val*x + b_val*z
-        F_z = b_val*y + c_val*x
-        
-        # Endpoints
-        x0, y0, z0 = randint(-2, 2), randint(-2, 2), randint(-2, 2)
-        x1, y1, z1 = randint(-2, 2), randint(-2, 2), randint(-2, 2)
-        
-        # For conservative field, integral = f(end) - f(start)
-        f_start = a_val*x0*y0 + b_val*y0*z0 + c_val*x0*z0
-        f_end = a_val*x1*y1 + b_val*y1*z1 + c_val*x1*z1
+        # Conservative 3D field: evaluate via potential function
+        a_val = nonzero(-4, 4)
+        b_val = nonzero(-4, 4)
+        c_val = nonzero(-4, 4)
+        # phi = a*x*y + b*y*z + c*x*z
+        F_x = a_val * y + c_val * z
+        F_y = a_val * x + b_val * z
+        F_z = b_val * y + c_val * x
+        x0, y0, z0 = randint(-3, 3), randint(-3, 3), randint(-3, 3)
+        x1, y1, z1 = randint(-3, 3), randint(-3, 3), randint(-3, 3)
+        while x1 == x0 and y1 == y0 and z1 == z0:
+            x1, y1, z1 = randint(-3, 3), randint(-3, 3), randint(-3, 3)
+        f_start = a_val * x0 * y0 + b_val * y0 * z0 + c_val * x0 * z0
+        f_end = a_val * x1 * y1 + b_val * y1 * z1 + c_val * x1 * z1
         ans = f_end - f_start
-        
         return problem(
-            question=f"Evaluate the line integral $\\int_C \\mathbf{{F}} \\cdot d\\mathbf{{r}}$ where $\\mathbf{{F}} = \\langle {latex(F_x)}, {latex(F_y)}, {latex(F_z)} \\rangle$ and $C$ is any path from $({x0}, {y0}, {z0})$ to $({x1}, {y1}, {z1})$.",
+            question=f"Evaluate $\\int_C \\mathbf{{F}} \\cdot d\\mathbf{{r}}$ where $\\mathbf{{F}} = \\langle {latex(F_x)}, {latex(F_y)}, {latex(F_z)} \\rangle$ along any path from $({x0},{y0},{z0})$ to $({x1},{y1},{z1})$.",
             answer=ans,
             difficulty=(1600, 1750),
             topic="multivariable_calculus/line_integrals",
             solution=steps(
-                f"Check if $\\mathbf{{F}}$ is conservative by verifying $\\nabla \\times \\mathbf{{F}} = \\mathbf{{0}}$",
-                f"$\\frac{{\\partial F_z}}{{\\partial y}} - \\frac{{\\partial F_y}}{{\\partial z}} = {latex(diff(F_z, y))} - {latex(diff(F_y, z))} = 0$",
-                f"$\\frac{{\\partial F_x}}{{\\partial z}} - \\frac{{\\partial F_z}}{{\\partial x}} = {latex(diff(F_x, z))} - {latex(diff(F_z, x))} = 0$",
-                f"$\\frac{{\\partial F_y}}{{\\partial x}} - \\frac{{\\partial F_x}}{{\\partial y}} = {latex(diff(F_y, x))} - {latex(diff(F_x, y))} = 0$",
-                f"Since $\\mathbf{{F}}$ is conservative, find potential function $f$ where $\\nabla f = \\mathbf{{F}}$",
-                f"$f(x,y,z) = {latex(a_val*x*y + b_val*y*z + c_val*x*z)}$",
-                f"Line integral = $f({x1},{y1},{z1}) - f({x0},{y0},{z0}) = {f_end} - {f_start} = {ans}$"
+                f"$\\mathbf{{F}} = \\nabla\\varphi$ where $\\varphi = {latex(a_val*x*y + b_val*y*z + c_val*x*z)}$",
+                f"$\\int_C \\mathbf{{F}} \\cdot d\\mathbf{{r}} = \\varphi({x1},{y1},{z1}) - \\varphi({x0},{y0},{z0})$",
+                f"$= {f_end} - {f_start} = {ans}$"
             ),
+            calculator="scientific"
         )
-    
+
     elif problem_type == 2:
-        # Line integral along a helix with non-conservative field
-        # Difficulty: 1700-1850
-        a_coeff = nonzero(-2, 2)
-        b_coeff = nonzero(-2, 2)
-        
-        # F = <y, -x, z>  (not conservative, typical rotation field)
-        # Parametrize helix: r(t) = <cos(t), sin(t), t> for t in [0, 2*pi]
-        # r'(t) = <-sin(t), cos(t), 1>
-        # F(r(t)) = <sin(t), -cos(t), t>
-        # F · r' = -sin²(t) - cos²(t) + t = -1 + t
-        # Integral from 0 to 2π of (-1 + t) dt = [-t + t²/2] from 0 to 2π
-        
-        t_end = 2  # Use 2π for cleaner computation
-        
+        # Line integral along helix r(t) = <cos t, sin t, t>
+        t_end = choice([1, 2, 3, 4])
+        # F = <y, -x, z>, F·r' = -sin²t - cos²t + t = -1 + t
+        # integral from 0 to t_end of (-1 + t) dt = [-t + t²/2]
+        ans = Rational(-t_end**2, 2) + Rational(t_end**2, 2)
+        # Re-derive correctly: int_0^T (-1+t)dt = -T + T^2/2
         ans = -t_end + Rational(t_end**2, 2)
-        
         return problem(
-            question=f"Evaluate $\\int_C (y\\,dx - x\\,dy + z\\,dz)$ where $C$ is the helix parametrized by $\\mathbf{{r}}(t) = \\langle \\cos(t), \\sin(t), t \\rangle$ for $t \\in [0, {t_end}]$.",
+            question=f"Evaluate $\\int_C (y\\,dx - x\\,dy + z\\,dz)$ where $C$: $\\mathbf{{r}}(t) = \\langle \\cos t, \\sin t, t \\rangle$, $t \\in [0,{t_end}]$.",
             answer=ans,
             difficulty=(1700, 1850),
             topic="multivariable_calculus/line_integrals",
             solution=steps(
-                f"Compute $\\mathbf{{r}}'(t) = \\langle -\\sin(t), \\cos(t), 1 \\rangle$",
-                f"On the curve: $x = \\cos(t)$, $y = \\sin(t)$, $z = t$",
-                f"The integrand becomes: $y(-\\sin(t)) - x(\\cos(t)) + z(1)$",
-                f"$= \\sin(t)(-\\sin(t)) - \\cos(t)(\\cos(t)) + t = -\\sin^2(t) - \\cos^2(t) + t = -1 + t$",
-                f"$\\int_0^{{{t_end}}} (-1 + t)\\,dt = \\left[-t + \\frac{{t^2}}{{2}}\\right]_0^{{{t_end}}}$",
-                f"$= -{t_end} + \\frac{{{t_end**2}}}{{2}} = {latex(ans)}$"
+                f"$\\mathbf{{r}}'(t) = \\langle -\\sin t, \\cos t, 1 \\rangle$",
+                f"Integrand: $y(-\\sin t) - x(\\cos t) + z = -\\sin^2 t - \\cos^2 t + t = -1 + t$",
+                f"$\\int_0^{{{t_end}}} (-1+t)\\,dt = \\left[-t + \\frac{{t^2}}{{2}}\\right]_0^{{{t_end}}} = -{t_end} + \\frac{{{t_end**2}}}{{2}} = {latex(ans)}$"
             ),
+            calculator="scientific"
         )
-    
+
     elif problem_type == 3:
-        # Work done by force field along a line segment
-        # Difficulty: 1650-1800
-        a_val = nonzero(-3, 3)
-        b_val = nonzero(-3, 3)
-        
-        # F = <ax, by>, line segment from (0,0) to (1,1)
-        # r(t) = <t, t>, r'(t) = <1, 1> for t in [0,1]
-        # F(r(t)) = <a*t, b*t>
-        # F · r' = a*t + b*t = (a+b)*t
-        # Integral = (a+b) * t²/2 from 0 to 1 = (a+b)/2
-        
-        ans = Rational(a_val + b_val, 2)
-        
+        # Work done by F = <ax, by> along segment from (0,0) to (p,q)
+        a_val = nonzero(-5, 5)
+        b_val = nonzero(-5, 5)
+        p_val = nonzero(-4, 4)
+        q_val = nonzero(-4, 4)
+        # r(t) = <p*t, q*t>, r'(t) = <p, q>
+        # F(r(t)) = <a*p*t, b*q*t>
+        # F·r' = a*p²*t + b*q²*t = (a*p² + b*q²)*t
+        dot = a_val * p_val**2 + b_val * q_val**2
+        ans = Rational(dot, 2)
         return problem(
-            question=f"Calculate the work done by the force field $\\mathbf{{F}}(x,y) = \\langle {a_val}x, {b_val}y \\rangle$ on a particle moving along the line segment from $(0,0)$ to $(1,1)$.",
+            question=f"Find the work done by $\\mathbf{{F}} = \\langle {a_val}x, {b_val}y \\rangle$ along the segment from $(0,0)$ to $({p_val},{q_val})$.",
             answer=ans,
             difficulty=(1650, 1800),
             topic="multivariable_calculus/line_integrals",
             solution=steps(
-                f"Parametrize the line segment: $\\mathbf{{r}}(t) = \\langle t, t \\rangle$ for $t \\in [0,1]$",
-                f"Compute $\\mathbf{{r}}'(t) = \\langle 1, 1 \\rangle$",
-                f"Evaluate $\\mathbf{{F}}(\\mathbf{{r}}(t)) = \\langle {a_val}t, {b_val}t \\rangle$",
-                f"$\\mathbf{{F}} \\cdot \\mathbf{{r}}' = {a_val}t \\cdot 1 + {b_val}t \\cdot 1 = {a_val + b_val}t$",
-                f"Work = $\\int_0^1 {a_val + b_val}t\\,dt = {a_val + b_val} \\cdot \\frac{{t^2}}{{2}}\\bigg|_0^1 = {latex(ans)}$"
+                f"Parameterize: $\\mathbf{{r}}(t) = \\langle {p_val}t, {q_val}t \\rangle$, $t \\in [0,1]$",
+                f"$\\mathbf{{F}}(\\mathbf{{r}}(t)) = \\langle {a_val}\\cdot{p_val}t, {b_val}\\cdot{q_val}t \\rangle$",
+                f"$\\mathbf{{F}} \\cdot \\mathbf{{r}}' = {a_val*p_val}\\cdot{p_val}\\cdot t + {b_val*q_val}\\cdot{q_val}\\cdot t = {dot}t$",
+                f"$W = \\int_0^1 {dot}t\\,dt = \\frac{{{dot}}}{{2}} = {latex(ans)}$"
             ),
+            calculator="scientific"
         )
-    
+
     elif problem_type == 4:
-        # Line integral with respect to arc length
-        # Difficulty: 1600-1750
-        a_val = nonzero(1, 4)
-        
-        # Integrate f(x,y) = xy along the circle x² + y² = a²
-        # Parametrize: x = a*cos(t), y = a*sin(t), t in [0, 2π]
-        # ds = a dt
-        # f = a²*cos(t)*sin(t) = (a²/2)*sin(2t)
-        # Integral of (a²/2)*sin(2t) * a dt from 0 to 2π
-        # = (a³/2) * [-cos(2t)/2] from 0 to 2π = 0
-        
+        # ∫_C xy ds along circle x²+y²=r², answer = 0
+        a_val = randint(1, 6)
         ans = 0
-        
         return problem(
-            question=f"Evaluate $\\int_C xy\\,ds$ where $C$ is the circle $x^2 + y^2 = {a_val**2}$ traversed counterclockwise.",
+            question=f"Evaluate $\\int_C xy\\,ds$ where $C$: $x^2+y^2={a_val**2}$ (full circle, CCW).",
             answer=ans,
             difficulty=(1600, 1750),
             topic="multivariable_calculus/line_integrals",
             solution=steps(
-                f"Parametrize the circle: $x = {a_val}\\cos(t)$, $y = {a_val}\\sin(t)$ for $t \\in [0, 2\\pi]$",
-                f"Compute $ds = \\sqrt{{x'(t)^2 + y'(t)^2}}\\,dt = \\sqrt{{{a_val**2}\\sin^2(t) + {a_val**2}\\cos^2(t)}}\\,dt = {a_val}\\,dt$",
-                f"On the curve: $xy = {a_val**2}\\cos(t)\\sin(t) = \\frac{{{a_val**2}}}{{2}}\\sin(2t)$",
-                f"$\\int_C xy\\,ds = \\int_0^{{2\\pi}} \\frac{{{a_val**2}}}{{2}}\\sin(2t) \\cdot {a_val}\\,dt$",
-                f"$= \\frac{{{a_val**3}}}{{2}} \\int_0^{{2\\pi}} \\sin(2t)\\,dt = \\frac{{{a_val**3}}}{{2}} \\left[-\\frac{{\\cos(2t)}}{{2}}\\right]_0^{{2\\pi}}$",
-                f"$= \\frac{{{a_val**3}}}{{4}}[-\\cos(4\\pi) + \\cos(0)] = \\frac{{{a_val**3}}}{{4}}[-1 + 1] = 0$"
+                f"Parameterize: $x = {a_val}\\cos t$, $y = {a_val}\\sin t$, $ds = {a_val}\\,dt$, $t \\in [0,2\\pi]$",
+                f"$xy = {a_val**2}\\cos t \\sin t = \\frac{{{a_val**2}}}{{2}}\\sin(2t)$",
+                f"$\\int_0^{{2\\pi}} \\frac{{{a_val**2}}}{{2}}\\sin(2t) \\cdot {a_val}\\,dt = \\frac{{{a_val**3}}}{{2}} \\cdot 0 = 0$",
+                f"(The integral of $\\sin(2t)$ over a full period is zero.)"
             ),
+            calculator="scientific"
         )
-    
-    else:  # problem_type == 5
-        # Circulation around a closed curve using Green's theorem verification
-        # Difficulty: 1750-1900
-        a_val = nonzero(-2, 2)
-        b_val = nonzero(-2, 2)
-        
-        # F = <-y + ax, x + by>, rectangle [0,2] × [0,1]
-        # Green's: ∮ F·dr = ∬ (∂Q/∂x - ∂P/∂y) dA
-        # P = -y + ax, Q = x + by
-        # ∂Q/∂x = 1, ∂P/∂y = -1
-        # ∂Q/∂x - ∂P/∂y = 1 - (-1) = 2
-        # Area = 2*1 = 2, so integral = 2*2 = 4
-        
-        ans = 4
-        
+
+    elif problem_type == 5:
+        # Green's theorem: ∮ F·dr over rectangle [0,a]×[0,b]
+        # P = c*y + ..., Q = d*x + ..., curl = dQ/dx - dP/dy = d - c
+        c_coeff = nonzero(-4, 4)
+        d_coeff = nonzero(-4, 4)
+        # Make c_coeff != d_coeff so answer is nonzero
+        while c_coeff == d_coeff:
+            d_coeff = nonzero(-4, 4)
+        extra_p = nonzero(-3, 3)
+        extra_q = nonzero(-3, 3)
+        P = c_coeff * y + extra_p * x
+        Q = d_coeff * x + extra_q * y
+        curl = diff(Q, x) - diff(P, y)
+        a_val = randint(1, 5)
+        b_val = randint(1, 5)
+        area = a_val * b_val
+        ans = curl * area
         return problem(
-            question=f"Compute the circulation $\\oint_C \\mathbf{{F}} \\cdot d\\mathbf{{r}}$ where $\\mathbf{{F}} = \\langle -y + {a_val}x, x + {b_val}y \\rangle$ and $C$ is the boundary of the rectangle $[0,2] \\times [0,1]$ traversed counterclockwise.",
+            question=f"Use Green's Theorem to evaluate $\\oint_C \\mathbf{{F}} \\cdot d\\mathbf{{r}}$ where $\\mathbf{{F}} = \\langle {latex(P)}, {latex(Q)} \\rangle$ and $C$ is the boundary of $[0,{a_val}] \\times [0,{b_val}]$ (CCW).",
             answer=ans,
             difficulty=(1750, 1900),
             topic="multivariable_calculus/line_integrals",
             solution=steps(
-                f"Use Green's Theorem: $\\oint_C \\mathbf{{F}} \\cdot d\\mathbf{{r}} = \\iint_D \\left(\\frac{{\\partial Q}}{{\\partial x}} - \\frac{{\\partial P}}{{\\partial y}}\\right) dA$",
-                f"Here $P = -y + {a_val}x$ and $Q = x + {b_val}y$",
-                f"$\\frac{{\\partial Q}}{{\\partial x}} = 1$, $\\frac{{\\partial P}}{{\\partial y}} = -1$",
-                f"$\\frac{{\\partial Q}}{{\\partial x}} - \\frac{{\\partial P}}{{\\partial y}} = 1 - (-1) = 2$",
-                f"$\\iint_D 2\\,dA = 2 \\cdot \\text{{Area}}(D) = 2 \\cdot (2 \\times 1) = 4$"
+                f"Green's Theorem: $\\oint_C \\mathbf{{F}} \\cdot d\\mathbf{{r}} = \\iint_D \\left(\\frac{{\\partial Q}}{{\\partial x}} - \\frac{{\\partial P}}{{\\partial y}}\\right) dA$",
+                f"$\\frac{{\\partial Q}}{{\\partial x}} = {d_coeff}$, $\\frac{{\\partial P}}{{\\partial y}} = {c_coeff}$",
+                f"Curl $= {d_coeff} - {c_coeff} = {latex(curl)}$",
+                f"$\\iint_D {latex(curl)}\\,dA = {latex(curl)} \\cdot {a_val} \\cdot {b_val} = {latex(ans)}$"
             ),
+            calculator="scientific"
+        )
+
+    else:
+        # 2D line integral with quadratic field along parabola y=x²
+        a_val = nonzero(-3, 3)
+        b_val = nonzero(-3, 3)
+        x_end = randint(1, 4)
+        P = a_val * x
+        Q = b_val * y
+        # r(t) = <t, t²>, r'(t) = <1, 2t>
+        P_sub = P.subs(x, t)
+        Q_sub = Q.subs([(x, t), (y, t**2)])
+        integrand = simplify(P_sub * 1 + Q_sub * 2 * t)
+        ans = simplify(integrate(integrand, (t, 0, x_end)))
+        return problem(
+            question=f"Evaluate $\\int_C \\mathbf{{F}} \\cdot d\\mathbf{{r}}$ where $\\mathbf{{F}} = \\langle {latex(P)}, {latex(Q)} \\rangle$ along the parabola $y = x^2$ from $(0,0)$ to $({x_end},{x_end**2})$.",
+            answer=ans,
+            difficulty=(1700, 1850),
+            topic="multivariable_calculus/line_integrals",
+            solution=steps(
+                f"Parameterize: $x = t$, $y = t^2$, $t \\in [0,{x_end}]$",
+                f"$d\\mathbf{{r}} = \\langle 1, 2t \\rangle\\,dt$",
+                f"$\\mathbf{{F}} \\cdot d\\mathbf{{r}} = {a_val}t + {b_val}t^2 \\cdot 2t = {latex(integrand)}\\,dt$",
+                f"$\\int_0^{{{x_end}}} {latex(integrand)}\\,dt = {latex(ans)}$"
+            ),
+            calculator="scientific"
         )
 
 emit(generate())

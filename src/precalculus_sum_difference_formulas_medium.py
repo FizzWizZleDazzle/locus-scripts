@@ -1,237 +1,261 @@
 """
 precalculus - sum_difference_formulas (medium)
-Generated: 2026-02-22T04:46:52.715841
 """
 
 from problem_utils import *
 
+SPECIAL = [
+    (15,  45, 30, '-'),
+    (75,  45, 30, '+'),
+    (105, 60, 45, '+'),
+    (120, 90, 30, '+'),
+    (135, 90, 45, '+'),
+    (150, 90, 60, '+'),
+    (165, 120, 45, '+'),
+    (195, 150, 45, '+'),
+    (210, 180, 30, '+'),
+    (225, 180, 45, '+'),
+    (240, 180, 60, '+'),
+    (255, 210, 45, '+'),
+    (285, 270, 15, '+'),
+    (300, 270, 30, '+'),
+    (315, 270, 45, '+'),
+    (330, 300, 30, '+'),
+]
+
+
 def generate():
-    problem_type = randint(1, 4)
-    
+    problem_type = randint(1, 5)
+
     if problem_type == 1:
-        # Evaluate sin or cos of sum/difference of special angles
-        # Difficulty: 1300-1400
-        angles = [30, 45, 60]
-        angle1 = choice(angles)
-        angle2 = choice(angles)
-        
-        # Choose sum or difference
+        # Evaluate sin/cos/tan of sum/difference of standard angles
+        a1 = choice([30, 45, 60, 90, 120, 135, 150])
+        a2 = choice([30, 45, 60])
         is_sum = choice([True, False])
-        
-        # Choose sin or cos
-        func = choice(['sin', 'cos'])
-        
-        if is_sum:
-            angle_expr = angle1 + angle2
-            op = "+"
-        else:
-            angle_expr = angle1 - angle2
-            op = "-"
-        
-        # Convert to radians for SymPy
-        angle1_rad = angle1 * pi / 180
-        angle2_rad = angle2 * pi / 180
-        
+        func = choice(['sin', 'cos', 'tan'])
+
+        result_deg = (a1 + a2) if is_sum else (a1 - a2)
+        result_rad = result_deg * pi / 180
+        op = '+' if is_sum else '-'
+
         if func == 'sin':
-            if is_sum:
-                ans = simplify(sin(angle1_rad)*cos(angle2_rad) + cos(angle1_rad)*sin(angle2_rad))
-            else:
-                ans = simplify(sin(angle1_rad)*cos(angle2_rad) - cos(angle1_rad)*sin(angle2_rad))
-            
-            formula = r"\sin(\alpha + \beta) = \sin\alpha\cos\beta + \cos\alpha\sin\beta" if is_sum else r"\sin(\alpha - \beta) = \sin\alpha\cos\beta - \cos\alpha\sin\beta"
-            
-            solution_steps = steps(
-                f"Use the formula: ${formula}$",
-                f"$\\sin({angle1}°)\\cos({angle2}°) {op} \\cos({angle1}°)\\sin({angle2}°)$",
-                f"$= {latex(ans)}$"
-            )
+            ans = simplify(sin(result_rad))
+            formula = r"\sin(A\pm B)=\sin A\cos B\pm\cos A\sin B"
+        elif func == 'cos':
+            ans = simplify(cos(result_rad))
+            formula = r"\cos(A\pm B)=\cos A\cos B\mp\sin A\sin B"
         else:
-            if is_sum:
-                ans = simplify(cos(angle1_rad)*cos(angle2_rad) - sin(angle1_rad)*sin(angle2_rad))
+            # Avoid undefined tan
+            if result_deg % 180 == 90:
+                func = 'sin'
+                ans = simplify(sin(result_rad))
+                formula = r"\sin(A\pm B)=\sin A\cos B\pm\cos A\sin B"
             else:
-                ans = simplify(cos(angle1_rad)*cos(angle2_rad) + sin(angle1_rad)*sin(angle2_rad))
-            
-            formula = r"\cos(\alpha + \beta) = \cos\alpha\cos\beta - \sin\alpha\sin\beta" if is_sum else r"\cos(\alpha - \beta) = \cos\alpha\cos\beta + \sin\alpha\sin\beta"
-            
-            solution_steps = steps(
-                f"Use the formula: ${formula}$",
-                f"$\\cos({angle1}°)\\cos({angle2}°) {'+' if not is_sum else '-'} \\sin({angle1}°)\\sin({angle2}°)$",
-                f"$= {latex(ans)}$"
-            )
-        
-        question = f"Evaluate $\\{func}({angle1}° {op} {angle2}°)$ exactly."
-        
+                try:
+                    ans = simplify(tan(result_rad))
+                    formula = r"\tan(A\pm B)=\frac{\tan A\pm\tan B}{1\mp\tan A\tan B}"
+                except Exception:
+                    func = 'cos'
+                    ans = simplify(cos(result_rad))
+                    formula = r"\cos(A\pm B)=\cos A\cos B\mp\sin A\sin B"
+
         return problem(
-            question=question,
+            question=f"Evaluate $\\{func}({a1}^\\circ {op} {a2}^\\circ)$ exactly.",
             answer=ans,
             difficulty=(1300, 1400),
             topic="precalculus/sum_difference_formulas",
-            solution=solution_steps
+            solution=steps(
+                f"Use: ${formula}$",
+                f"Substitute $A = {a1}^\\circ$, $B = {a2}^\\circ$",
+                f"$= {latex(ans)}$"
+            )
         )
-    
+
     elif problem_type == 2:
-        # Simplify using sum/difference formula (with variables)
-        # Difficulty: 1400-1500
-        func = choice(['sin', 'cos'])
-        
-        # Choose whether to expand or verify identity
-        expand_problem = choice([True, False])
-        
-        if expand_problem:
-            if func == 'sin':
-                is_sum = choice([True, False])
-                if is_sum:
-                    question = f"Expand $\\sin(x + y)$ using the sum formula."
-                    ans = sin(x)*cos(y) + cos(x)*sin(y)
-                    solution_steps = steps(
-                        r"Use the formula: $\sin(\alpha + \beta) = \sin\alpha\cos\beta + \cos\alpha\sin\beta$",
-                        f"$= {latex(ans)}$"
-                    )
-                else:
-                    question = f"Expand $\\sin(x - y)$ using the difference formula."
-                    ans = sin(x)*cos(y) - cos(x)*sin(y)
-                    solution_steps = steps(
-                        r"Use the formula: $\sin(\alpha - \beta) = \sin\alpha\cos\beta - \cos\alpha\sin\beta$",
-                        f"$= {latex(ans)}$"
-                    )
+        # Simplify with variables: sin(ax)/cos(bx) combo → single function
+        a = choice([2, 3, 4, 5, 6])
+        b = choice([1, 2, 3, 4])
+        while a == b:
+            b = choice([1, 2, 3, 4])
+
+        variant = choice(['expand_sin', 'expand_cos', 'collapse_sin', 'collapse_cos'])
+
+        if variant == 'expand_sin':
+            angle_add = choice([pi/6, pi/4, pi/3, pi/2])
+            lhs = sin(x + angle_add)
+            ans = expand_trig(lhs)
+            return problem(
+                question=f"Expand $\\sin\\!\\left(x + {latex(angle_add)}\\right)$ using the sum formula.",
+                answer=ans,
+                difficulty=(1400, 1500),
+                topic="precalculus/sum_difference_formulas",
+                solution=steps(
+                    "$\\sin(A+B) = \\sin A\\cos B + \\cos A\\sin B$",
+                    f"$= \\sin x\\cos{latex(angle_add)} + \\cos x\\sin{latex(angle_add)}$",
+                    f"$= {latex(ans)}$"
+                )
+            )
+
+        elif variant == 'expand_cos':
+            angle_add = choice([pi/6, pi/4, pi/3, pi/2])
+            is_sum_v = choice([True, False])
+            if is_sum_v:
+                lhs = cos(x + angle_add)
             else:
-                is_sum = choice([True, False])
-                if is_sum:
-                    question = f"Expand $\\cos(x + y)$ using the sum formula."
-                    ans = cos(x)*cos(y) - sin(x)*sin(y)
-                    solution_steps = steps(
-                        r"Use the formula: $\cos(\alpha + \beta) = \cos\alpha\cos\beta - \sin\alpha\sin\beta$",
-                        f"$= {latex(ans)}$"
-                    )
-                else:
-                    question = f"Expand $\\cos(x - y)$ using the difference formula."
-                    ans = cos(x)*cos(y) + sin(x)*sin(y)
-                    solution_steps = steps(
-                        r"Use the formula: $\cos(\alpha - \beta) = \cos\alpha\cos\beta + \sin\alpha\sin\beta$",
-                        f"$= {latex(ans)}$"
-                    )
+                lhs = cos(x - angle_add)
+            ans = expand_trig(lhs)
+            pm = '+' if is_sum_v else '-'
+            return problem(
+                question=f"Expand $\\cos\\!\\left(x {pm} {latex(angle_add)}\\right)$ using the {'sum' if is_sum_v else 'difference'} formula.",
+                answer=ans,
+                difficulty=(1400, 1500),
+                topic="precalculus/sum_difference_formulas",
+                solution=steps(
+                    f"$\\cos(A{pm}B) = \\cos A\\cos B {'\\mp' if is_sum_v else '\\pm'}\\sin A\\sin B$",
+                    f"$= {latex(ans)}$"
+                )
+            )
+
+        elif variant == 'collapse_sin':
+            # sin(ax)cos(bx) - cos(ax)sin(bx) = sin((a-b)x)
+            ans = sin((a - b) * x)
+            return problem(
+                question=f"Simplify $\\sin({a}x)\\cos({b}x) - \\cos({a}x)\\sin({b}x)$.",
+                answer=ans,
+                difficulty=(1400, 1500),
+                topic="precalculus/sum_difference_formulas",
+                solution=steps(
+                    "$\\sin(A-B)=\\sin A\\cos B - \\cos A\\sin B$",
+                    f"$= \\sin({a}x - {b}x) = \\sin({a-b}x)$"
+                )
+            )
+
         else:
-            # Simplify a specific expression
-            coeff = choice([2, 3, 4])
-            if func == 'sin':
-                question = f"Simplify $\\sin({coeff}x)\\cos(x) - \\cos({coeff}x)\\sin(x)$"
-                ans = sin((coeff - 1)*x)
-                solution_steps = steps(
-                    r"Recognize the difference formula: $\sin\alpha\cos\beta - \cos\alpha\sin\beta = \sin(\alpha - \beta)$",
-                    f"Let $\\alpha = {coeff}x$ and $\\beta = x$",
-                    f"$= \\sin({coeff}x - x) = \\sin({coeff-1}x)$"
+            # cos(ax)cos(bx) + sin(ax)sin(bx) = cos((a-b)x)
+            ans = cos((a - b) * x)
+            return problem(
+                question=f"Simplify $\\cos({a}x)\\cos({b}x) + \\sin({a}x)\\sin({b}x)$.",
+                answer=ans,
+                difficulty=(1400, 1500),
+                topic="precalculus/sum_difference_formulas",
+                solution=steps(
+                    "$\\cos(A-B)=\\cos A\\cos B + \\sin A\\sin B$",
+                    f"$= \\cos({a}x - {b}x) = \\cos({a-b}x)$"
                 )
-            else:
-                question = f"Simplify $\\cos({coeff}x)\\cos(x) + \\sin({coeff}x)\\sin(x)$"
-                ans = cos((coeff - 1)*x)
-                solution_steps = steps(
-                    r"Recognize the difference formula: $\cos\alpha\cos\beta + \sin\alpha\sin\beta = \cos(\alpha - \beta)$",
-                    f"Let $\\alpha = {coeff}x$ and $\\beta = x$",
-                    f"$= \\cos({coeff}x - x) = \\cos({coeff-1}x)$"
-                )
-        
-        return problem(
-            question=question,
-            answer=ans,
-            difficulty=(1400, 1500),
-            topic="precalculus/sum_difference_formulas",
-            solution=solution_steps
-        )
-    
+            )
+
     elif problem_type == 3:
-        # Evaluate tan using sum/difference formula
-        # Difficulty: 1400-1500
-        angles = [30, 45, 60]
-        angle1 = choice(angles)
-        angle2 = choice(angles)
+        # tan addition / subtraction formula
+        a1 = choice([15, 30, 45, 60, 75, 120, 135, 150])
+        a2 = choice([30, 45, 60])
         is_sum = choice([True, False])
-        
-        angle1_rad = angle1 * pi / 180
-        angle2_rad = angle2 * pi / 180
-        
-        tan1 = tan(angle1_rad)
-        tan2 = tan(angle2_rad)
-        
-        if is_sum:
-            ans = simplify((tan1 + tan2) / (1 - tan1*tan2))
-            op = "+"
-            formula = r"\tan(\alpha + \beta) = \frac{\tan\alpha + \tan\beta}{1 - \tan\alpha\tan\beta}"
-        else:
-            ans = simplify((tan1 - tan2) / (1 + tan1*tan2))
-            op = "-"
-            formula = r"\tan(\alpha - \beta) = \frac{\tan\alpha - \tan\beta}{1 + \tan\alpha\tan\beta}"
-        
-        question = f"Evaluate $\\tan({angle1}° {op} {angle2}°)$ exactly using the {'sum' if is_sum else 'difference'} formula."
-        
-        solution_steps = steps(
-            f"Use the formula: ${formula}$",
-            f"$\\tan({angle1}°) = {latex(tan1)}$, $\\tan({angle2}°) = {latex(tan2)}$",
-            f"$= {latex(ans)}$"
-        )
-        
+        result_deg = (a1 + a2) if is_sum else (a1 - a2)
+
+        if result_deg % 180 == 90:
+            # undefined — skip to safe values
+            a1, a2, is_sum = 15, 45, False  # 15-45 = -30 — tan(-30) well defined
+            result_deg = -30
+
+        result_rad = result_deg * pi / 180
+        ans = simplify(tan(result_rad))
+        op = '+' if is_sum else '-'
+        formula = r"\tan(A\pm B) = \frac{\tan A \pm \tan B}{1 \mp \tan A\tan B}"
+
         return problem(
-            question=question,
+            question=f"Evaluate $\\tan({a1}^\\circ {op} {a2}^\\circ)$ using the {'sum' if is_sum else 'difference'} formula.",
             answer=ans,
             difficulty=(1400, 1500),
             topic="precalculus/sum_difference_formulas",
-            solution=solution_steps,
+            solution=steps(
+                f"Formula: ${formula}$",
+                f"$\\tan({a1}^\\circ) = {latex(simplify(tan(a1*pi/180)))}$, "
+                f"$\\tan({a2}^\\circ) = {latex(simplify(tan(a2*pi/180)))}$",
+                f"$= {latex(ans)}$"
+            ),
             calculator="scientific"
         )
-    
-    else:
-        # Apply sum/difference formula to find exact value
-        # More complex: sin(15°) or cos(75°), etc.
-        # Difficulty: 1500-1600
-        target_angles = [15, 75, 105, 165]
-        target = choice(target_angles)
-        func = choice(['sin', 'cos'])
-        
-        # Decompose into difference or sum of standard angles
-        if target == 15:
-            angle1, angle2 = 45, 30
-            op = "-"
-        elif target == 75:
-            angle1, angle2 = 45, 30
-            op = "+"
-        elif target == 105:
-            angle1, angle2 = 60, 45
-            op = "+"
-        else:  # 165
-            angle1, angle2 = 135, 30
-            op = "+"
-        
-        angle1_rad = angle1 * pi / 180
-        angle2_rad = angle2 * pi / 180
-        
+
+    elif problem_type == 4:
+        # Exact value of non-standard angle — wider target pool
+        target, a1, a2, op = choice(SPECIAL)
+        func = choice(['sin', 'cos', 'tan'])
+
+        angle_rad = target * pi / 180
+        if func == 'tan' and target % 180 == 90:
+            func = 'cos'
+
         if func == 'sin':
-            if op == "+":
-                ans = simplify(sin(angle1_rad)*cos(angle2_rad) + cos(angle1_rad)*sin(angle2_rad))
-                formula = r"\sin(\alpha + \beta) = \sin\alpha\cos\beta + \cos\alpha\sin\beta"
-            else:
-                ans = simplify(sin(angle1_rad)*cos(angle2_rad) - cos(angle1_rad)*sin(angle2_rad))
-                formula = r"\sin(\alpha - \beta) = \sin\alpha\cos\beta - \cos\alpha\sin\beta"
+            ans = simplify(sin(angle_rad))
+        elif func == 'cos':
+            ans = simplify(cos(angle_rad))
         else:
-            if op == "+":
-                ans = simplify(cos(angle1_rad)*cos(angle2_rad) - sin(angle1_rad)*sin(angle2_rad))
-                formula = r"\cos(\alpha + \beta) = \cos\alpha\cos\beta - \sin\alpha\sin\beta"
-            else:
-                ans = simplify(cos(angle1_rad)*cos(angle2_rad) + sin(angle1_rad)*sin(angle2_rad))
-                formula = r"\cos(\alpha - \beta) = \cos\alpha\cos\beta + \sin\alpha\sin\beta"
-        
-        question = f"Find the exact value of $\\{func}({target}°)$ using a sum or difference formula."
-        
-        solution_steps = steps(
-            f"Express ${target}°$ as ${angle1}° {op} {angle2}°$",
-            f"Use the formula: ${formula}$",
-            f"$= {latex(ans)}$"
+            try:
+                ans = simplify(tan(angle_rad))
+                if not ans.is_finite:
+                    func = 'sin'
+                    ans = simplify(sin(angle_rad))
+            except Exception:
+                func = 'cos'
+                ans = simplify(cos(angle_rad))
+
+        return problem(
+            question=f"Find the exact value of $\\{func}({target}^\\circ)$ using a sum or difference formula.",
+            answer=ans,
+            difficulty=(1500, 1600),
+            topic="precalculus/sum_difference_formulas",
+            solution=steps(
+                f"${target}^\\circ = {a1}^\\circ {op} {a2}^\\circ$",
+                f"Apply the $\\{func}$ {'sum' if op == '+' else 'difference'} formula",
+                f"$= {latex(ans)}$"
+            )
         )
-        
+
+    else:
+        # Solve sin(x + c) = val or cos(x - c) = val on [0, 2pi)
+        angle_const = choice([pi/6, pi/4, pi/3, pi/2, 2*pi/3])
+        target_val = choice([Rational(1, 2), sqrt(2)/2, sqrt(3)/2, 0, -Rational(1,2)])
+        is_sin = choice([True, False])
+        pm = choice(['+', '-'])
+
+        if is_sin:
+            if pm == '+':
+                equation = Eq(sin(x + angle_const), target_val)
+                question = f"Solve for $x \\in [0, 2\\pi)$: $\\sin\\!\\left(x + {latex(angle_const)}\\right) = {latex(target_val)}$"
+            else:
+                equation = Eq(sin(x - angle_const), target_val)
+                question = f"Solve for $x \\in [0, 2\\pi)$: $\\sin\\!\\left(x - {latex(angle_const)}\\right) = {latex(target_val)}$"
+        else:
+            if pm == '+':
+                equation = Eq(cos(x + angle_const), target_val)
+                question = f"Solve for $x \\in [0, 2\\pi)$: $\\cos\\!\\left(x + {latex(angle_const)}\\right) = {latex(target_val)}$"
+            else:
+                equation = Eq(cos(x - angle_const), target_val)
+                question = f"Solve for $x \\in [0, 2\\pi)$: $\\cos\\!\\left(x - {latex(angle_const)}\\right) = {latex(target_val)}$"
+
+        sols_full = solve(equation, x)
+        sols = [s for s in sols_full if s.is_real and 0 <= s < 2*pi]
+        # also check by substituting 2pi-shifted values
+        extended = []
+        for s in sols:
+            for k in range(-1, 3):
+                cand = s + 2*pi*k
+                if 0 <= cand < 2*pi:
+                    extended.append(cand)
+        if extended:
+            ans = FiniteSet(*[simplify(v) for v in set(extended)])
+        else:
+            ans = FiniteSet()
+
         return problem(
             question=question,
             answer=ans,
             difficulty=(1500, 1600),
             topic="precalculus/sum_difference_formulas",
-            solution=solution_steps
+            solution=steps(
+                f"Let $u = x {pm} {latex(angle_const)}$, solve $\\{'sin' if is_sin else 'cos'}(u) = {latex(target_val)}$",
+                f"Find solutions for $u$, then subtract the constant to get $x$",
+                f"Solutions in $[0, 2\\pi)$: ${latex(ans)}$"
+            )
         )
 
 emit(generate())

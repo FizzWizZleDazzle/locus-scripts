@@ -1,180 +1,163 @@
 """
 differential_equations - homogeneous_equations (medium)
-Generated: 2026-02-22T05:23:38.334901
+Generated: 2026-02-22T05:23:38.334903
 """
 
 from problem_utils import *
 
 def generate():
     problem_type = randint(1, 4)
-    
+
     if problem_type == 1:
-        # Type 1: dy/dx = f(x)/g(x) where f and g are homogeneous of same degree
-        # Example: dy/dx = (x + y) / x
-        coeff1 = choice([1, 2, 3])
-        coeff2 = choice([1, 2, 3])
-        
-        # dy/dx = (coeff1*x + coeff2*y) / x
-        # Substitute v = y/x, so y = vx, dy/dx = v + x*dv/dx
-        # v + x*dv/dx = coeff1 + coeff2*v
-        # x*dv/dx = coeff1 + (coeff2-1)*v
-        # Separable: dv/(coeff1 + (coeff2-1)*v) = dx/x
-        
-        if coeff2 == 1:
-            # dv/coeff1 = dx/x
-            # v = coeff1*ln|x| + C
-            # y/x = coeff1*ln|x| + C
-            # y = coeff1*x*ln|x| + Cx
-            ans_expr = f"y = {coeff1}x\\ln|x| + Cx" if coeff1 > 1 else "y = x\\ln|x| + Cx"
-            
-            solution_steps = steps(
-                f"This is a homogeneous equation. Let $v = \\frac{{y}}{{x}}$, so $y = vx$ and $\\frac{{dy}}{{dx}} = v + x\\frac{{dv}}{{dx}}$",
-                f"Substitute: $v + x\\frac{{dv}}{{dx}} = {coeff1} + {coeff2}v = {coeff1} + v$",
-                f"Simplify: $x\\frac{{dv}}{{dx}} = {coeff1}$",
-                f"Separate variables: $dv = \\frac{{{coeff1}dx}}{{x}}$",
-                f"Integrate: $v = {coeff1}\\ln|x| + C$",
-                f"Substitute back $v = \\frac{{y}}{{x}}$: ${ans_expr}$"
+        # dy/dx = (a1*x + a2*y) / x  — linear homogeneous
+        a1 = nonzero(-5, 5)
+        a2 = nonzero(-5, 5)
+
+        # v = y/x  =>  v + x*dv/dx = a1 + a2*v
+        # x*dv/dx = a1 + (a2-1)*v
+        k = a2 - 1
+
+        if a1 == 1:
+            num_latex = f"x + {a2}y" if a2 != 1 else "x + y"
+        elif a1 == -1:
+            num_latex = f"-x + {a2}y" if a2 != 1 else "-x + y"
+        else:
+            num_latex = f"{a1}x + {a2}y" if a2 != 1 else f"{a1}x + y"
+
+        question = f"Solve the homogeneous DE: $\\frac{{dy}}{{dx}} = \\frac{{{num_latex}}}{{x}}$"
+
+        if k == 0:
+            # x*dv/dx = a1  =>  v = a1*ln|x| + C  =>  y = a1*x*ln|x| + Cx
+            ans_expr = f"y = {a1}x\\ln|x| + Cx" if a1 != 1 else "y = x\\ln|x| + Cx"
+            sol_steps = steps(
+                f"Let $v = y/x$: $v + x\\frac{{dv}}{{dx}} = {a1} + {a2}v = {a1} + v$",
+                f"Simplify: $x\\frac{{dv}}{{dx}} = {a1}$",
+                f"Separate: $dv = \\frac{{{a1}\\,dx}}{{x}}$",
+                f"Integrate: $v = {a1}\\ln|x| + C$",
+                f"Back-substitute: ${ans_expr}$"
             )
         else:
-            # General case
-            k = coeff2 - 1
-            if k == 0:
-                ans_expr = f"y = {coeff1}x\\ln|x| + Cx" if coeff1 > 1 else "y = x\\ln|x| + Cx"
-            else:
-                # ln|coeff1 + k*v| = ln|x| + C
-                # coeff1 + k*v = Cx
-                # v = (Cx - coeff1)/k
-                # y/x = (Cx - coeff1)/k
-                if k > 0:
-                    ans_expr = f"{coeff1} + {k}\\frac{{y}}{{x}} = Cx"
-                else:
-                    ans_expr = f"{coeff1} - {abs(k)}\\frac{{y}}{{x}} = Cx"
-            
-            solution_steps = steps(
-                f"This is a homogeneous equation. Let $v = \\frac{{y}}{{x}}$, so $y = vx$ and $\\frac{{dy}}{{dx}} = v + x\\frac{{dv}}{{dx}}$",
-                f"Substitute: $v + x\\frac{{dv}}{{dx}} = {coeff1} + {coeff2}v$",
-                f"Simplify: $x\\frac{{dv}}{{dx}} = {coeff1} + {k}v$",
-                f"Separate variables: $\\frac{{dv}}{{{coeff1} + {k}v}} = \\frac{{dx}}{{x}}$",
-                f"Integrate both sides to get the general solution",
-                f"Substitute back $v = \\frac{{y}}{{x}}$: ${ans_expr}$"
+            # dv/(a1 + k*v) = dx/x
+            # (1/k)*ln|a1 + k*v| = ln|x| + C
+            ans_expr = f"{a1} + {k}(y/x) = Cx" if k != 1 else f"{a1} + y/x = Cx"
+            sol_steps = steps(
+                f"Let $v = y/x$: $x\\frac{{dv}}{{dx}} = {a1} + {k}v$",
+                f"Separate: $\\frac{{dv}}{{{a1} + {k}v}} = \\frac{{dx}}{{x}}$",
+                f"Integrate: $\\frac{{1}}{{{k}}}\\ln|{a1} + {k}v| = \\ln|x| + C_1$",
+                f"$|{a1} + {k}v| = C|x|^{{{k}}}$",
+                f"Back-substitute $v = y/x$: ${ans_expr}$"
             )
-        
-        numerator = f"{coeff1}x + {coeff2}y" if coeff1 > 1 and coeff2 > 1 else (f"x + {coeff2}y" if coeff1 == 1 and coeff2 > 1 else (f"{coeff1}x + y" if coeff1 > 1 else "x + y"))
-        
+
         return problem(
-            question=f"Solve the homogeneous differential equation: $\\frac{{dy}}{{dx}} = \\frac{{{numerator}}}{{x}}$",
+            question=question,
             answer=ans_expr,
-            difficulty=(1300, 1500),
+            difficulty=(1300, 1470),
             topic="differential_equations/homogeneous_equations",
-            solution=solution_steps,
+            solution=sol_steps,
             answer_type="expression"
         )
-    
+
     elif problem_type == 2:
-        # Type 2: dy/dx = f(y/x) form
-        # Example: dy/dx = (y/x)^2 + y/x
-        
-        a = randint(1, 3)
-        
-        # dy/dx = v^2 + a*v where v = y/x
+        # dy/dx = (y/x)^2 + a*(y/x)
+        a = randint(1, 5)
+        b = a - 1  # coefficient after substitution
+
         # v + x*dv/dx = v^2 + a*v
-        # x*dv/dx = v^2 + (a-1)*v
-        # dv/(v^2 + (a-1)*v) = dx/x
-        
-        b = a - 1
-        
-        if b == 0:
-            # dv/v^2 = dx/x
-            # -1/v = ln|x| + C
-            ans_expr = "y = -\\frac{x}{\\ln|x| + C}"
-        else:
-            ans_expr = f"\\frac{{1}}{{v}} - \\frac{{1}}{{v+{b}}} = {b}\\ln|x| + C \\text{{ where }} v = \\frac{{y}}{{x}}"
-        
+        # x*dv/dx = v^2 + (a-1)*v = v^2 + b*v
+
         if a == 1:
             main_eq = "\\left(\\frac{y}{x}\\right)^2 + \\frac{y}{x}"
         else:
             main_eq = f"\\left(\\frac{{y}}{{x}}\\right)^2 + {a}\\frac{{y}}{{x}}"
-        
-        return problem(
-            question=f"Solve the homogeneous differential equation: $\\frac{{dy}}{{dx}} = {main_eq}$",
-            answer=ans_expr,
-            difficulty=(1400, 1600),
-            topic="differential_equations/homogeneous_equations",
-            solution=steps(
-                f"Let $v = \\frac{{y}}{{x}}$, so $y = vx$ and $\\frac{{dy}}{{dx}} = v + x\\frac{{dv}}{{dx}}$",
-                f"Substitute: $v + x\\frac{{dv}}{{dx}} = v^2 + {a}v$",
-                f"Simplify: $x\\frac{{dv}}{{dx}} = v^2 + {b}v$",
-                f"Separate variables and integrate",
-                f"${ans_expr}$"
-            ),
-            answer_type="expression"
-        )
-    
-    elif problem_type == 3:
-        # Type 3: Standard form (x^2 + y^2)dx + something*dy = 0
-        
-        coeff = choice([2, -2, 3, -3])
-        
-        # (x^2 + y^2)dx + coeff*xy*dy = 0
-        # dy/dx = -(x^2 + y^2)/(coeff*xy)
-        
-        ans_expr = f"x^2 + y^2 = Cx^{{{coeff}}}"
-        
-        if coeff > 0:
-            question_str = f"(x^2 + y^2)dx + {coeff}xydy = 0"
+
+        question = f"Solve the homogeneous DE: $\\frac{{dy}}{{dx}} = {main_eq}$"
+
+        if b == 0:
+            ans_expr = "y = -\\frac{x}{\\ln|x| + C}"
         else:
-            question_str = f"(x^2 + y^2)dx {coeff}xydy = 0"
-        
+            ans_expr = f"\\frac{{1}}{{v}} - \\frac{{1}}{{v + {b}}} = {b}\\ln|x| + C \\text{{ where }} v = y/x"
+
+        sol_steps = steps(
+            f"Let $v = y/x$: $v + x\\frac{{dv}}{{dx}} = v^2 + {a}v$",
+            f"$x\\frac{{dv}}{{dx}} = v^2 + {b}v = v(v + {b})$",
+            f"Partial fractions: $\\frac{{dv}}{{v(v + {b})}} = \\frac{{dx}}{{x}}$",
+            f"Integrate and back-substitute $v = y/x$: ${ans_expr}$"
+        )
+
         return problem(
-            question=f"Solve the homogeneous differential equation: ${question_str}$",
+            question=question,
             answer=ans_expr,
-            difficulty=(1300, 1500),
+            difficulty=(1400, 1560),
             topic="differential_equations/homogeneous_equations",
-            solution=steps(
-                f"Rewrite as $\\frac{{dy}}{{dx}} = -\\frac{{x^2 + y^2}}{{{coeff}xy}}$",
-                f"This is homogeneous. Let $v = \\frac{{y}}{{x}}$",
-                f"Substitute and separate variables",
-                f"After integration: ${ans_expr}$"
-            ),
+            solution=sol_steps,
             answer_type="expression"
         )
-    
+
+    elif problem_type == 3:
+        # (a*x^2 + b*y^2)dx + c_coef*xy*dy = 0
+        a = nonzero(-4, 4)
+        b = nonzero(-4, 4)
+        c_coef = nonzero(-4, 4)
+
+        # dy/dx = -(a*x^2 + b*y^2)/(c_coef*x*y)
+        # v = y/x  =>  dy/dx = -(a + b*v^2)/(c_coef*v)
+        # v + x*dv/dx = -(a + b*v^2)/(c_coef*v)
+        # x*dv/dx = -(a + b*v^2)/(c_coef*v) - v = -(a + b*v^2 + c_coef*v^2)/(c_coef*v)
+
+        if c_coef > 0:
+            q_str = f"({a}x^2 + {b}y^2)dx + {c_coef}xy\\,dy = 0"
+        else:
+            q_str = f"({a}x^2 + {b}y^2)dx - {-c_coef}xy\\,dy = 0"
+
+        ans_expr = f"{a}x^2 + {b + c_coef}y^2 = Cx^{{{2 + c_coef}}}" if (b + c_coef) != 0 else f"Implicit solution involves integration"
+
+        sol_steps = steps(
+            f"Rewrite: $\\frac{{dy}}{{dx}} = -\\frac{{{a}x^2 + {b}y^2}}{{{c_coef}xy}}$",
+            f"This is homogeneous (degree 2). Let $v = y/x$",
+            f"Substitute $y = vx$ and separate variables",
+            f"After integration, back-substitute $v = y/x$"
+        )
+
+        return problem(
+            question=f"Solve the homogeneous DE: ${q_str}$",
+            answer=ans_expr,
+            difficulty=(1350, 1520),
+            topic="differential_equations/homogeneous_equations",
+            solution=sol_steps,
+            answer_type="expression"
+        )
+
     else:
-        # Type 4: Simple homogeneous with substitution
-        # dy/dx = (x + y)/x = 1 + y/x
-        
+        # dy/dx = 1 ± y/x  — simplest log-type solutions
         sign = choice([1, -1])
-        
+
         if sign == 1:
-            # dy/dx = 1 + y/x
-            # v + x*dv/dx = 1 + v
-            # x*dv/dx = 1
-            # dv = dx/x
-            # v = ln|x| + C
-            # y = x*ln|x| + Cx
+            # v + x*dv/dx = 1 + v  =>  x*dv/dx = 1  =>  v = ln|x| + C
+            # y = vx = x*ln|x| + Cx
             ans_expr = "y = x\\ln|x| + Cx"
             eq_str = "1 + \\frac{y}{x}"
         else:
-            # dy/dx = 1 - y/x
-            # v + x*dv/dx = 1 - v
-            # x*dv/dx = 1 - 2v
-            # dv/(1-2v) = dx/x
-            # -ln|1-2v|/2 = ln|x| + C
-            ans_expr = "1 - 2\\frac{y}{x} = \\frac{C}{x^2}"
+            # v + x*dv/dx = 1 - v  =>  x*dv/dx = 1 - 2v
+            # dv/(1-2v) = dx/x  =>  -ln|1-2v|/2 = ln|x| + C
+            # 1 - 2y/x = C/x^2
+            ans_expr = "x^2 - 2xy = C"
             eq_str = "1 - \\frac{y}{x}"
-        
+
+        sol_steps = steps(
+            f"Let $v = y/x$: $v + x\\frac{{dv}}{{dx}} = {eq_str}$",
+            f"Simplify and separate variables",
+            f"Integrate both sides",
+            f"Back-substitute $v = y/x$: ${ans_expr}$"
+        )
+
         return problem(
-            question=f"Solve the homogeneous differential equation: $\\frac{{dy}}{{dx}} = {eq_str}$",
+            question=f"Solve the homogeneous DE: $\\frac{{dy}}{{dx}} = {eq_str}$",
             answer=ans_expr,
-            difficulty=(1300, 1400),
+            difficulty=(1300, 1430),
             topic="differential_equations/homogeneous_equations",
-            solution=steps(
-                f"Let $v = \\frac{{y}}{{x}}$, so $y = vx$ and $\\frac{{dy}}{{dx}} = v + x\\frac{{dv}}{{dx}}$",
-                f"Substitute into the equation",
-                f"Separate variables and integrate",
-                f"${ans_expr}$"
-            ),
+            solution=sol_steps,
             answer_type="expression"
         )
+
 
 emit(generate())

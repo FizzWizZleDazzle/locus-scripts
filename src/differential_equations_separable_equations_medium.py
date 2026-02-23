@@ -6,115 +6,113 @@ Generated: 2026-02-22T05:18:59.460572
 from problem_utils import *
 
 def generate():
-    # Choose problem type based on difficulty
-    prob_type = choice(['basic_separable', 'with_coefficient', 'exponential', 'trig'])
-    
-    if prob_type == 'basic_separable':
-        # dy/dx = g(x)h(y) type, 1300-1400 difficulty
-        # Construct backward from clean antiderivatives
-        
-        # Pick simple functions
-        x_power = randint(1, 3)
-        y_power = randint(1, 2)
-        
-        # dy/dx = x^n * y^m
-        question_text = f"\\frac{{dy}}{{dx}} = {latex(x**x_power * y**y_power)}"
-        
+    prob_type = randint(1, 5)
+
+    if prob_type == 1:
+        # dy/dx = (a*x^n) / (b*y^m)  — polynomial separation
+        a = nonzero(-5, 5)
+        b = nonzero(-5, 5)
+        n = randint(1, 4)
+        m = randint(1, 3)
+
+        lhs_power = m + 1
+        rhs_integral = integrate(a * x**n, x)   # a*x^(n+1)/(n+1)
+
+        question_text = f"\\frac{{dy}}{{dx}} = \\frac{{{latex(a * x**n)}}}{{{latex(b * y**m)}}}"
+
+        # b*y^m dy = a*x^n dx
+        # b*y^(m+1)/(m+1) = a*x^(n+1)/(n+1) + C
+        left_expr = Rational(b, lhs_power) * y**lhs_power
+        ans = Eq(left_expr, rhs_integral + c)
+
         solution_steps = [
-            f"Separate variables: $\\frac{{1}}{{y^{{{y_power}}}}} dy = x^{{{x_power}}} dx$",
-            f"Rewrite: $y^{{-{y_power}}} dy = x^{{{x_power}}} dx$",
-            f"Integrate both sides: $\\int y^{{-{y_power}}} dy = \\int x^{{{x_power}}} dx$"
+            f"Separate variables: ${b}y^{{{m}}}\\,dy = {a}x^{{{n}}}\\,dx$",
+            f"Integrate both sides: $\\int {b}y^{{{m}}}\\,dy = \\int {a}x^{{{n}}}\\,dx$",
+            f"${latex(left_expr)} = {latex(rhs_integral)} + C$"
         ]
-        
-        if y_power == 1:
-            left_side = log(y)
-            solution_steps.append(f"$\\ln|y| = \\frac{{x^{{{x_power+1}}}}}{{{x_power+1}}} + C$")
-        else:
-            left_side = y**(-y_power + 1) / (-y_power + 1)
-            solution_steps.append(f"$\\frac{{y^{{{-y_power+1}}}}}{{{-y_power+1}}} = \\frac{{x^{{{x_power+1}}}}}{{{x_power+1}}} + C$")
-        
-        right_side = x**(x_power + 1) / (x_power + 1)
-        ans = Eq(left_side, right_side + c)
-        difficulty = (1300, 1400)
-        
-    elif prob_type == 'with_coefficient':
-        # dy/dx = k*f(x)*g(y), 1400-1500 difficulty
+
+        difficulty = (1300, 1420)
+
+    elif prob_type == 2:
+        # dy/dx = k*x/y  (hyperbola family)
+        k = nonzero(-6, 6)
+
+        question_text = f"\\frac{{dy}}{{dx}} = \\frac{{{latex(k * x)}}}{{y}}"
+
+        # y dy = k*x dx  =>  y^2/2 = k*x^2/2 + C  =>  y^2 = k*x^2 + C
+        ans = Eq(y**2, k * x**2 + c)
+
+        solution_steps = [
+            f"Separate variables: $y\\,dy = {k}x\\,dx$",
+            f"Integrate both sides: $\\frac{{y^2}}{{2}} = {latex(Rational(k,2)*x**2)} + C_1$",
+            f"Multiply by 2: $y^2 = {k}x^2 + C$"
+        ]
+
+        difficulty = (1350, 1480)
+
+    elif prob_type == 3:
+        # dy/dx = k*e^(a*x)*y  (exponential coefficient)
         k = nonzero(-4, 4)
-        
-        # Simple case: dy/dx = k*x/y
-        question_text = f"\\frac{{dy}}{{dx}} = {latex(k*x/y)}"
-        
+        a = nonzero(-4, 4)
+
+        question_text = f"\\frac{{dy}}{{dx}} = {latex(k * exp(a * x) * y)}"
+
+        # dy/y = k*e^(a*x) dx  =>  ln|y| = k/a * e^(a*x) + C
+        integral_rhs = integrate(k * exp(a * x), x)
+        ans = Eq(log(y), integral_rhs + c)
+
         solution_steps = [
-            f"Separate variables: $y \\, dy = {k}x \\, dx$",
-            f"Integrate both sides: $\\int y \\, dy = \\int {k}x \\, dx$",
-            f"$\\frac{{y^2}}{{2}} = {k} \\cdot \\frac{{x^2}}{{2}} + C$",
-            f"$\\frac{{y^2}}{{2}} = {latex(Rational(k,2)*x**2)} + C$",
-            f"$y^2 = {latex(k*x**2)} + C$ (absorbing the constant)"
+            f"Separate variables: $\\frac{{dy}}{{y}} = {latex(k * exp(a * x))}\\,dx$",
+            f"Integrate: $\\ln|y| = \\int {latex(k * exp(a * x))}\\,dx = {latex(integral_rhs)} + C$"
         ]
-        
-        ans = Eq(y**2, k*x**2 + c)
-        difficulty = (1400, 1500)
-        
-    elif prob_type == 'exponential':
-        # dy/dx = e^x * y or similar, 1450-1550 difficulty
-        k = nonzero(-3, 3)
-        
-        if choice([True, False]):
-            # dy/dx = k*e^x * y
-            question_text = f"\\frac{{dy}}{{dx}} = {latex(k*exp(x)*y)}"
-            
-            solution_steps = [
-                f"Separate variables: $\\frac{{1}}{{y}} dy = {k}e^x dx$",
-                f"Integrate both sides: $\\int \\frac{{1}}{{y}} dy = \\int {k}e^x dx$",
-                f"$\\ln|y| = {k}e^x + C$"
-            ]
-            
-            ans = Eq(log(y), k*exp(x) + c)
+
+        difficulty = (1420, 1530)
+
+    elif prob_type == 4:
+        # dy/dx = sin(a*x) * b*y  or  cos(a*x) * b*y
+        a = randint(1, 6)
+        b = nonzero(-5, 5)
+        trig_fn = choice(['sin', 'cos'])
+
+        if trig_fn == 'sin':
+            rhs_trig = sin(a * x)
+            trig_latex = f"\\sin({a}x)"
+            integral_rhs = -cos(a * x) / a
+            integral_latex = f"-\\frac{{\\cos({a}x)}}{{{a}}}"
         else:
-            # dy/dx = e^x / y
-            question_text = f"\\frac{{dy}}{{dx}} = {latex(exp(x)/y)}"
-            
-            solution_steps = [
-                f"Separate variables: $y \\, dy = e^x dx$",
-                f"Integrate both sides: $\\int y \\, dy = \\int e^x dx$",
-                f"$\\frac{{y^2}}{{2}} = e^x + C$",
-                f"$y^2 = 2e^x + C$ (absorbing the constant)"
-            ]
-            
-            ans = Eq(y**2, 2*exp(x) + c)
-        
-        difficulty = (1450, 1550)
-        
-    else:  # trig
-        # dy/dx with trig functions, 1500-1600 difficulty
-        trig_choice = choice(['sin', 'cos'])
-        
-        if trig_choice == 'sin':
-            # dy/dx = sin(x) * y
-            question_text = f"\\frac{{dy}}{{dx}} = {latex(sin(x)*y)}"
-            
-            solution_steps = [
-                f"Separate variables: $\\frac{{1}}{{y}} dy = \\sin(x) dx$",
-                f"Integrate both sides: $\\int \\frac{{1}}{{y}} dy = \\int \\sin(x) dx$",
-                f"$\\ln|y| = -\\cos(x) + C$"
-            ]
-            
-            ans = Eq(log(y), -cos(x) + c)
-        else:
-            # dy/dx = cos(x)/y
-            question_text = f"\\frac{{dy}}{{dx}} = {latex(cos(x)/y)}"
-            
-            solution_steps = [
-                f"Separate variables: $y \\, dy = \\cos(x) dx$",
-                f"Integrate both sides: $\\int y \\, dy = \\int \\cos(x) dx$",
-                f"$\\frac{{y^2}}{{2}} = \\sin(x) + C$",
-                f"$y^2 = 2\\sin(x) + C$ (absorbing the constant)"
-            ]
-            
-            ans = Eq(y**2, 2*sin(x) + c)
-        
-        difficulty = (1500, 1600)
-    
+            rhs_trig = cos(a * x)
+            trig_latex = f"\\cos({a}x)"
+            integral_rhs = sin(a * x) / a
+            integral_latex = f"\\frac{{\\sin({a}x)}}{{{a}}}"
+
+        question_text = f"\\frac{{dy}}{{dx}} = {b}{trig_latex} \\cdot y"
+
+        ans = Eq(log(y), b * integral_rhs + c)
+
+        solution_steps = [
+            f"Separate variables: $\\frac{{dy}}{{y}} = {b}{trig_latex}\\,dx$",
+            f"Integrate: $\\ln|y| = {b} \\cdot {integral_latex} + C = {latex(b * integral_rhs)} + C$"
+        ]
+
+        difficulty = (1480, 1580)
+
+    else:
+        # dy/dx = a*e^x / (b*y^2)  — exponential/polynomial mix
+        a = nonzero(-5, 5)
+        b = nonzero(-4, 4)
+
+        question_text = f"\\frac{{dy}}{{dx}} = \\frac{{{latex(a * exp(x))}}}{{{latex(b * y**2)}}}"
+
+        # b*y^2 dy = a*e^x dx  =>  b*y^3/3 = a*e^x + C
+        ans = Eq(Rational(b, 3) * y**3, a * exp(x) + c)
+
+        solution_steps = [
+            f"Separate variables: ${b}y^2\\,dy = {a}e^x\\,dx$",
+            f"Integrate: $\\frac{{{b}y^3}}{{3}} = {a}e^x + C$"
+        ]
+
+        difficulty = (1520, 1600)
+
     return problem(
         question=f"Solve the differential equation: ${question_text}$",
         answer=ans,
@@ -124,5 +122,6 @@ def generate():
         answer_type="equation",
         grading_mode="equivalent"
     )
+
 
 emit(generate())

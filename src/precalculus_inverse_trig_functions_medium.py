@@ -1,164 +1,170 @@
 """
 precalculus - inverse_trig_functions (medium)
-Generated: 2026-02-22T04:48:39.721043
 """
 
 from problem_utils import *
 
+ARCSIN_TABLE = [
+    (-1, -pi/2), (-sqrt(3)/2, -pi/3), (-sqrt(2)/2, -pi/4),
+    (-Rational(1,2), -pi/6), (0, 0), (Rational(1,2), pi/6),
+    (sqrt(2)/2, pi/4), (sqrt(3)/2, pi/3), (1, pi/2),
+]
+ARCCOS_TABLE = [
+    (-1, pi), (-sqrt(3)/2, 5*pi/6), (-sqrt(2)/2, 3*pi/4),
+    (-Rational(1,2), 2*pi/3), (0, pi/2), (Rational(1,2), pi/3),
+    (sqrt(2)/2, pi/4), (sqrt(3)/2, pi/6), (1, 0),
+]
+ARCTAN_TABLE = [
+    (-sqrt(3), -pi/3), (-1, -pi/4), (-sqrt(3)/3, -pi/6),
+    (0, 0), (sqrt(3)/3, pi/6), (1, pi/4), (sqrt(3), pi/3),
+]
+
+
 def generate():
-    problem_type = randint(1, 5)
-    
+    problem_type = randint(1, 6)
+
     if problem_type == 1:
-        # Evaluate arcsin/arccos/arctan at standard values
+        # Evaluate at standard values — large pool
         func = choice(['arcsin', 'arccos', 'arctan'])
-        
-        if func == 'arcsin':
-            values = [(-1, -pi/2), (-sqrt(3)/2, -pi/3), (-sqrt(2)/2, -pi/4), 
-                     (-1/2, -pi/6), (0, 0), (1/2, pi/6), (sqrt(2)/2, pi/4), 
-                     (sqrt(3)/2, pi/3), (1, pi/2)]
-        elif func == 'arccos':
-            values = [(-1, pi), (-sqrt(3)/2, 5*pi/6), (-sqrt(2)/2, 3*pi/4), 
-                     (-1/2, 2*pi/3), (0, pi/2), (1/2, pi/3), (sqrt(2)/2, pi/4), 
-                     (sqrt(3)/2, pi/6), (1, 0)]
-        else:  # arctan
-            values = [(-sqrt(3), -pi/3), (-1, -pi/4), (-sqrt(3)/3, -pi/6), 
-                     (0, 0), (sqrt(3)/3, pi/6), (1, pi/4), (sqrt(3), pi/3)]
-        
-        val, ans = choice(values)
-        
+        table = {'arcsin': ARCSIN_TABLE, 'arccos': ARCCOS_TABLE, 'arctan': ARCTAN_TABLE}[func]
+        val, ans = choice(table)
         func_latex = {'arcsin': '\\arcsin', 'arccos': '\\arccos', 'arctan': '\\arctan'}[func]
-        
         return problem(
-            question=f"Evaluate ${func_latex}\\left({latex(val)}\\right)$",
+            question=f"Evaluate ${func_latex}\\!\\left({latex(val)}\\right)$",
             answer=ans,
             difficulty=(1200, 1350),
             topic="precalculus/inverse_trig_functions",
             solution=steps(
-                f"Recall that ${func_latex}$ returns the angle whose {func[3:]} is the input",
-                f"${func_latex}\\left({latex(val)}\\right) = {latex(ans)}$"
+                f"Recall: ${func_latex}$ returns the angle in its principal range whose {func[3:]} is the input",
+                f"${func_latex}\\!\\left({latex(val)}\\right) = {latex(ans)}$"
             ),
         )
-    
+
     elif problem_type == 2:
-        # Solve equation like sin(x) = value, find x in range
+        # Solve sin/cos/tan(x) = value in principal range
         trig_func = choice(['sin', 'cos', 'tan'])
-        
         if trig_func == 'sin':
-            values = [(1/2, pi/6), (sqrt(2)/2, pi/4), (sqrt(3)/2, pi/3), 
-                     (-1/2, -pi/6), (-sqrt(2)/2, -pi/4), (-sqrt(3)/2, -pi/3)]
+            table = ARCSIN_TABLE
+            range_text = r"-\frac{\pi}{2} \leq x \leq \frac{\pi}{2}"
         elif trig_func == 'cos':
-            values = [(1/2, pi/3), (sqrt(2)/2, pi/4), (sqrt(3)/2, pi/6),
-                     (-1/2, 2*pi/3), (-sqrt(2)/2, 3*pi/4), (-sqrt(3)/2, 5*pi/6)]
-        else:  # tan
-            values = [(1, pi/4), (sqrt(3), pi/3), (sqrt(3)/3, pi/6),
-                     (-1, -pi/4), (-sqrt(3), -pi/3), (-sqrt(3)/3, -pi/6)]
-        
-        val, base_ans = choice(values)
-        
-        if trig_func == 'sin':
-            range_text = "-\\frac{\\pi}{2} \\leq x \\leq \\frac{\\pi}{2}"
-        elif trig_func == 'cos':
-            range_text = "0 \\leq x \\leq \\pi"
+            table = ARCCOS_TABLE
+            range_text = r"0 \leq x \leq \pi"
         else:
-            range_text = "-\\frac{\\pi}{2} < x < \\frac{\\pi}{2}"
-        
-        ans = base_ans
-        
+            table = ARCTAN_TABLE
+            range_text = r"-\frac{\pi}{2} < x < \frac{\pi}{2}"
+
+        val, ans = choice(table)
         func_latex = {'sin': '\\sin', 'cos': '\\cos', 'tan': '\\tan'}[trig_func]
-        inv_func_latex = {'sin': '\\arcsin', 'cos': '\\arccos', 'tan': '\\arctan'}[trig_func]
-        
+        inv_latex = {'sin': '\\arcsin', 'cos': '\\arccos', 'tan': '\\arctan'}[trig_func]
+
         return problem(
-            question=f"Solve ${func_latex}(x) = {latex(val)}$ for $x$ where ${range_text}$",
+            question=f"Solve ${func_latex}(x) = {latex(val)}$ where ${range_text}$",
             answer=ans,
             difficulty=(1300, 1450),
             topic="precalculus/inverse_trig_functions",
             solution=steps(
-                f"Apply ${inv_func_latex}$ to both sides",
-                f"$x = {inv_func_latex}\\left({latex(val)}\\right)$",
-                f"$x = {latex(ans)}$"
+                f"Apply ${inv_latex}$ to both sides",
+                f"$x = {inv_latex}\\!\\left({latex(val)}\\right) = {latex(ans)}$"
             ),
         )
-    
+
     elif problem_type == 3:
-        # Composition like arcsin(sin(θ)) where θ may or may not be in range
-        angle_vals = [pi/6, pi/4, pi/3, 2*pi/3, 3*pi/4, 5*pi/6]
-        theta = choice(angle_vals)
-        
-        if theta <= pi/2:
-            ans = theta
-            explanation = f"Since ${latex(theta)}$ is in $\\left[-\\frac{{\\pi}}{{2}}, \\frac{{\\pi}}{{2}}\\right]$, we have $\\arcsin(\\sin({latex(theta)})) = {latex(theta)}$"
-        else:
-            ans = pi - theta
-            explanation = f"Since ${latex(theta)} > \\frac{{\\pi}}{{2}}$, we need to find the equivalent angle in $\\left[-\\frac{{\\pi}}{{2}}, \\frac{{\\pi}}{{2}}\\right]$"
-        
+        # arcsin(sin(theta)) where theta may be outside [-pi/2, pi/2]
+        # Varied pool of angles in all quadrants
+        outside_angles = [
+            2*pi/3, 3*pi/4, 5*pi/6, pi,
+            7*pi/6, 5*pi/4, 4*pi/3, 3*pi/2,
+            5*pi/3, 7*pi/4, 11*pi/6, 2*pi,
+        ]
+        theta = choice(outside_angles)
+        sin_val = sin(theta)
+        # Find the equivalent angle in [-pi/2, pi/2]
+        ans = asin(sin_val)
+        ans = simplify(ans)
+
         return problem(
-            question=f"Simplify $\\arcsin\\left(\\sin\\left({latex(theta)}\\right)\\right)$",
+            question=f"Simplify $\\arcsin\\!\\left(\\sin\\!\\left({latex(theta)}\\right)\\right)$",
             answer=ans,
             difficulty=(1400, 1550),
             topic="precalculus/inverse_trig_functions",
             solution=steps(
-                f"First evaluate $\\sin\\left({latex(theta)}\\right) = {latex(sin(theta))}$",
-                explanation,
+                f"First evaluate $\\sin\\!\\left({latex(theta)}\\right) = {latex(simplify(sin_val))}$",
+                f"Find the angle in $\\left[-\\dfrac{{\\pi}}{{2}}, \\dfrac{{\\pi}}{{2}}\\right]$ with that sine value",
                 f"Answer: ${latex(ans)}$"
             ),
         )
-    
+
     elif problem_type == 4:
-        # Find domain or range of inverse trig function composition
-        inner_choice = choice(['2x', 'x-1', 'x+1', '3x'])
-        
-        if inner_choice == '2x':
-            domain_condition = '-\\frac{1}{2} \\leq x \\leq \\frac{1}{2}'
-            ans_left, ans_right = Rational(-1, 2), Rational(1, 2)
-        elif inner_choice == 'x-1':
-            domain_condition = '0 \\leq x \\leq 2'
-            ans_left, ans_right = 0, 2
-        elif inner_choice == 'x+1':
-            domain_condition = '-2 \\leq x \\leq 0'
-            ans_left, ans_right = -2, 0
-        else:  # 3x
-            domain_condition = '-\\frac{1}{3} \\leq x \\leq \\frac{1}{3}'
-            ans_left, ans_right = Rational(-1, 3), Rational(1, 3)
-        
-        ans = fmt_interval(ans_left, ans_right, False, False)
-        
+        # Domain of arcsin(linear expression): find x such that -1 <= ax+b <= 1
+        # Vary a and b widely
+        a_vals = [2, 3, 4, 5, Rational(1,2), Rational(1,3)]
+        b_vals = [-3, -2, -1, 0, 1, 2, 3]
+        a = choice(a_vals)
+        b = choice(b_vals)
+        # domain: (-1-b)/a <= x <= (1-b)/a   (a > 0)
+        lo = simplify((-1 - b) / a)
+        hi = simplify((1 - b) / a)
+        if lo > hi:
+            lo, hi = hi, lo
+        ans = fmt_interval(lo, hi, False, False)
+
+        inner_str = f"{latex(a)}x" + (f" + {b}" if b > 0 else (f" - {abs(b)}" if b < 0 else ""))
+
         return problem(
-            question=f"Find the domain of $f(x) = \\arcsin({inner_choice})$",
+            question=f"Find the domain of $f(x) = \\arcsin\\!\\left({inner_str}\\right)$",
             answer=ans,
             difficulty=(1350, 1500),
             topic="precalculus/inverse_trig_functions",
             answer_type="interval",
             solution=steps(
-                f"The domain of $\\arcsin$ is $[-1, 1]$",
-                f"We need $-1 \\leq {inner_choice} \\leq 1$",
-                f"Solving: ${domain_condition}$",
-                f"Domain: $[{latex(ans_left)}, {latex(ans_right)}]$"
+                f"Domain of $\\arcsin$ requires $-1 \\leq {inner_str} \\leq 1$",
+                f"Solve: ${latex(lo)} \\leq x \\leq {latex(hi)}$"
             ),
         )
-    
-    else:  # problem_type == 5
-        # Evaluate composition like arccos(cos(θ)) with θ possibly outside [0, π]
-        angle_vals = [-pi/3, -pi/4, -pi/6, pi/6, pi/4, pi/3, 5*pi/6, 7*pi/6]
-        theta = choice(angle_vals)
-        
-        if 0 <= theta <= pi:
-            ans = theta
-            explanation = f"Since ${latex(theta)}$ is in $[0, \\pi]$, we have $\\arccos(\\cos({latex(theta)})) = {latex(theta)}$"
-        elif theta < 0:
-            ans = -theta
-            explanation = f"Since ${latex(theta)} < 0$, the equivalent angle in $[0, \\pi]$ is ${latex(-theta)}$"
-        else:
-            ans = 2*pi - theta
-            explanation = f"Since ${latex(theta)} > \\pi$, the equivalent angle in $[0, \\pi]$ is ${latex(2*pi - theta)}$"
-        
+
+    elif problem_type == 5:
+        # arccos(cos(theta)) with theta outside [0, pi]
+        outside_angles = [
+            -pi/6, -pi/4, -pi/3, -pi/2,
+            -2*pi/3, -3*pi/4, -5*pi/6,
+            7*pi/6, 5*pi/4, 4*pi/3, 3*pi/2,
+            5*pi/3, 7*pi/4, 11*pi/6,
+        ]
+        theta = choice(outside_angles)
+        cos_val = cos(theta)
+        ans = simplify(acos(cos_val))
+
         return problem(
-            question=f"Simplify $\\arccos\\left(\\cos\\left({latex(theta)}\\right)\\right)$",
+            question=f"Simplify $\\arccos\\!\\left(\\cos\\!\\left({latex(theta)}\\right)\\right)$",
             answer=ans,
             difficulty=(1400, 1600),
             topic="precalculus/inverse_trig_functions",
             solution=steps(
-                f"First evaluate $\\cos\\left({latex(theta)}\\right) = {latex(cos(theta))}$",
-                explanation,
+                f"Evaluate $\\cos\\!\\left({latex(theta)}\\right) = {latex(simplify(cos_val))}$",
+                f"Find the angle in $[0, \\pi]$ with that cosine value",
+                f"Answer: ${latex(ans)}$"
+            ),
+        )
+
+    else:
+        # arctan(tan(theta)) with theta outside (-pi/2, pi/2)
+        outside_angles = [
+            3*pi/4, 5*pi/6, 2*pi/3,
+            -3*pi/4, -5*pi/6, -2*pi/3,
+            pi + pi/6, pi + pi/4, pi + pi/3,
+        ]
+        theta = choice(outside_angles)
+        tan_val = tan(theta)
+        ans = simplify(atan(tan_val))
+
+        return problem(
+            question=f"Simplify $\\arctan\\!\\left(\\tan\\!\\left({latex(theta)}\\right)\\right)$",
+            answer=ans,
+            difficulty=(1400, 1600),
+            topic="precalculus/inverse_trig_functions",
+            solution=steps(
+                f"Evaluate $\\tan\\!\\left({latex(theta)}\\right) = {latex(simplify(tan_val))}$",
+                f"Find the angle in $\\left(-\\dfrac{{\\pi}}{{2}}, \\dfrac{{\\pi}}{{2}}\\right)$ with that tangent value",
                 f"Answer: ${latex(ans)}$"
             ),
         )

@@ -1,257 +1,313 @@
 """
 precalculus - polar_curves (hard)
-Generated: 2026-02-22T04:54:58.523907
 """
 
 from problem_utils import *
 
+
 def generate():
     problem_type = choice([
+        'area_enclosed',
         'area_between_curves',
         'tangent_line_polar',
         'arc_length_polar',
+        'convert_complex',
         'intersection_points',
-        'convert_polar_to_cartesian_curve',
-        'area_enclosed_complex'
     ])
-    
-    if problem_type == 'area_between_curves':
-        # Area between two polar curves
-        # Pick clean curves that intersect
-        curve_type = choice(['circles', 'cardioid_circle', 'rose_petals'])
-        
-        if curve_type == 'circles':
-            a_val = randint(2, 5)
-            b_val = randint(1, a_val - 1)
-            # r = a and r = b*cos(theta)
-            r1 = a_val
-            r2 = 2 * b_val * cos(t)
-            
-            # Find intersection: a = 2b*cos(theta) => cos(theta) = a/(2b)
-            # For valid intersection, need |a/(2b)| <= 1
-            if a_val <= 2 * b_val:
-                cos_val = Rational(a_val, 2 * b_val)
-                theta_int = acos(cos_val)
-                
-                # Area = (1/2) * integral from -theta_int to theta_int of (r1^2 - r2^2) dtheta
-                integrand = r1**2 - (2 * b_val * cos(t))**2
-                area_expr = integrate(integrand, (t, -theta_int, theta_int)) / 2
-                ans = simplify(area_expr)
-                
-                return problem(
-                    question=f"Find the area inside the circle $r = {a_val}$ and outside the circle $r = {2*b_val}\\cos\\theta$.",
-                    answer=ans,
-                    difficulty=(1650, 1750),
-                    topic="precalculus/polar_curves",
-                    solution=steps(
-                        f"Find intersection points: ${a_val} = {2*b_val}\\cos\\theta \\Rightarrow \\cos\\theta = {latex(cos_val)}$",
-                        f"$\\theta = \\pm {latex(theta_int)}$",
-                        f"Area $= \\frac{{1}}{{2}}\\int_{{-{latex(theta_int)}}}^{{{latex(theta_int)}}} \\left[{a_val}^2 - ({2*b_val}\\cos\\theta)^2\\right] d\\theta$",
-                        f"$= {latex(ans)}$"
-                    ),
-                    calculator="scientific"
-                )
-        
-        # Default to cardioid and circle
-        a_val = randint(2, 4)
-        # r = a(1 + cos(theta)) and r = 3a/2
-        r1_expr = a_val * (1 + cos(t))
-        r2_val = Rational(3 * a_val, 2)
-        
-        # Intersection: a(1 + cos(theta)) = 3a/2 => cos(theta) = 1/2 => theta = pi/3
-        theta_int = pi / 3
-        integrand = (a_val * (1 + cos(t)))**2 - r2_val**2
-        area_expr = integrate(integrand, (t, -theta_int, theta_int)) / 2
-        ans = simplify(area_expr)
-        
-        return problem(
-            question=f"Find the area inside the cardioid $r = {a_val}(1 + \\cos\\theta)$ and outside the circle $r = \\frac{{{3*a_val}}}{{2}}$.",
-            answer=ans,
-            difficulty=(1700, 1800),
-            topic="precalculus/polar_curves",
-            solution=steps(
-                f"Find intersection: ${a_val}(1 + \\cos\\theta) = \\frac{{{3*a_val}}}{{2}} \\Rightarrow \\cos\\theta = \\frac{{1}}{{2}}$",
-                f"$\\theta = \\pm\\frac{{\\pi}}{{3}}$",
-                f"Area $= \\frac{{1}}{{2}}\\int_{{-\\pi/3}}^{{\\pi/3}} \\left[{a_val}^2(1+\\cos\\theta)^2 - \\left(\\frac{{{3*a_val}}}{{2}}\\right)^2\\right] d\\theta$",
-                f"$= {latex(ans)}$"
-            ),
-            calculator="scientific"
-        )
-    
-    elif problem_type == 'tangent_line_polar':
-        # Find equation of tangent line to polar curve at given point
-        a_val = randint(2, 5)
-        theta_val = choice([0, pi/6, pi/4, pi/3, pi/2])
-        
-        # Use r = a*theta or r = a*sin(2*theta)
-        if choice([True, False]):
-            r_expr = a_val * t
-            r_at_theta = a_val * theta_val
-            dr_dt = a_val
-            
-            # Cartesian coords: x = r*cos(theta), y = r*sin(theta)
-            x_val = r_at_theta * cos(theta_val)
-            y_val = r_at_theta * sin(theta_val)
-            
-            # dy/dx = (dr/dtheta * sin(theta) + r*cos(theta)) / (dr/dtheta * cos(theta) - r*sin(theta))
-            numer = dr_dt * sin(theta_val) + r_at_theta * cos(theta_val)
-            denom = dr_dt * cos(theta_val) - r_at_theta * sin(theta_val)
-            
-            if abs(denom) > 0.01:
-                slope = simplify(numer / denom)
-                # y - y_val = slope * (x - x_val)
-                ans = Eq(y - y_val, slope * (x - x_val))
-                
-                return problem(
-                    question=f"Find the equation of the tangent line to the polar curve $r = {a_val}\\theta$ at $\\theta = {latex(theta_val)}$.",
-                    answer=ans,
-                    difficulty=(1650, 1750),
-                    topic="precalculus/polar_curves",
-                    solution=steps(
-                        f"At $\\theta = {latex(theta_val)}$: $r = {latex(r_at_theta)}$",
-                        f"Point in Cartesian: $({latex(x_val)}, {latex(y_val)})$",
-                        f"$\\frac{{dy}}{{dx}} = \\frac{{\\frac{{dr}}{{d\\theta}}\\sin\\theta + r\\cos\\theta}}{{\\frac{{dr}}{{d\\theta}}\\cos\\theta - r\\sin\\theta}}$",
-                        f"Slope $= {latex(slope)}$",
-                        f"${latex(ans)}$"
-                    ),
-                    answer_type="equation"
-                )
-        
-        # Use simpler case: cardioid
-        r_expr = a_val * (1 + cos(t))
-        r_at_theta = a_val * (1 + cos(theta_val))
-        dr_dt = -a_val * sin(theta_val)
-        
-        x_val = simplify(r_at_theta * cos(theta_val))
-        y_val = simplify(r_at_theta * sin(theta_val))
-        
-        numer = dr_dt * sin(theta_val) + r_at_theta * cos(theta_val)
-        denom = dr_dt * cos(theta_val) - r_at_theta * sin(theta_val)
-        
-        if abs(denom) > 0.01:
-            slope = simplify(numer / denom)
-            ans = Eq(y - y_val, slope * (x - x_val))
-            
+
+    if problem_type == 'area_enclosed':
+        # Area of various polar regions
+        curve_type = choice(['rose_n3', 'rose_n4', 'cardioid', 'lemniscate_half'])
+        a_val = randint(1, 5)
+
+        if curve_type == 'rose_n3':
+            # 3-petal rose r=a cos(3theta), area = pi*a^2/4
+            ans = pi * a_val**2 / 4
             return problem(
-                question=f"Find the equation of the tangent line to the cardioid $r = {a_val}(1 + \\cos\\theta)$ at $\\theta = {latex(theta_val)}$.",
+                question=f"Find the total area enclosed by the rose curve $r = {a_val}\\cos(3\\theta)$.",
+                answer=ans,
+                difficulty=(1650, 1800),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    "Three petals; each petal area $= \\dfrac{1}{2}\\int_{-\\pi/6}^{\\pi/6} a^2\\cos^2(3\\theta)\\,d\\theta$",
+                    f"Each petal area $= \\dfrac{{{a_val**2}\\pi}}{{12}}$, total $= 3 \\cdot \\dfrac{{{a_val**2}\\pi}}{{12}} = \\dfrac{{{a_val**2}\\pi}}{{4}}$"
+                ),
+                calculator="scientific"
+            )
+        elif curve_type == 'rose_n4':
+            # 4-petal rose r=a cos(2theta), area of all petals = pi*a^2/2
+            ans = pi * a_val**2 / 2
+            return problem(
+                question=f"Find the total area enclosed by the rose curve $r = {a_val}\\cos(2\\theta)$.",
+                answer=ans,
+                difficulty=(1650, 1800),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    "Four petals; each petal area $= \\dfrac{1}{2}\\int_{-\\pi/4}^{\\pi/4} a^2\\cos^2(2\\theta)\\,d\\theta$",
+                    f"Each petal area $= \\dfrac{{{a_val**2}\\pi}}{{8}}$, total $= 4 \\cdot \\dfrac{{{a_val**2}\\pi}}{{8}} = \\dfrac{{{a_val**2}\\pi}}{{2}}$"
+                ),
+                calculator="scientific"
+            )
+        elif curve_type == 'cardioid':
+            # r = a(1+cos theta), area = 3 pi a^2 / 2
+            ans = Rational(3, 2) * pi * a_val**2
+            return problem(
+                question=f"Find the area enclosed by the cardioid $r = {a_val}(1 + \\cos\\theta)$.",
+                answer=ans,
+                difficulty=(1650, 1800),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    "$A = \\dfrac{1}{2}\\int_0^{2\\pi} a^2(1+\\cos\\theta)^2\\,d\\theta$",
+                    "$\\int_0^{2\\pi}(1+\\cos\\theta)^2\\,d\\theta = \\int_0^{2\\pi}(\\tfrac{3}{2}+2\\cos\\theta+\\tfrac{\\cos 2\\theta}{2})\\,d\\theta = 3\\pi$",
+                    f"$A = \\dfrac{{{a_val**2}}}{{2}} \\cdot 3\\pi = \\dfrac{{3{a_val**2}\\pi}}{{2}}$"
+                ),
+                calculator="scientific"
+            )
+        else:
+            # lemniscate r^2 = a^2 cos(2theta), total area = a^2
+            ans = a_val**2
+            return problem(
+                question=f"Find the total area enclosed by the lemniscate $r^2 = {a_val**2}\\cos(2\\theta)$.",
                 answer=ans,
                 difficulty=(1700, 1850),
                 topic="precalculus/polar_curves",
                 solution=steps(
-                    f"At $\\theta = {latex(theta_val)}$: $r = {latex(r_at_theta)}$",
-                    f"Point: $({latex(x_val)}, {latex(y_val)})$",
-                    f"$\\frac{{dr}}{{d\\theta}} = {latex(dr_dt)}$",
-                    f"Slope $= {latex(slope)}$",
-                    f"${latex(ans)}$"
+                    "$A = \\dfrac{1}{2}\\int_{-\\pi/4}^{\\pi/4} r^2\\,d\\theta \\times 2 = \\int_{-\\pi/4}^{\\pi/4} a^2\\cos(2\\theta)\\,d\\theta$",
+                    f"$= {a_val**2}[\\tfrac{{\\sin(2\\theta)}}{{2}}]_{{-\\pi/4}}^{{\\pi/4}} = {a_val**2}$"
                 ),
-                answer_type="equation"
+                calculator="scientific"
             )
-    
-    elif problem_type == 'arc_length_polar':
-        # Arc length of polar curve
-        a_val = randint(2, 4)
-        # Use r = a*e^(b*theta) from theta = 0 to theta = pi
-        b_val = Rational(1, 2)
-        theta_end = pi
-        
-        r_expr = a_val * exp(b_val * t)
-        dr_dt = a_val * b_val * exp(b_val * t)
-        
-        # Arc length = integral sqrt(r^2 + (dr/dtheta)^2) dtheta
-        integrand_squared = r_expr**2 + dr_dt**2
-        integrand = sqrt(integrand_squared)
-        
-        arc_length = integrate(integrand, (t, 0, theta_end))
-        ans = simplify(arc_length)
-        
+
+    elif problem_type == 'area_between_curves':
+        a_val = randint(1, 4)
+        variant = choice(['circle_cardioid', 'two_circles', 'rose_circle'])
+
+        if variant == 'circle_cardioid':
+            # Inside r=a(1+cos) and outside r=a
+            # Intersection: 1+cos=1 => cos=0 => theta=pi/2, 3pi/2
+            # Area = integral from -pi/2 to pi/2 of (cardioid^2 - circle^2)/2
+            inner_integrand = (a_val*(1+cos(t)))**2 - a_val**2
+            area_part = integrate(inner_integrand, (t, -pi/2, pi/2)) / 2
+            ans = simplify(area_part)
+            return problem(
+                question=f"Find the area inside the cardioid $r = {a_val}(1+\\cos\\theta)$ and outside the circle $r = {a_val}$.",
+                answer=ans,
+                difficulty=(1700, 1850),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    f"Intersection: $\\cos\\theta = 0$, so $\\theta = \\pm\\pi/2$",
+                    f"$A = \\dfrac{{1}}{{2}}\\int_{{-\\pi/2}}^{{\\pi/2}}\\left[({a_val}(1+\\cos\\theta))^2 - {a_val}^2\\right]d\\theta = {latex(ans)}$"
+                ),
+                calculator="scientific"
+            )
+
+        elif variant == 'two_circles':
+            b_val = randint(a_val+1, a_val+4)
+            # Area inside r=b_val and outside r=a_val cos(theta)
+            # Intersection: b_val = a_val cos(theta) => cos(theta) = b_val/a_val
+            # Only valid if b_val < a_val
+            a_circ = a_val + 2
+            b_circ = randint(1, a_circ - 1)
+            if a_circ <= 2 * b_circ:
+                cos_val = Rational(b_circ, a_circ)
+                theta_int = acos(cos_val)
+                ans = simplify(
+                    (integrate(b_circ**2, (t, theta_int, 2*pi - theta_int)) +
+                     integrate((a_circ*cos(t))**2, (t, -theta_int, theta_int))) / 2
+                )
+            else:
+                ans = pi * b_circ**2
+            return problem(
+                question=f"Find the area inside $r = {b_circ}$ and outside $r = {a_circ}\\cos\\theta$.",
+                answer=ans,
+                difficulty=(1700, 1850),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    f"Find intersections and integrate the appropriate regions",
+                    f"$A = {latex(ans)}$"
+                ),
+                calculator="scientific"
+            )
+
+        else:
+            # Area of one petal of r = a*cos(2theta), already computed
+            ans = pi * a_val**2 / 8
+            return problem(
+                question=f"Find the area of one petal of the four-petaled rose $r = {a_val}\\cos(2\\theta)$.",
+                answer=ans,
+                difficulty=(1650, 1800),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    "One petal: $-\\pi/4 \\leq \\theta \\leq \\pi/4$",
+                    f"$A = \\dfrac{{1}}{{2}}\\int_{{-\\pi/4}}^{{\\pi/4}} {a_val**2}\\cos^2(2\\theta)\\,d\\theta = \\dfrac{{{a_val**2}\\pi}}{{8}}$"
+                ),
+                calculator="scientific"
+            )
+
+    elif problem_type == 'tangent_line_polar':
+        a_val = randint(1, 5)
+        theta_opts = [pi/6, pi/4, pi/3, pi/2, 2*pi/3]
+        theta_val = choice(theta_opts)
+
+        # Use cardioid r = a(1+cos theta)
+        r_at = a_val * (1 + cos(theta_val))
+        dr = -a_val * sin(theta_val)
+
+        numer = dr * sin(theta_val) + r_at * cos(theta_val)
+        denom = dr * cos(theta_val) - r_at * sin(theta_val)
+
+        if simplify(denom) == 0:
+            # Vertical tangent — fall back
+            theta_val = pi/6
+            r_at = a_val * (1 + cos(theta_val))
+            dr = -a_val * sin(theta_val)
+            numer = dr * sin(theta_val) + r_at * cos(theta_val)
+            denom = dr * cos(theta_val) - r_at * sin(theta_val)
+
+        slope = simplify(numer / denom)
+        x_pt = simplify(r_at * cos(theta_val))
+        y_pt = simplify(r_at * sin(theta_val))
+
         return problem(
-            question=f"Find the arc length of the spiral $r = {a_val}e^{{{latex(b_val)}\\theta}}$ from $\\theta = 0$ to $\\theta = \\pi$.",
-            answer=ans,
-            difficulty=(1750, 1850),
+            question=f"Find the slope of the tangent line to the cardioid $r = {a_val}(1+\\cos\\theta)$ at $\\theta = {latex(theta_val)}$.",
+            answer=slope,
+            difficulty=(1700, 1850),
             topic="precalculus/polar_curves",
             solution=steps(
-                f"Arc length $= \\int_0^\\pi \\sqrt{{r^2 + \\left(\\frac{{dr}}{{d\\theta}}\\right)^2}} d\\theta$",
-                f"$r = {a_val}e^{{{latex(b_val)}\\theta}}, \\frac{{dr}}{{d\\theta}} = {latex(a_val * b_val)}e^{{{latex(b_val)}\\theta}}$",
-                f"$r^2 + \\left(\\frac{{dr}}{{d\\theta}}\\right)^2 = {latex(simplify(integrand_squared))}$",
-                f"$= {latex(ans)}$"
+                f"At $\\theta = {latex(theta_val)}$: $r = {latex(r_at)}$, $\\frac{{dr}}{{d\\theta}} = {latex(dr)}$",
+                f"$\\frac{{dy}}{{dx}} = \\frac{{\\frac{{dr}}{{d\\theta}}\\sin\\theta + r\\cos\\theta}}{{\\frac{{dr}}{{d\\theta}}\\cos\\theta - r\\sin\\theta}}$",
+                f"Slope $= {latex(slope)}$"
             ),
             calculator="scientific"
         )
-    
-    elif problem_type == 'intersection_points':
-        # Find all intersection points of two polar curves
-        a_val = randint(2, 4)
-        # r = a*cos(2*theta) and r = a*sin(2*theta)
-        r1_expr = a_val * cos(2 * t)
-        r2_expr = a_val * sin(2 * t)
-        
-        # Solve: a*cos(2*theta) = a*sin(2*theta)
-        # cos(2*theta) = sin(2*theta) => tan(2*theta) = 1 => 2*theta = pi/4 + n*pi
-        theta_solutions = [pi/8, 5*pi/8]
-        
-        points = []
-        for theta_val in theta_solutions:
-            r_val = a_val * cos(2 * theta_val)
-            points.append((float(r_val), float(theta_val)))
-        
-        # Also check for pole
-        points.append((0, 0))
-        
-        ans_list = [(simplify(a_val * cos(2 * pi/8)), pi/8), 
-                    (simplify(a_val * cos(2 * 5*pi/8)), 5*pi/8),
-                    (0, pi/4)]
-        
-        ans_str = fmt_set([f"({latex(r)}, {latex(theta)})" for r, theta in ans_list])
-        
-        return problem(
-            question=f"Find all points of intersection (in polar coordinates) of the curves $r = {a_val}\\cos(2\\theta)$ and $r = {a_val}\\sin(2\\theta)$ for $0 \\leq \\theta < 2\\pi$.",
-            answer=ans_str,
-            difficulty=(1600, 1700),
-            topic="precalculus/polar_curves",
-            solution=steps(
-                f"Set ${a_val}\\cos(2\\theta) = {a_val}\\sin(2\\theta)$",
-                f"$\\tan(2\\theta) = 1 \\Rightarrow 2\\theta = \\frac{{\\pi}}{{4}}, \\frac{{5\\pi}}{{4}}$",
-                f"$\\theta = \\frac{{\\pi}}{{8}}, \\frac{{5\\pi}}{{8}}$",
-                f"Also check pole: $r = 0$ when $\\theta = \\frac{{\\pi}}{{4}}$ (first curve) and $\\theta = 0$ (second curve)",
-                f"Points: {ans_str}"
-            ),
-            answer_type="set"
-        )
-    
-    elif problem_type == 'convert_polar_to_cartesian_curve':
-        # Convert polar equation to Cartesian form
-        curve_choice = choice(['lemniscate', 'limaçon', 'rose'])
-        
-        if curve_choice == 'lemniscate':
-            a_val = randint(2, 5)
-            # r^2 = a^2 * cos(2*theta)
-            # r^2 = a^2(cos^2(theta) - sin^2(theta))
-            # x^2 + y^2 = a^2 * ((x^2 - y^2)/(x^2 + y^2))
-            # (x^2 + y^2)^2 = a^2(x^2 - y^2)
-            
-            ans = Eq((x**2 + y**2)**2, a_val**2 * (x**2 - y**2))
-            
+
+    elif problem_type == 'arc_length_polar':
+        a_val = randint(1, 5)
+        variant = choice(['spiral', 'circle_full'])
+
+        if variant == 'spiral':
+            # r = a*theta from 0 to 2pi: L = a*integral sqrt(1+theta^2) — complex, use r=a*e^(b theta)
+            b_val = Rational(1, 2)
+            r_expr = a_val * exp(b_val * t)
+            dr_dt = diff(r_expr, t)
+            integrand = sqrt(r_expr**2 + dr_dt**2)
+            arc_length = integrate(integrand, (t, 0, pi))
+            ans = simplify(arc_length)
             return problem(
-                question=f"Convert the polar equation $r^2 = {a_val**2}\\cos(2\\theta)$ to Cartesian form.",
+                question=f"Find the arc length of $r = {a_val}e^{{\\theta/2}}$ from $\\theta=0$ to $\\theta=\\pi$.",
+                answer=ans,
+                difficulty=(1800, 1950),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    "$L = \\int_0^\\pi \\sqrt{r^2 + \\left(\\frac{dr}{d\\theta}\\right)^2}\\,d\\theta$",
+                    f"$r = {a_val}e^{{\\theta/2}},\\; \\frac{{dr}}{{d\\theta}} = \\frac{{{a_val}}}{{2}}e^{{\\theta/2}}$",
+                    f"$r^2 + \\left(\\frac{{dr}}{{d\\theta}}\\right)^2 = {a_val**2}e^\\theta\\left(1 + \\frac{{1}}{{4}}\\right) = \\frac{{5{a_val**2}}}{{4}}e^\\theta$",
+                    f"$L = \\frac{{\\sqrt{{5}}{a_val}}}{{2}}[e^{{\\theta/2}}]_0^\\pi = {latex(ans)}$"
+                ),
+                calculator="scientific"
+            )
+        else:
+            # Arc length of r = a from 0 to 2pi = 2 pi a
+            ans = 2 * pi * a_val
+            return problem(
+                question=f"Find the arc length (circumference) of the circle $r = {a_val}$.",
                 answer=ans,
                 difficulty=(1650, 1750),
                 topic="precalculus/polar_curves",
                 solution=steps(
-                    f"Use $\\cos(2\\theta) = \\cos^2\\theta - \\sin^2\\theta = \\frac{{x^2 - y^2}}{{r^2}}$",
-                    f"$r^2 = {a_val**2} \\cdot \\frac{{x^2 - y^2}}{{r^2}}$",
-                    f"$r^4 = {a_val**2}(x^2 - y^2)$",
-                    f"$(x^2 + y^2)^2 = {a_val**2}(x^2 - y^2)$"
+                    "$L = \\int_0^{2\\pi} \\sqrt{r^2 + 0^2}\\,d\\theta = \\int_0^{2\\pi} a\\,d\\theta = 2\\pi a$",
+                    f"$= 2\\pi \\cdot {a_val} = {latex(ans)}$"
+                ),
+                calculator="scientific"
+            )
+
+    elif problem_type == 'convert_complex':
+        curve_choice = choice(['lemniscate', 'r_cos_theta', 'r_sin_cos'])
+
+        if curve_choice == 'lemniscate':
+            a_val = randint(2, 6)
+            ans = Eq((x**2 + y**2)**2, a_val**2 * (x**2 - y**2))
+            return problem(
+                question=f"Convert the polar equation $r^2 = {a_val**2}\\cos(2\\theta)$ to Cartesian form.",
+                answer=ans,
+                difficulty=(1650, 1800),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    "$\\cos(2\\theta) = \\cos^2\\theta - \\sin^2\\theta = \\frac{x^2-y^2}{r^2}$",
+                    f"$r^4 = {a_val**2}(x^2-y^2)$",
+                    f"$(x^2+y^2)^2 = {a_val**2}(x^2-y^2)$"
                 ),
                 answer_type="equation"
             )
-        
+
+        elif curve_choice == 'r_cos_theta':
+            a_val = nonzero(-5, 5)
+            rect_ans = Eq((x - a_val)**2 + y**2, a_val**2)
+            return problem(
+                question=f"Convert $r = {2*a_val}\\cos\\theta$ to Cartesian form (complete the square).",
+                answer=rect_ans,
+                difficulty=(1700, 1850),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    f"$r^2 = {2*a_val}r\\cos\\theta \\Rightarrow x^2+y^2 = {2*a_val}x$",
+                    f"Complete the square: $(x-{a_val})^2 + y^2 = {a_val**2}$"
+                ),
+                answer_type="equation"
+            )
+
         else:
-            # Simpler conversion
-            a_val = randint(2, 5)
-            # r = a*cos(theta)
-            # r^2 = a*r*cos(theta)
-            # x^2 + y^2 = a*x
-            # x^2 - a*x + y^2 = 0
-            # (x - a/2)^2 + y^2 = (a/2)^2
-            
-            ans = Eq((x - Rational(a_val, 2))**2 + y**2, (Rational(a_val, 2)
+            # cardioid to rectangular
+            a_val = randint(1, 4)
+            ans = Eq((x**2 + y**2 - a_val*x)**2, a_val**2*(x**2+y**2))
+            return problem(
+                question=f"Convert the cardioid $r = {a_val}(1 + \\cos\\theta)$ to Cartesian form.",
+                answer=ans,
+                difficulty=(1750, 1950),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    f"$r = {a_val} + {a_val}\\cos\\theta$",
+                    f"$r - {a_val} = {a_val}\\frac{{x}}{{r}}$",
+                    f"$(r - {a_val})r = {a_val}x$",
+                    f"$(r^2 - {a_val}r)^2 = ({a_val}x)^2 \\Rightarrow (x^2+y^2-{a_val}x)^2 = {a_val**2}(x^2+y^2)$"
+                ),
+                answer_type="equation"
+            )
+
+    else:
+        # Intersection points of two polar curves
+        a_val = randint(1, 4)
+        variant = choice(['cos_sin_same_a', 'circle_rose'])
+
+        if variant == 'cos_sin_same_a':
+            # r = a*cos(theta), r = a*sin(theta) => tan(theta)=1, theta=pi/4
+            r_at = a_val * sin(pi/4)
+            ans = FiniteSet((simplify(r_at), pi/4))
+            return problem(
+                question=f"Find the non-zero intersection of $r = {a_val}\\cos\\theta$ and $r = {a_val}\\sin\\theta$ in polar form $(r>0)$.",
+                answer=ans,
+                difficulty=(1650, 1800),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    f"Set equal: ${a_val}\\cos\\theta = {a_val}\\sin\\theta \\Rightarrow \\tan\\theta = 1 \\Rightarrow \\theta = \\pi/4$",
+                    f"$r = {a_val}\\sin(\\pi/4) = {latex(simplify(r_at))}$",
+                    f"Intersection: $({latex(simplify(r_at))}, \\pi/4)$"
+                ),
+                answer_type="set"
+            )
+        else:
+            # r = a and r = 2a cos(theta): a = 2a cos => cos = 1/2 => theta = pm pi/3
+            ans = FiniteSet((a_val, pi/3), (a_val, -pi/3))
+            return problem(
+                question=f"Find the intersection points of $r = {a_val}$ and $r = {2*a_val}\\cos\\theta$.",
+                answer=ans,
+                difficulty=(1700, 1850),
+                topic="precalculus/polar_curves",
+                solution=steps(
+                    f"Set equal: ${a_val} = {2*a_val}\\cos\\theta \\Rightarrow \\cos\\theta = \\frac{{1}}{{2}}$",
+                    f"$\\theta = \\pm\\dfrac{{\\pi}}{{3}}$",
+                    f"Points: $({a_val}, \\pi/3)$ and $({a_val}, -\\pi/3)$"
+                ),
+                answer_type="set"
+            )
+
+emit(generate())
