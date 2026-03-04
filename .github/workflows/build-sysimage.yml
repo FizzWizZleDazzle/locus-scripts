@@ -1,0 +1,41 @@
+name: Build Julia Sysimage
+
+on:
+  push:
+    paths:
+      - 'julia/**'
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.11'
+
+      - name: Install runtime dependencies
+        run: julia --project=julia -e 'using Pkg; Pkg.instantiate()'
+
+      - name: Install build dependencies
+        run: julia --project=julia/build -e 'using Pkg; Pkg.instantiate()'
+
+      - name: Build sysimage
+        run: julia --project=julia/build julia/build/build_sysimage.jl
+        timeout-minutes: 15
+
+      - name: Upload sysimage to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: sysimage-latest
+          name: Julia Sysimage (latest)
+          files: julia/sysimage.so
+          prerelease: true
+          body: |
+            Auto-built Julia sysimage for locus-scripts.
+            Download and place at `julia/sysimage.so` to skip local build.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+
+# Julia
+julia/Manifest.toml
+julia/sysimage.so
+julia/build/Manifest.toml
