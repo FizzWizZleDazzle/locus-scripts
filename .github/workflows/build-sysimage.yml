@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'julia/**'
+      - '.github/workflows/build-sysimage.yml'
     branches: [main]
   workflow_dispatch:
 
