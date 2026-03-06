@@ -29,10 +29,12 @@ export @variables, Num,
     # Batch
     run_batch,
     # SVG diagrams
-    DiagramObj, GraphObj,
-    line!, polygon!, circle!, arc!, point!, angle_arc!, right_angle!,
+    DiagramObj, GraphObj, NumberLine,
+    line!, arrow!, polygon!, circle!, arc!, point!, angle_arc!, right_angle!,
     segment_label!, tick_marks!, text!,
-    plot!, vline!, hline!, render
+    plot!, fill_between!, vline!, hline!,
+    open_point!, closed_point!, shade!, shade_left!, shade_right!,
+    render
 
 # ---------------------------------------------------------------------------
 # Random helpers (match Python API)
