@@ -40,6 +40,6 @@ rand_linear(x)
 rand_quadratic(x)
 rand_factorable(x)
 rand_poly(x, 3)
-step("test", x^2)
+sol("test", x^2)
 
 println("Precompile workload complete")

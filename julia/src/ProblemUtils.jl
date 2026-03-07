@@ -21,7 +21,7 @@ export @variables, Num,
     # Math functions (re-exported from Symbolics)
     sin, cos, tan, exp, log, sqrt, abs,
     # Helpers
-    problem, emit, steps, step, nonzero, set_topic!,
+    problem, emit, steps, sol, nonzero, set_topic!,
     fmt_set, fmt_tuple, fmt_list, fmt_matrix, fmt_interval, fmt_equation, fmt_multipart,
     compress_svg, decompress_svg, tex,
     # Random expression generators
@@ -121,9 +121,9 @@ end
 """Join solution steps with <br> for solution_latex."""
 steps(strings::String...) = join(strings, "<br>")
 
-"""Format a single solution step: step("Derivative", expr) -> "Derivative: \$...\$" """
-step(label::String, expr) = "$(label): \$$(tex(expr))\$"
-step(expr) = "\$$(tex(expr))\$"
+"""Format a single solution step: sol("Derivative", expr) -> "Derivative: \$...\$" """
+sol(label::String, expr) = "$(label): \$$(tex(expr))\$"
+sol(expr) = "\$$(tex(expr))\$"
 
 # ---------------------------------------------------------------------------
 # Random expression generators
