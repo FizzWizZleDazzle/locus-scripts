@@ -29,11 +29,15 @@ export @variables, Num,
     # Batch
     run_batch,
     # SVG diagrams
-    DiagramObj, GraphObj, NumberLine,
+    DiagramObj, GraphObj, NumberLine, VennDiagram, BarChart, PieChart,
     line!, arrow!, polygon!, circle!, arc!, point!, angle_arc!, right_angle!,
     segment_label!, tick_marks!, text!,
+    rect!, ellipse!, midpoint_label!, distance_marker!, parallel_marks!,
     plot!, fill_between!, vline!, hline!,
+    asymptote!, label!, plot_parametric!,
     open_point!, closed_point!, shade!, shade_left!, shade_right!,
+    label_set!, label_region!, bar!, bars!, slice!,
+    unit_circle,
     render
 
 # ---------------------------------------------------------------------------
@@ -234,6 +238,9 @@ const _SVG_DICT = [
     ("~g", "class=\"g\""),
     ("~a", "class=\"a\""),
     ("~t", "class=\"t\""),
+    ("~R", "<rect "),
+    ("~S", "<ellipse "),
+    ("~B", "fill-opacity=\"0.7\""),
 ]
 
 """Replace common SVG substrings with short tokens, prepend 's1:' prefix."""
