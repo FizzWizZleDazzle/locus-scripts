@@ -31,4 +31,15 @@ JSON.json(Dict{String,Any}(
 rand(1:10)
 rand([1, 2, 3, 4, 5])
 
+# ProblemUtils helpers
+push!(LOAD_PATH, joinpath(@__DIR__, "..", "src"))
+include(joinpath(@__DIR__, "..", "src", "ProblemUtils.jl"))
+using .ProblemUtils
+
+rand_linear(x)
+rand_quadratic(x)
+rand_factorable(x)
+rand_poly(x, 3)
+step("test", x^2)
+
 println("Precompile workload complete")

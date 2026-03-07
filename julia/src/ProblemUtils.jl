@@ -21,13 +21,15 @@ export @variables, Num,
     # Math functions (re-exported from Symbolics)
     sin, cos, tan, exp, log, sqrt, abs,
     # Helpers
-    problem, emit, steps, nonzero,
+    problem, emit, steps, step, nonzero, set_topic!,
     fmt_set, fmt_tuple, fmt_list, fmt_matrix, fmt_interval, fmt_equation, fmt_multipart,
     compress_svg, decompress_svg, tex,
+    # Random expression generators
+    rand_linear, rand_quadratic, rand_factorable, rand_poly,
     # Random helpers
     rand, randint, choice,
-    # Batch
-    run_batch,
+    # Batch & script macro
+    run_batch, @script,
     # SVG diagrams
     DiagramObj, GraphObj, NumberLine, VennDiagram, BarChart, PieChart,
     line!, arrow!, polygon!, circle!, arc!, point!, angle_arc!, right_angle!,
@@ -118,6 +120,47 @@ end
 
 """Join solution steps with <br> for solution_latex."""
 steps(strings::String...) = join(strings, "<br>")
+
+"""Format a single solution step: step("Derivative", expr) -> "Derivative: \$...\$" """
+step(label::String, expr) = "$(label): \$$(tex(expr))\$"
+step(expr) = "\$$(tex(expr))\$"
+
+# ---------------------------------------------------------------------------
+# Random expression generators
+# ---------------------------------------------------------------------------
+
+"""Random linear: ax + b. Returns (expr, a, b)."""
+function rand_linear(var; a=(-9,9), b=(-9,9), nonzero_a=true)
+    av = nonzero_a ? nonzero(a...) : randint(a...)
+    bv = randint(b...)
+    return (expr=av*var + bv, a=av, b=bv)
+end
+
+"""Random quadratic: ax² + bx + c. Returns (expr, a, b, c)."""
+function rand_quadratic(var; a=(-5,5), b=(-9,9), c=(-9,9), nonzero_a=true)
+    av = nonzero_a ? nonzero(a...) : randint(a...)
+    bv = randint(b...)
+    cv = randint(c...)
+    return (expr=av*var^2 + bv*var + cv, a=av, b=bv, c=cv)
+end
+
+"""Random factorable quadratic: a(x - r1)(x - r2). Returns (expr, a, r1, r2)."""
+function rand_factorable(var; a=(1,1), roots=(-9,9))
+    av = randint(a...)
+    r1 = randint(roots...)
+    r2 = randint(roots...)
+    return (expr=expand(av*(var - r1)*(var - r2)), a=av, r1=r1, r2=r2)
+end
+
+"""Random polynomial of degree n. Returns (expr, coeffs::Vector)."""
+function rand_poly(var, n::Int; coeff=(-9,9), nonzero_leading=true)
+    coeffs = [randint(coeff...) for _ in 0:n]
+    if nonzero_leading
+        while coeffs[end] == 0; coeffs[end] = randint(coeff...); end
+    end
+    expr = sum(coeffs[i+1] * var^i for i in 0:n)
+    return (expr=expr, coeffs=coeffs)
+end
 
 # ---------------------------------------------------------------------------
 # Answer formatting helpers
@@ -263,6 +306,17 @@ function decompress_svg(s::String)
 end
 
 # ---------------------------------------------------------------------------
+# Script-level default topic
+# ---------------------------------------------------------------------------
+
+const _DEFAULT_TOPIC = Ref{Union{Nothing,String}}(nothing)
+
+"""Set a script-level default topic so problem() calls don't need to repeat it."""
+function set_topic!(topic::String)
+    _DEFAULT_TOPIC[] = topic
+end
+
+# ---------------------------------------------------------------------------
 # Main API
 # ---------------------------------------------------------------------------
 
@@ -276,9 +330,10 @@ Build a complete problem dict with validation.
 - `difficulty`: Int ELO or (lo, hi) tuple for random range
 - `topic`: "main/sub" format string
 """
-function problem(; question, answer, difficulty, topic, solution="",
+function problem(; question, answer, difficulty, topic=_DEFAULT_TOPIC[], solution="",
                    grading_mode="equivalent", answer_type=nothing, calculator="none",
                    image="", time=nothing)
+    topic === nothing && error("topic is required — pass it or call set_topic!()")
     # Handle difficulty tuple
     if difficulty isa Tuple
         difficulty = rand(difficulty[1]:difficulty[2])
@@ -341,6 +396,31 @@ function run_batch(generate_fn::Function)
     end
     for _ in 1:count
         emit(generate_fn())
+    end
+end
+
+# ---------------------------------------------------------------------------
+# @script macro — eliminates per-script boilerplate
+# ---------------------------------------------------------------------------
+
+"""
+    @script x y begin ... end
+
+Declares symbolic variables, wraps body in a generate function, and calls run_batch.
+The body should return a problem() Dict.
+"""
+macro script(args...)
+    block = args[end]
+    vars = args[1:end-1]
+
+    var_decls = isempty(vars) ? :() : :(@variables $(vars...))
+
+    quote
+        $(esc(var_decls))
+        function _generate()
+            $(esc(block))
+        end
+        run_batch(_generate)
     end
 end
 
