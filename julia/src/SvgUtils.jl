@@ -19,3 +19,15 @@ include(joinpath(@__DIR__, "svg", "graph.jl"))       # GraphObj + render
 include(joinpath(@__DIR__, "svg", "numberline.jl"))  # NumberLine + render
 include(joinpath(@__DIR__, "svg", "charts.jl"))      # VennDiagram, BarChart, PieChart + render
 include(joinpath(@__DIR__, "svg", "unit_circle.jl")) # unit_circle()
+
+# Statistics SVGs
+include(joinpath(@__DIR__, "svg", "histogram.jl"))     # Histogram + render
+include(joinpath(@__DIR__, "svg", "boxplot.jl"))        # BoxPlot + render
+include(joinpath(@__DIR__, "svg", "scatterplot.jl"))    # ScatterPlot + render
+
+# Physics SVGs
+include(joinpath(@__DIR__, "svg", "freebody.jl"))       # FreeBodyDiagram + render
+include(joinpath(@__DIR__, "svg", "projectile_path.jl"))# ProjectilePath + render
+include(joinpath(@__DIR__, "svg", "circuit.jl"))        # CircuitDiagram + render
+include(joinpath(@__DIR__, "svg", "wave.jl"))           # WaveDiagram + render
+include(joinpath(@__DIR__, "svg", "optics.jl"))         # OpticsRay + render

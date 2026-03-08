@@ -14,6 +14,8 @@ using Random
 import Base: diff
 
 include("SvgUtils.jl")
+include("stats.jl")
+include("physics.jl")
 
 export @variables, Num,
     # CAS operations
@@ -40,7 +42,46 @@ export @variables, Num,
     open_point!, closed_point!, shade!, shade_left!, shade_right!,
     label_set!, label_region!, bar!, bars!, slice!,
     unit_circle,
-    render
+    render,
+    # Statistics
+    stat_mean, stat_median, stat_mode, stat_variance, stat_stdev,
+    stat_quartiles, stat_iqr, stat_five_number, stat_range,
+    rand_dataset, rand_dataset_with_mode,
+    fact, comb, perm,
+    fmt_prob, fmt_prob_decimal,
+    z_score, phi, phi_inv, normal_cdf, normal_between,
+    least_squares, rand_regression,
+    confidence_interval, margin_of_error, Z_90, Z_95, Z_99,
+    z_test_stat, p_value_two_tail, p_value_one_tail,
+    se_mean, se_proportion,
+    # Statistics SVGs
+    Histogram, bin!, bins_from_data!,
+    BoxPlot, add_data!,
+    ScatterPlot, scatter_points!, regression_line!,
+    # Physics
+    PHYS, fmt_phys, UNIT_CONVERSIONS, convert_unit,
+    kinematic_1d, projectile, rand_projectile,
+    newton2, weight, friction, net_force,
+    ke, pe, pe_spring, work, power,
+    momentum, impulse, elastic_collision, inelastic_collision,
+    angular_velocity, centripetal_accel, INERTIA, torque, ke_rotational,
+    shm_period_spring, shm_period_pendulum, shm_frequency, shm_vmax,
+    wave_speed, wave_frequency, wavelength, doppler, speed_of_sound,
+    pressure, hydrostatic_pressure, buoyant_force, flow_rate,
+    c_to_k, k_to_c, c_to_f, f_to_c, heat_transfer, ideal_gas, carnot_efficiency,
+    coulomb_force, electric_field_point, ohm, resistance_series, resistance_parallel,
+    electrical_power, rand_circuit, rc_time_constant, capacitance_parallel, capacitor_energy,
+    magnetic_force_charge, magnetic_force_wire, B_wire, B_solenoid,
+    snell, critical_angle, thin_lens, magnification,
+    gravity_force, orbital_velocity, orbital_period, escape_velocity,
+    magnetic_flux, faraday_emf, motional_emf, inductor_energy,
+    rand_mech,
+    # Physics SVGs
+    FreeBodyDiagram, add_force!, set_object!, add_surface!,
+    ProjectilePath, add_label!,
+    CircuitDiagram, add_battery!, add_resistor!, add_capacitor!, set_topology!,
+    WaveDiagram, label_amplitude!, label_wavelength!, add_second_wave!,
+    OpticsRay
 
 # ---------------------------------------------------------------------------
 # Random helpers (match Python API)
