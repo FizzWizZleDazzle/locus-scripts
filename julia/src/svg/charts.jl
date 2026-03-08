@@ -197,9 +197,10 @@ function render(pc::PieChart)
     isempty(pc._slices) && return """<svg xmlns="http://www.w3.org/2000/svg"></svg>"""
 
     parts = String[]
-    w, h = pc._width, pc._height
+    label_pad = 50  # extra space for labels around the pie
+    w, h = pc._width + label_pad, pc._height + label_pad
     cx, cy = w / 2.0, h / 2.0
-    r = min(w, h) * 0.38
+    r = min(pc._width, pc._height) * 0.38
     label_r = r + 16
 
     total = sum(v for (_, v) in pc._slices)

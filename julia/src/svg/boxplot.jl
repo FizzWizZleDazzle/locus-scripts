@@ -27,8 +27,11 @@ function render(bp::BoxPlot)
     isempty(bp._datasets) && return """<svg xmlns="http://www.w3.org/2000/svg"></svg>"""
 
     parts = String[]
-    pad = bp._padding
-    w = bp._width
+    # Compute left padding to fit labels
+    max_label_len = maximum(length(l) for (l, _) in bp._datasets; init=0)
+    left_pad = max_label_len > 0 ? max(bp._padding, max_label_len * 8 + 12) : bp._padding
+    pad = left_pad  # used for left; right uses bp._padding
+    w = bp._width + (left_pad - bp._padding)  # widen viewBox if needed
     n = length(bp._datasets)
     # Adjust height for multiple datasets
     row_h = 40

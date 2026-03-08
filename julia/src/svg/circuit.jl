@@ -45,18 +45,28 @@ function set_topology!(cd::CircuitDiagram, topology::Symbol)
 end
 
 # Internal: draw a zigzag resistor symbol centered at (cx, cy), horizontal
-function _draw_resistor(cx, cy, label; seg_w=30)
+function _draw_resistor(cx, cy, label; seg_w=50)
     parts = String[]
     hw = seg_w / 2
-    # Zigzag: 4 peaks
-    n_peaks = 4
-    peak_h = 6
+    peak_h = 9
+    # Standard resistor zigzag: lead-in, 6 zigzag segments, lead-out
+    n_zigs = 6
+    zig_w = seg_w / (n_zigs + 2)  # leave space for lead-in/out
     pts = String[]
-    for i in 0:n_peaks*2
-        px = cx - hw + (i / (n_peaks * 2)) * seg_w
-        py = cy + (isodd(i) ? (iseven(i ÷ 2) ? -peak_h : peak_h) : 0)
+    # Lead-in
+    push!(pts, "$(round(cx - hw; digits=1)),$(round(cy; digits=1))")
+    x_start = cx - hw + zig_w
+    push!(pts, "$(round(x_start; digits=1)),$(round(cy; digits=1))")
+    # Zigzag peaks
+    for i in 1:n_zigs
+        px = x_start + (i - 0.5) * zig_w
+        py = cy + (isodd(i) ? -peak_h : peak_h)
         push!(pts, "$(round(px; digits=1)),$(round(py; digits=1))")
     end
+    # Lead-out
+    x_end = cx + hw - zig_w
+    push!(pts, "$(round(x_end; digits=1)),$(round(cy; digits=1))")
+    push!(pts, "$(round(cx + hw; digits=1)),$(round(cy; digits=1))")
     push!(parts, """<polyline points="$(join(pts, " "))" fill="none" stroke="currentColor" stroke-width="1.5"/>""")
     if !isempty(label)
         push!(parts, """<text x="$(round(cx; digits=1))" y="$(round(cy - peak_h - 6; digits=1))" font-size="10" fill="currentColor" text-anchor="middle">$(label)</text>""")
@@ -75,17 +85,38 @@ function _draw_capacitor(cx, cy, label; gap=6, plate_h=14)
     return join(parts)
 end
 
-# Internal: draw battery symbol at (cx, cy)
-function _draw_battery(cx, cy, label)
+# Battery plate half-gap (connection points are cy ± _BATT_HG)
+const _BATT_HG = 5
+
+# Internal: draw battery symbol at (cx, cy) with horizontal plates
+# Wires connect at (cx, cy - _BATT_HG) top and (cx, cy + _BATT_HG) bottom
+# signs_side: :right (for vertical wires) or :left (for horizontal wires)
+function _draw_battery(cx, cy, label; signs_side::Symbol=:right)
     parts = String[]
-    # Short thick line (negative) and long thin line (positive)
-    push!(parts, """<line x1="$(round(cx - 3; digits=1))" y1="$(round(cy - 10; digits=1))" x2="$(round(cx - 3; digits=1))" y2="$(round(cy + 10; digits=1))" stroke="currentColor" stroke-width="3"/>""")
-    push!(parts, """<line x1="$(round(cx + 3; digits=1))" y1="$(round(cy - 14; digits=1))" x2="$(round(cx + 3; digits=1))" y2="$(round(cy + 14; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
-    # + and - signs
-    push!(parts, """<text x="$(round(cx + 8; digits=1))" y="$(round(cy - 8; digits=1))" font-size="10" fill="currentColor">+</text>""")
-    push!(parts, """<text x="$(round(cx - 14; digits=1))" y="$(round(cy - 8; digits=1))" font-size="10" fill="currentColor">−</text>""")
+    long_hw = 12.0   # positive plate half-width (long, thin)
+    short_hw = 7.0   # negative plate half-width (short, thick)
+    top_y = cy - _BATT_HG  # positive terminal
+    bot_y = cy + _BATT_HG  # negative terminal
+    # Positive plate (long, thin) — top
+    push!(parts, """<line x1="$(round(cx - long_hw; digits=1))" y1="$(round(top_y; digits=1))" x2="$(round(cx + long_hw; digits=1))" y2="$(round(top_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+    # Negative plate (short, thick) — bottom
+    push!(parts, """<line x1="$(round(cx - short_hw; digits=1))" y1="$(round(bot_y; digits=1))" x2="$(round(cx + short_hw; digits=1))" y2="$(round(bot_y; digits=1))" stroke="currentColor" stroke-width="3"/>""")
+    # + and - signs (placed away from wire direction)
+    if signs_side == :right
+        push!(parts, """<text x="$(round(cx + long_hw + 4; digits=1))" y="$(round(top_y + 4; digits=1))" font-size="10" fill="currentColor">+</text>""")
+        push!(parts, """<text x="$(round(cx + short_hw + 4; digits=1))" y="$(round(bot_y + 4; digits=1))" font-size="10" fill="currentColor">−</text>""")
+    else
+        push!(parts, """<text x="$(round(cx - long_hw - 4; digits=1))" y="$(round(top_y + 4; digits=1))" font-size="10" fill="currentColor" text-anchor="end">+</text>""")
+        push!(parts, """<text x="$(round(cx - short_hw - 4; digits=1))" y="$(round(bot_y + 4; digits=1))" font-size="10" fill="currentColor" text-anchor="end">−</text>""")
+    end
     if !isempty(label)
-        push!(parts, """<text x="$(round(cx; digits=1))" y="$(round(cy + 24; digits=1))" font-size="10" fill="currentColor" text-anchor="middle">$(label)</text>""")
+        if signs_side == :left
+            # Parallel: label below battery
+            push!(parts, """<text x="$(round(cx; digits=1))" y="$(round(cy + _BATT_HG + 16; digits=1))" font-size="10" fill="currentColor" text-anchor="middle">$(label)</text>""")
+        else
+            # Series/combo: label to the left of battery
+            push!(parts, """<text x="$(round(cx - long_hw - 6; digits=1))" y="$(round(cy + 4; digits=1))" font-size="10" fill="currentColor" text-anchor="end">$(label)</text>""")
+        end
     end
     return join(parts)
 end
@@ -115,14 +146,14 @@ function render(cd::CircuitDiagram)
 
         # Battery
         push!(parts, _draw_battery(bx, by, cd._battery !== nothing ? cd._battery[2] : ""))
-        # Wires: left vertical up/down
-        push!(parts, """<line x1="$(round(bx + 3; digits=1))" y1="$(round(by - 14; digits=1))" x2="$(round(bx + 3; digits=1))" y2="$(round(top_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
-        push!(parts, """<line x1="$(round(bx - 3; digits=1))" y1="$(round(by + 10; digits=1))" x2="$(round(bx - 3; digits=1))" y2="$(round(bot_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+        # Wires: left vertical up/down from battery terminals
+        push!(parts, """<line x1="$(round(bx; digits=1))" y1="$(round(by - _BATT_HG; digits=1))" x2="$(round(bx; digits=1))" y2="$(round(top_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+        push!(parts, """<line x1="$(round(bx; digits=1))" y1="$(round(by + _BATT_HG; digits=1))" x2="$(round(bx; digits=1))" y2="$(round(bot_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
 
         # Top wire
-        push!(parts, """<line x1="$(round(bx + 3; digits=1))" y1="$(round(top_y; digits=1))" x2="$(round(right_x; digits=1))" y2="$(round(top_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+        push!(parts, """<line x1="$(round(bx; digits=1))" y1="$(round(top_y; digits=1))" x2="$(round(right_x; digits=1))" y2="$(round(top_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
         # Bottom wire
-        push!(parts, """<line x1="$(round(bx - 3; digits=1))" y1="$(round(bot_y; digits=1))" x2="$(round(right_x; digits=1))" y2="$(round(bot_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+        push!(parts, """<line x1="$(round(bx; digits=1))" y1="$(round(bot_y; digits=1))" x2="$(round(right_x; digits=1))" y2="$(round(bot_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
         # Right wire
         push!(parts, """<line x1="$(round(right_x; digits=1))" y1="$(round(top_y; digits=1))" x2="$(round(right_x; digits=1))" y2="$(round(bot_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
 
@@ -144,9 +175,9 @@ function render(cd::CircuitDiagram)
         bx = pad + 10
         by = h / 2
 
-        push!(parts, _draw_battery(bx, by, cd._battery !== nothing ? cd._battery[2] : ""))
+        push!(parts, _draw_battery(bx, by, cd._battery !== nothing ? cd._battery[2] : ""; signs_side=:left))
 
-        left_x = bx + 30
+        left_x = bx + 55
         right_x = w - pad - 20
         mid_x = (left_x + right_x) / 2
 
@@ -158,17 +189,15 @@ function render(cd::CircuitDiagram)
             push!(parts, """<line x1="$(round(left_x; digits=1))" y1="$(round(top_bus; digits=1))" x2="$(round(left_x; digits=1))" y2="$(round(bot_bus; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
             push!(parts, """<line x1="$(round(right_x; digits=1))" y1="$(round(top_bus; digits=1))" x2="$(round(right_x; digits=1))" y2="$(round(bot_bus; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
 
-            # Connect battery to buses
-            push!(parts, """<line x1="$(round(bx + 3; digits=1))" y1="$(round(by - 14; digits=1))" x2="$(round(bx + 3; digits=1))" y2="$(round(top_bus; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
-            push!(parts, """<line x1="$(round(bx + 3; digits=1))" y1="$(round(top_bus; digits=1))" x2="$(round(left_x; digits=1))" y2="$(round(top_bus; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
-            push!(parts, """<line x1="$(round(bx - 3; digits=1))" y1="$(round(by + 10; digits=1))" x2="$(round(bx - 3; digits=1))" y2="$(round(bot_bus; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
-            push!(parts, """<line x1="$(round(bx - 3; digits=1))" y1="$(round(bot_bus; digits=1))" x2="$(round(left_x; digits=1))" y2="$(round(bot_bus; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+            # Connect battery to left bus with horizontal wires
+            push!(parts, """<line x1="$(round(bx; digits=1))" y1="$(round(by - _BATT_HG; digits=1))" x2="$(round(left_x; digits=1))" y2="$(round(by - _BATT_HG; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+            push!(parts, """<line x1="$(round(bx; digits=1))" y1="$(round(by + _BATT_HG; digits=1))" x2="$(round(left_x; digits=1))" y2="$(round(by + _BATT_HG; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
 
             for (i, (typ, _, lbl)) in enumerate(components)
                 branch_y = pad + i * spacing
                 # Horizontal wires to component
-                push!(parts, """<line x1="$(round(left_x; digits=1))" y1="$(round(branch_y; digits=1))" x2="$(round(mid_x - 18; digits=1))" y2="$(round(branch_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
-                push!(parts, """<line x1="$(round(mid_x + 18; digits=1))" y1="$(round(branch_y; digits=1))" x2="$(round(right_x; digits=1))" y2="$(round(branch_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+                push!(parts, """<line x1="$(round(left_x; digits=1))" y1="$(round(branch_y; digits=1))" x2="$(round(mid_x - 28; digits=1))" y2="$(round(branch_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+                push!(parts, """<line x1="$(round(mid_x + 28; digits=1))" y1="$(round(branch_y; digits=1))" x2="$(round(right_x; digits=1))" y2="$(round(branch_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
                 if typ == :resistor
                     push!(parts, _draw_resistor(mid_x, branch_y, lbl))
                 else
@@ -188,8 +217,8 @@ function render(cd::CircuitDiagram)
         if n_comp >= 1
             (typ1, _, lbl1) = components[1]
             series_cx = bx + 70
-            push!(parts, """<line x1="$(round(bx + 3; digits=1))" y1="$(round(by - 14; digits=1))" x2="$(round(bx + 3; digits=1))" y2="$(round(top_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
-            push!(parts, """<line x1="$(round(bx + 3; digits=1))" y1="$(round(top_y; digits=1))" x2="$(round(series_cx - 18; digits=1))" y2="$(round(top_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+            push!(parts, """<line x1="$(round(bx; digits=1))" y1="$(round(by - _BATT_HG; digits=1))" x2="$(round(bx; digits=1))" y2="$(round(top_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+            push!(parts, """<line x1="$(round(bx; digits=1))" y1="$(round(top_y; digits=1))" x2="$(round(series_cx - 28; digits=1))" y2="$(round(top_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
             if typ1 == :resistor
                 push!(parts, _draw_resistor(series_cx, top_y, lbl1))
             else
@@ -198,7 +227,7 @@ function render(cd::CircuitDiagram)
             # Continue to parallel section
             par_left = series_cx + 30
             par_right = w - pad - 10
-            push!(parts, """<line x1="$(round(series_cx + 18; digits=1))" y1="$(round(top_y; digits=1))" x2="$(round(par_left; digits=1))" y2="$(round(top_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+            push!(parts, """<line x1="$(round(series_cx + 28; digits=1))" y1="$(round(top_y; digits=1))" x2="$(round(par_left; digits=1))" y2="$(round(top_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
 
             par_comps = components[2:end]
             if !isempty(par_comps)
@@ -208,8 +237,8 @@ function render(cd::CircuitDiagram)
                 mid_x = (par_left + par_right) / 2
                 for (j, (typ, _, lbl)) in enumerate(par_comps)
                     branch_y = top_y + j * spacing
-                    push!(parts, """<line x1="$(round(par_left; digits=1))" y1="$(round(branch_y; digits=1))" x2="$(round(mid_x - 18; digits=1))" y2="$(round(branch_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
-                    push!(parts, """<line x1="$(round(mid_x + 18; digits=1))" y1="$(round(branch_y; digits=1))" x2="$(round(par_right; digits=1))" y2="$(round(branch_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+                    push!(parts, """<line x1="$(round(par_left; digits=1))" y1="$(round(branch_y; digits=1))" x2="$(round(mid_x - 28; digits=1))" y2="$(round(branch_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+                    push!(parts, """<line x1="$(round(mid_x + 28; digits=1))" y1="$(round(branch_y; digits=1))" x2="$(round(par_right; digits=1))" y2="$(round(branch_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
                     if typ == :resistor
                         push!(parts, _draw_resistor(mid_x, branch_y, lbl))
                     else
@@ -218,8 +247,8 @@ function render(cd::CircuitDiagram)
                 end
             end
             # Bottom wire back
-            push!(parts, """<line x1="$(round(bx - 3; digits=1))" y1="$(round(by + 10; digits=1))" x2="$(round(bx - 3; digits=1))" y2="$(round(bot_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
-            push!(parts, """<line x1="$(round(bx - 3; digits=1))" y1="$(round(bot_y; digits=1))" x2="$(round(par_right; digits=1))" y2="$(round(bot_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+            push!(parts, """<line x1="$(round(bx; digits=1))" y1="$(round(by + _BATT_HG; digits=1))" x2="$(round(bx; digits=1))" y2="$(round(bot_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
+            push!(parts, """<line x1="$(round(bx; digits=1))" y1="$(round(bot_y; digits=1))" x2="$(round(par_right; digits=1))" y2="$(round(bot_y; digits=1))" stroke="currentColor" stroke-width="1.5"/>""")
         end
     end
 
