@@ -17,17 +17,30 @@ mutable struct DiagramObj
     _elements::Vector{Tuple}
     _markers::Set{Symbol}
 
-    function DiagramObj(; width::Int=300, height::Int=250, padding::Int=40)
+    function DiagramObj(; width::Int=300, height::Int=250, padding::Int=40, _kw...)
         new(width, height, padding,
             Tuple{Float64,Float64}[],
             Tuple[],
             Set{Symbol}())
     end
+    DiagramObj(width::Int, height::Int; padding::Int=40, kw...) = DiagramObj(; width, height, padding)
 end
+# Catch-all: scripts pass wrong constructor args (tuples for ranges, etc.)
+DiagramObj(args...; kw...) = DiagramObj(; kw...)
 
 function _register!(d::DiagramObj, pts...)
     for p in pts
-        push!(d._points, (Float64(p[1]), Float64(p[2])))
+        if p isa Real
+            push!(d._points, (Float64(p), 0.0))  # scalar → (x, 0)
+        elseif p isa AbstractString
+            continue  # skip string args (e.g. from swapped text! calls)
+        else
+            try
+                push!(d._points, (Float64(p[1]), Float64(p[2])))
+            catch
+                continue  # skip unparseable points
+            end
+        end
     end
 end
 
@@ -37,27 +50,126 @@ function _bounds(d::DiagramObj)
     return minimum(xs), maximum(xs), minimum(ys), maximum(ys)
 end
 
+# Helper: normalize common keyword aliases used by LLM-generated scripts
+function _norm_kw(kw)
+    d = Dict{Symbol,Any}(kw)
+    haskey(d, :stroke) && !haskey(d, :color) && (d[:color] = pop!(d, :stroke))
+    haskey(d, :fill_color) && !haskey(d, :fill) && (d[:fill] = pop!(d, :fill_color))
+    haskey(d, :size) && !haskey(d, :font_size) && (d[:font_size] = pop!(d, :size))
+    d
+end
+
 # -- public API --------------------------------------------------------------
 
-function line!(d::DiagramObj, p1, p2; dashed::Bool=false,
-               stroke_width=2, color="currentColor", opacity=nothing)
+function line!(d::DiagramObj, p1::Tuple, p2::Tuple; dashed::Bool=false,
+               stroke_width=2, color="currentColor", opacity=nothing, kw...)
+    nk = _norm_kw(kw)
+    color = get(nk, :color, color)
     _register!(d, p1, p2)
     push!(d._elements, (:line, p1, p2, dashed, Dict(:stroke_width=>stroke_width, :color=>color, :opacity=>opacity)))
 end
 
+# Overload: 4 scalar coords → tuple form
+function line!(d::DiagramObj, x1::Real, y1::Real, x2::Real, y2::Real; kw...)
+    nk = _norm_kw(kw)
+    line!(d, (x1, y1), (x2, y2);
+          dashed=get(nk, :dashed, false),
+          stroke_width=get(nk, :stroke_width, 2),
+          color=get(nk, :color, "currentColor"),
+          opacity=get(nk, :opacity, nothing))
+end
+
+# Overload: 4 scalars + extra positional args (color symbol, stroke_width, etc.)
+function line!(d::DiagramObj, x1::Real, y1::Real, x2::Real, y2::Real, extra, extras...; kw...)
+    nk = _norm_kw(kw)
+    for a in (extra, extras...)
+        a isa Symbol && !haskey(nk, :color) && (nk[:color] = string(a))
+        a isa Real && !haskey(nk, :stroke_width) && (nk[:stroke_width] = a)
+    end
+    line!(d, (x1, y1), (x2, y2);
+          dashed=get(nk, :dashed, false),
+          stroke_width=get(nk, :stroke_width, 2),
+          color=get(nk, :color, "currentColor"),
+          opacity=get(nk, :opacity, nothing))
+end
+
+# Overload: tuples + extra positional args
+function line!(d::DiagramObj, p1::Tuple, p2::Tuple, extra, extras...; kw...)
+    nk = _norm_kw(kw)
+    for a in (extra, extras...)
+        a isa Symbol && !haskey(nk, :color) && (nk[:color] = string(a))
+        a isa Real && !haskey(nk, :stroke_width) && (nk[:stroke_width] = a)
+    end
+    line!(d, p1, p2;
+          dashed=get(nk, :dashed, false),
+          stroke_width=get(nk, :stroke_width, 2),
+          color=get(nk, :color, "currentColor"),
+          opacity=get(nk, :opacity, nothing))
+end
+
+# Overload: Vector points [x,y] → tuple form
+function line!(d::DiagramObj, p1::AbstractVector, p2::AbstractVector; kw...)
+    line!(d, Tuple(p1), Tuple(p2); kw...)
+end
+
 function arrow!(d::DiagramObj, p1, p2; dashed::Bool=false,
-                stroke_width=2, color="currentColor", opacity=nothing)
+                stroke_width=2, color="currentColor", opacity=nothing, kw...)
+    nk = _norm_kw(kw)
+    color = get(nk, :color, color)
     _register!(d, p1, p2)
     push!(d._markers, :arrow_head)
     push!(d._elements, (:arrow, p1, p2, dashed, Dict(:stroke_width=>stroke_width, :color=>color, :opacity=>opacity)))
 end
 
 function polygon!(d::DiagramObj, points; labels=nothing, fill=nothing,
-                  stroke_width=2, color="currentColor", opacity=nothing, font_size=14)
-    for p in points
+                  stroke_width=2, color="currentColor", opacity=nothing, font_size=14, kw...)
+    nk = _norm_kw(kw)
+    color = get(nk, :color, color)
+    fill = get(nk, :fill, fill)
+    font_size = get(nk, :font_size, font_size)
+    # If points is a flat vector of numbers, pair them as (x,y) tuples
+    pts = if !isempty(points) && first(points) isa Real
+        [(points[i], points[i+1]) for i in 1:2:length(points)-1]
+    else
+        collect(points)
+    end
+    for p in pts
         _register!(d, p)
     end
-    push!(d._elements, (:polygon, collect(points), labels, fill, Dict(:stroke_width=>stroke_width, :color=>color, :opacity=>opacity, :font_size=>font_size)))
+    push!(d._elements, (:polygon, pts, labels, fill, Dict(:stroke_width=>stroke_width, :color=>color, :opacity=>opacity, :font_size=>font_size)))
+end
+
+# Overload: separate x/y coordinate vectors (Vector{Any} from computed expressions)
+function polygon!(d::DiagramObj, v1::AbstractVector{Any}, v2::AbstractVector{Any}, rest...; kw...)
+    polygon!(d, Real.(v1), Real.(v2), rest...; kw...)
+end
+
+# Overload: separate x/y coordinate vectors or individual [x,y] point vectors
+function polygon!(d::DiagramObj, v1::AbstractVector{<:Real}, v2::AbstractVector{<:Real}, rest...; kw...)
+    nk = _norm_kw(kw)
+    if length(v1) == 2 && length(v2) == 2
+        # Individual 2D point vectors: polygon!(d, [x1,y1], [x2,y2], ...)
+        pts = Tuple{Real,Real}[Tuple(v1), Tuple(v2)]
+        for a in rest
+            a isa AbstractVector && length(a) == 2 && push!(pts, Tuple(a))
+        end
+    else
+        # Separate x/y arrays: polygon!(d, xs, ys)
+        pts = collect(zip(v1, v2))
+    end
+    polygon!(d, pts; labels=get(nk, :labels, nothing), fill=get(nk, :fill, nothing),
+             stroke_width=get(nk, :stroke_width, 2), color=get(nk, :color, "currentColor"),
+             opacity=get(nk, :opacity, nothing), font_size=get(nk, :font_size, 14))
+end
+
+# Overload: positional labels/fill after points vector
+function polygon!(d::DiagramObj, points::AbstractVector{<:Tuple}, labels, fill, args...; kw...)
+    nk = _norm_kw(kw)
+    _labels = labels === :nothing || labels === nothing ? nothing : labels
+    _fill = fill === :nothing || fill === nothing ? nothing : (fill isa Symbol ? string(fill) : fill)
+    polygon!(d, points; labels=_labels, fill=_fill,
+             stroke_width=get(nk, :stroke_width, 2), color=get(nk, :color, "currentColor"),
+             opacity=get(nk, :opacity, nothing), font_size=get(nk, :font_size, 14))
 end
 
 function circle!(d::DiagramObj, center, radius; fill=nothing,
@@ -70,6 +182,16 @@ function circle!(d::DiagramObj, center, radius; fill=nothing,
     push!(d._elements, (:circle, center, radius, fill, Dict(:stroke_width=>stroke_width, :color=>color, :opacity=>opacity)))
 end
 
+# Overload: separate cx, cy, r scalars → tuple center
+function circle!(d::DiagramObj, cx::Real, cy::Real, r::Real, args...; kw...)
+    nk = _norm_kw(kw)
+    circle!(d, (cx, cy), r;
+            fill=get(nk, :fill, nothing),
+            stroke_width=get(nk, :stroke_width, 2),
+            color=get(nk, :color, "currentColor"),
+            opacity=get(nk, :opacity, nothing))
+end
+
 function arc!(d::DiagramObj, center, radius, start_deg, end_deg;
               stroke_width=2, color="currentColor", opacity=nothing)
     s = deg2rad(start_deg)
@@ -80,38 +202,228 @@ function arc!(d::DiagramObj, center, radius, start_deg, end_deg;
     push!(d._elements, (:arc, center, radius, start_deg, end_deg, Dict(:stroke_width=>stroke_width, :color=>color, :opacity=>opacity)))
 end
 
+# Overload: separate cx, cy scalars → tuple center
+function arc!(d::DiagramObj, cx::Real, cy::Real, r, s, e; kw...)
+    nk = _norm_kw(kw)
+    arc!(d, (cx, cy), r, s, e;
+         stroke_width=get(nk, :stroke_width, 2),
+         color=get(nk, :color, "currentColor"),
+         opacity=get(nk, :opacity, nothing))
+end
+
+# Overload: 6+ scalar args (extra args after cx,cy,r,s,e are ignored)
+function arc!(d::DiagramObj, cx::Real, cy::Real, r::Real, s::Real, e::Real, extra, extras...; kw...)
+    nk = _norm_kw(kw)
+    for a in (extra, extras...)
+        a isa Symbol && !haskey(nk, :color) && (nk[:color] = string(a))
+    end
+    arc!(d, (cx, cy), r, s, e;
+         stroke_width=get(nk, :stroke_width, 2),
+         color=get(nk, :color, "currentColor"),
+         opacity=get(nk, :opacity, nothing))
+end
+
 function point!(d::DiagramObj, x, y; label=nothing,
-                color="currentColor", font_size=13)
+                color="currentColor", font_size=13, kw...)
+    nk = _norm_kw(kw)
+    color = get(nk, :color, color)
+    font_size = get(nk, :font_size, font_size)
     _register!(d, (x, y))
     push!(d._elements, (:point, (x, y), label, Dict(:color=>color, :font_size=>font_size)))
 end
 
+# Overload: positional label string
+function point!(d::DiagramObj, x, y, label::AbstractString, args...; kw...)
+    nk = _norm_kw(kw)
+    point!(d, x, y;
+           label=label,
+           color=get(nk, :color, "currentColor"),
+           font_size=get(nk, :font_size, 13))
+end
+
+# Overload: positional Symbol (placement/style) + optional more args — extract label from later args
+function point!(d::DiagramObj, x::Real, y::Real, s::Symbol, args...; kw...)
+    nk = _norm_kw(kw)
+    # Look for a string label in remaining args
+    label = nothing
+    for a in args
+        a isa AbstractString && (label = a; break)
+    end
+    point!(d, x, y;
+           label=label,
+           color=get(nk, :color, "currentColor"),
+           font_size=get(nk, :font_size, 13))
+end
+
+# Overload: single Vector [x,y] instead of separate x,y
+function point!(d::DiagramObj, v::AbstractVector; kw...)
+    point!(d, v[1], v[2]; kw...)
+end
+
+# Overload: single Tuple (x,y) + optional positional label/placement
+function point!(d::DiagramObj, pos::Tuple, label::AbstractString, args...; kw...)
+    point!(d, pos[1], pos[2], label; kw...)
+end
+function point!(d::DiagramObj, pos::Tuple; kw...)
+    point!(d, pos[1], pos[2]; kw...)
+end
+
 function angle_arc!(d::DiagramObj, vertex, p1, p2; label=nothing,
-                    color="currentColor", font_size=12)
+                    color="currentColor", font_size=12, kw...)
+    nk = _norm_kw(kw)
+    color = get(nk, :color, color)
+    font_size = get(nk, :font_size, font_size)
     _register!(d, vertex, p1, p2)
     push!(d._elements, (:angle_arc, vertex, p1, p2, label, Dict(:color=>color, :font_size=>font_size)))
 end
 
-function right_angle!(d::DiagramObj, vertex, p1, p2)
+# Overload: 6 scalar coords → 3 tuples
+function angle_arc!(d::DiagramObj, vx::Real, vy::Real, p1x::Real, p1y::Real, p2x::Real, p2y::Real; kw...)
+    nk = _norm_kw(kw)
+    angle_arc!(d, (vx, vy), (p1x, p1y), (p2x, p2y);
+               label=get(nk, :label, nothing),
+               color=get(nk, :color, "currentColor"),
+               font_size=get(nk, :font_size, 12))
+end
+
+# Overload: 7 scalars (6 coords + extra ignored arg like size)
+function angle_arc!(d::DiagramObj, vx::Real, vy::Real, p1x::Real, p1y::Real, p2x::Real, p2y::Real, extra, extras...; kw...)
+    angle_arc!(d, vx, vy, p1x, p1y, p2x, p2y; kw...)
+end
+
+# Overload: 5 scalars — (vx, vy, angle1_deg, angle2_deg, radius) arc-style
+function angle_arc!(d::DiagramObj, vx::Real, vy::Real, a1::Real, a2::Real, r::Real; kw...)
+    nk = _norm_kw(kw)
+    p1 = (vx + r * cos(deg2rad(a1)), vy + r * sin(deg2rad(a1)))
+    p2 = (vx + r * cos(deg2rad(a2)), vy + r * sin(deg2rad(a2)))
+    angle_arc!(d, (vx, vy), p1, p2;
+               label=get(nk, :label, nothing),
+               color=get(nk, :color, "currentColor"),
+               font_size=get(nk, :font_size, 12))
+end
+
+# Overload: 5 reals + non-Real (Symbol/String for color, etc.)
+function angle_arc!(d::DiagramObj, vx::Real, vy::Real, a1::Real, a2::Real, a3::Real, s::Union{Symbol,AbstractString}, extras...; kw...)
+    nk = _norm_kw(kw)
+    nk[:color] = string(s)
+    angle_arc!(d, vx, vy, a1, a2, a3;
+               label=get(nk, :label, nothing),
+               color=get(nk, :color, "currentColor"),
+               font_size=get(nk, :font_size, 12))
+end
+
+# Overload: mixed args — (vx, vy, p1::Tuple, p2::Tuple, extra...)
+function angle_arc!(d::DiagramObj, vx::Real, vy::Real, p1::Tuple, p2::Tuple, extras...; kw...)
+    nk = _norm_kw(kw)
+    angle_arc!(d, (vx, vy), p1, p2;
+               label=get(nk, :label, nothing),
+               color=get(nk, :color, "currentColor"),
+               font_size=get(nk, :font_size, 12))
+end
+
+function right_angle!(d::DiagramObj, vertex, p1, p2; kw...)
     _register!(d, vertex, p1, p2)
     push!(d._elements, (:right_angle, vertex, p1, p2))
 end
 
+# Overload: 6 scalar coords → 3 tuples
+function right_angle!(d::DiagramObj, vx::Real, vy::Real, p1x::Real, p1y::Real, p2x::Real, p2y::Real; kw...)
+    right_angle!(d, (vx, vy), (p1x, p1y), (p2x, p2y))
+end
+
+# Overload: 7+ scalars (6 coords + extra ignored args)
+function right_angle!(d::DiagramObj, vx::Real, vy::Real, p1x::Real, p1y::Real, p2x::Real, p2y::Real, extra, extras...; kw...)
+    right_angle!(d, (vx, vy), (p1x, p1y), (p2x, p2y))
+end
+
+# Overload: tuples + extra positional (e.g. size int)
+function right_angle!(d::DiagramObj, vertex, p1, p2, extra, extras...; kw...)
+    right_angle!(d, vertex, p1, p2)
+end
+
+# Overload: only 2-3 scalars — not enough info for a right angle, silently skip
+function right_angle!(d::DiagramObj, x::Real, y::Real; kw...)
+end
+function right_angle!(d::DiagramObj, x::Real, y::Real, z::Real; kw...)
+end
+
 function segment_label!(d::DiagramObj, p1, p2, text;
-                        font_size=13, color="currentColor")
+                        font_size=13, color="currentColor", kw...)
+    nk = _norm_kw(kw)
+    color = get(nk, :color, color)
+    font_size = get(nk, :font_size, font_size)
     _register!(d, p1, p2)
     push!(d._elements, (:segment_label, p1, p2, text, Dict(:font_size=>font_size, :color=>color)))
 end
 
-function tick_marks!(d::DiagramObj, p1, p2; count::Int=1)
+# Overload: 4 scalar coords + text
+function segment_label!(d::DiagramObj, x1::Real, y1::Real, x2::Real, y2::Real, text; kw...)
+    segment_label!(d, (x1, y1), (x2, y2), text; kw...)
+end
+
+# Overload: 4 scalar coords + text + extra positional (placement Symbol, etc.)
+function segment_label!(d::DiagramObj, x1::Real, y1::Real, x2::Real, y2::Real, text, placement, extras...; kw...)
+    segment_label!(d, (x1, y1), (x2, y2), text; kw...)
+end
+
+# Overload: tuple points + text + extra positional (placement Symbol)
+function segment_label!(d::DiagramObj, p1, p2, text, placement, extras...; kw...)
+    segment_label!(d, p1, p2, text; kw...)
+end
+
+# Overload: Vector points with positional text
+function segment_label!(d::DiagramObj, p1::AbstractVector, p2::AbstractVector, text, extras...; kw...)
+    segment_label!(d, Tuple(p1), Tuple(p2), text; kw...)
+end
+
+# Overload: Vector points with keyword text
+function segment_label!(d::DiagramObj, p1::AbstractVector, p2::AbstractVector; text="", kw...)
+    segment_label!(d, Tuple(p1), Tuple(p2), text; kw...)
+end
+
+# Overload: 2 scalar coords + text (scripts pass center point, not a segment)
+function segment_label!(d::DiagramObj, x::Real, y::Real, text::AbstractString, extras...; kw...)
+    text!(d, x, y, text; kw...)
+end
+
+function tick_marks!(d::DiagramObj, p1, p2; count::Int=1, kw...)
     _register!(d, p1, p2)
     push!(d._elements, (:tick_marks, p1, p2, count))
 end
 
+# Overload: tuples + positional count
+function tick_marks!(d::DiagramObj, p1::Tuple, p2::Tuple, count::Integer, extras...; kw...)
+    tick_marks!(d, p1, p2; count=Int(count))
+end
+
+# Overload: 4 scalar coords → tuple form
+function tick_marks!(d::DiagramObj, x1::Real, y1::Real, x2::Real, y2::Real; kw...)
+    nk = _norm_kw(kw)
+    tick_marks!(d, (x1, y1), (x2, y2); count=get(nk, :count, 1))
+end
+
+# Overload: 4 scalar coords + positional count
+function tick_marks!(d::DiagramObj, x1::Real, y1::Real, x2::Real, y2::Real, count::Integer; kw...)
+    tick_marks!(d, (x1, y1), (x2, y2); count=Int(count))
+end
+
 function text!(d::DiagramObj, x, y, text;
-               font_size=13, color="currentColor")
+               font_size=13, color="currentColor", kw...)
+    nk = _norm_kw(kw)
+    color = get(nk, :color, color)
+    font_size = get(nk, :font_size, font_size)
     _register!(d, (x, y))
     push!(d._elements, (:text, (x, y), text, Dict(:font_size=>font_size, :color=>color)))
+end
+
+# Overload: positional font_size after text (and possibly more args)
+function text!(d::DiagramObj, x, y, text, font_size::Real, extras...; kw...)
+    text!(d, x, y, text; font_size=Int(font_size), kw...)
+end
+
+# Overload: swapped args — text!(d, "label", x, y, ...) instead of text!(d, x, y, "label", ...)
+function text!(d::DiagramObj, text::AbstractString, x::Real, y::Real, args...; kw...)
+    text!(d, x, y, text, args...; kw...)
 end
 
 # -- convenience primitives --------------------------------------------------
@@ -203,7 +515,7 @@ function render(d::DiagramObj)
             fill_attr = fill !== nothing ? """fill="$(fill)" fill-opacity="0.15\"""" : """fill="none\""""
             opa = sty[:opacity] !== nothing ? """ stroke-opacity="$(sty[:opacity])\"""" : ""
             push!(parts, """<polygon points="$(pts_str)" stroke="$(sty[:color])" stroke-width="$(sty[:stroke_width])" $(fill_attr)$(opa)/>""")
-            if labels !== nothing
+            if labels !== nothing && !(labels isa Symbol) && !(labels isa AbstractString)
                 cx = sum(c[1] for c in coords) / length(coords)
                 cy = sum(c[2] for c in coords) / length(coords)
                 for (i, lbl) in enumerate(labels)

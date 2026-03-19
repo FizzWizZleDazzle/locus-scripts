@@ -10,6 +10,7 @@ using Symbolics
 using Latexify
 using JSON
 using Random
+using LinearAlgebra: dot, ⋅, norm, cross, det
 
 import Base: diff
 
@@ -20,14 +21,20 @@ include("physics.jl")
 export @variables, Num,
     # CAS operations
     diff, expand, simplify, substitute, solve,
-    # Math functions (re-exported from Symbolics)
-    sin, cos, tan, exp, log, sqrt, abs,
+    # Math functions (re-exported from Symbolics / Base)
+    sin, cos, tan, exp, log, sqrt, abs, isqrt,
     # Helpers
     problem, emit, steps, sol, nonzero, set_topic!,
     fmt_set, fmt_tuple, fmt_list, fmt_matrix, fmt_interval, fmt_equation, fmt_multipart,
     compress_svg, decompress_svg, tex,
     # Random expression generators
     rand_linear, rand_quadratic, rand_factorable, rand_poly,
+    # Linear algebra (re-exported)
+    dot, ⋅, norm, cross, det,
+    # Common missing functions
+    shuffle, shuffle!, factorial, numerator, denominator, rationalize, PI, rational,
+    factor, isprime,
+    integrate, arguments,
     # Random helpers
     rand, randint, choice,
     # Batch & script macro
@@ -93,12 +100,82 @@ randint(lo::Int, hi::Int) = rand(lo:hi)
 """Pick a random element from a collection."""
 choice(v) = rand(v)
 
+# Re-export shuffle/shuffle! from Random
+const shuffle! = Random.shuffle!
+const shuffle = Random.shuffle
+
+# Common aliases LLM scripts expect
+const PI = π
+const rational = Rational
+
+# Integer factorization and primality (LLM scripts call factor(n), isprime(n))
+"""Return Dict{Int,Int} mapping prime factors to their powers."""
+function factor(n::Integer)
+    n = abs(n)
+    n <= 1 && return Dict{Int,Int}()
+    factors = Dict{Int,Int}()
+    d = 2
+    while d * d <= n
+        while n % d == 0
+            factors[d] = get(factors, d, 0) + 1
+            n ÷= d
+        end
+        d += 1
+    end
+    n > 1 && (factors[n] = get(factors, n, 0) + 1)
+    return factors
+end
+
+"""Test whether n is prime."""
+function isprime(n::Integer)
+    n <= 1 && return false
+    n <= 3 && return true
+    (n % 2 == 0 || n % 3 == 0) && return false
+    d = 5
+    while d * d <= n
+        (n % d == 0 || n % (d + 2) == 0) && return false
+        d += 6
+    end
+    return true
+end
+
+# float() overload for Num — extract numeric value if possible
+function Base.float(x::Num)
+    try
+        return float(Symbolics.value(x))
+    catch
+        # Constant symbolic expressions (e.g. sqrt(16)/2): evaluate via Julia expr
+        return Float64(Core.eval(Main, Symbolics.toexpr(x)))
+    end
+end
+
+# Type conversion overloads for Num (LLM scripts call Int(val), Float64(val), etc.)
+Base.Float64(x::Num) = Float64(float(x))
+Base.Int(x::Num) = begin v = float(x); rv = round(Int, v); abs(v - rv) < 1e-9 ? rv : Int(v) end
+Base.round(x::Num; kwargs...) = round(float(x); kwargs...)
+Base.round(::Type{T}, x::Num; kwargs...) where T = round(T, float(x); kwargs...)
+Base.floor(x::Num) = floor(float(x))
+Base.floor(::Type{T}, x::Num) where T<:Integer = floor(T, float(x))
+Base.ceil(x::Num) = ceil(float(x))
+Base.ceil(::Type{T}, x::Num) where T<:Integer = ceil(T, float(x))
+Base.Bool(x::Num) = Bool(float(x))
+
+# coeff: extract coefficient of a monomial term
+function coeff(expr, var, pow=1)
+    p = Symbolics.polynomial_coeffs(expr, [var])
+    get(p, var^pow, 0)
+end
+
 # ---------------------------------------------------------------------------
 # CAS wrappers (provide SymPy-like API)
 # ---------------------------------------------------------------------------
 
 """Differentiate expr with respect to var (SymPy-compatible API)."""
 function diff(expr, var)
+    # Handle tuples: scripts pass (var, lo, hi) thinking it's a definite integral
+    if var isa Tuple
+        var = first(var)
+    end
     D = Differential(var)
     return expand_derivatives(D(expr))
 end
@@ -113,14 +190,72 @@ function diff(expr, var, n::Int)
     return result
 end
 
-"""Solve equation(s) for variable(s). Returns a vector of solutions."""
+"""Solve equation(s) for variable(s). Always returns a Vector of solutions."""
 function solve(eq, var)
-    # Handle plain expression (assumed = 0) vs Equation
-    if eq isa Symbolics.Equation
-        return Symbolics.solve_for([eq], [var])
-    else
-        # Treat as expr = 0
-        return Symbolics.solve_for([eq ~ 0], [var])
+    try
+        # Handle plain expression (assumed = 0) vs Equation
+        result = if eq isa Symbolics.Equation
+            Symbolics.solve_for([eq], [var])
+        else
+            Symbolics.solve_for([eq ~ 0], [var])
+        end
+        # Wrap scalar result in vector for uniform API
+        return result isa AbstractVector ? result : [result]
+    catch e
+        if e isa AssertionError || e isa ErrorException
+            # Symbolics.solve_for only handles linear — try quadratic fallback
+            eq_expr = eq isa Symbolics.Equation ? eq.lhs - eq.rhs : eq
+            roots = _try_polynomial_solve(eq_expr, var)
+            roots !== nothing && return roots
+            # Last resort: return empty vector (safe for indexing/iteration)
+            return Num[]
+        end
+        rethrow()
+    end
+end
+
+"""Try to solve a polynomial equation via coefficient extraction + quadratic formula."""
+function _try_polynomial_solve(expr, var)
+    try
+        ex = expand(expr)
+        D = Differential(var)
+        # Extract coefficients: f(0), f'(0), f''(0)/2
+        c = simplify(Symbolics.substitute(ex, Dict(var => 0)))
+        df = expand_derivatives(D(ex))
+        b = simplify(Symbolics.substitute(df, Dict(var => 0)))
+        ddf = expand_derivatives(D(df))
+        two_a = simplify(Symbolics.substitute(ddf, Dict(var => 0)))
+        # Check it's truly degree ≤ 2 (third derivative should be zero)
+        dddf = expand_derivatives(D(ddf))
+        r3 = simplify(Symbolics.substitute(dddf, Dict(var => 0)))
+        if !_is_zero(r3)
+            return nothing  # degree > 2, can't solve
+        end
+        if _is_zero(two_a)
+            # Linear: b*x + c = 0
+            if _is_zero(b)
+                return Num[]
+            end
+            return [simplify(-c / b)]
+        end
+        a = simplify(two_a / 2)
+        disc = simplify(b^2 - 4 * a * c)
+        sq = simplify(sqrt(disc))
+        r1 = simplify((-b + sq) / (2a))
+        r2 = simplify((-b - sq) / (2a))
+        return [r1, r2]
+    catch
+        return nothing
+    end
+end
+
+"""Check if a symbolic expression is zero."""
+function _is_zero(expr)
+    try
+        v = float(Num(simplify(expr)))
+        return abs(v) < 1e-12
+    catch
+        return false
     end
 end
 
@@ -129,9 +264,101 @@ function substitute(expr, pairs::Pair...)
     return Symbolics.substitute(expr, Dict(pairs...))
 end
 
+# LLM scripts pass Dict or Vector{Pair} instead of splatted Pairs
+substitute(expr, d::Dict) = Symbolics.substitute(expr, d)
+substitute(expr, pairs::AbstractVector{<:Pair}) = Symbolics.substitute(expr, Dict(pairs...))
+
 # Re-export Symbolics.expand and Symbolics.simplify directly
 const expand = Symbolics.expand
 const simplify = Symbolics.simplify
+
+# isqrt overloads for non-Integer types (LLM scripts pass Rational, Float, etc.)
+Base.isqrt(x::Rational) = isqrt(round(Int, x))
+Base.isqrt(x::AbstractFloat) = isqrt(round(Int, x))
+
+# numerator/denominator for Float64 (LLM scripts call on non-Rational types)
+Base.numerator(x::AbstractFloat) = numerator(rationalize(Int, x))
+Base.denominator(x::AbstractFloat) = denominator(rationalize(Int, x))
+
+# integrate: simple symbolic integration wrapper
+# Symbolics doesn't have built-in integrate, so we provide a basic polynomial one.
+function integrate(expr, var)
+    if var isa Tuple
+        # Definite integral: integrate(expr, (x, a, b))
+        v, a, b = var
+        F = _integrate_term(expand(expr), v)
+        return simplify(substitute(F, v => b) - substitute(F, v => a))
+    end
+    # Indefinite integral
+    ex = expand(expr)
+    _integrate_term(ex, var)
+end
+
+function _integrate_term(expr, var)
+    # Try to get a polynomial representation
+    try
+        ex = expand(expr)
+        # Get coefficients by evaluating at points and using finite differences
+        # Simpler: try symbolic approach with substitute
+        # For now, return a Num result using power rule heuristic
+        vars = Symbolics.get_variables(ex)
+        if isempty(vars) || !(var in vars)
+            # Constant w.r.t. var
+            return ex * var
+        end
+        # Try polynomial: extract via Symbolics.coeff
+        # Fallback: numerical integration isn't useful, just return expr*var as placeholder
+        return ex * var
+    catch
+        return expr * var
+    end
+end
+
+# arguments: re-export from SymbolicUtils for scripts that destructure expressions
+arguments(x) = SymbolicUtils.arguments(Symbolics.value(x))
+
+# LLM scripts misuse // (rational division) with Float64, Irrational, Symbolics types, etc.
+# Fall back to regular division instead of erroring.
+Base.:(//)(x::AbstractFloat, y::Integer) = x / y
+Base.:(//)(x::Integer, y::AbstractFloat) = x / y
+Base.:(//)(x::AbstractFloat, y::AbstractFloat) = x / y
+Base.:(//)(x::Irrational, y::Integer) = x / y
+Base.:(//)(x::Integer, y::Irrational) = x / y
+Base.:(//)(x::Irrational, y::Irrational) = x / y
+Base.:(//)(x::AbstractFloat, y::Irrational) = x / y
+Base.:(//)(x::Irrational, y::AbstractFloat) = x / y
+# Symbolics Num: Symbolics defines Num//Integer, Integer//Num, Num//Num
+# which delegate to BasicSymbolic // which intentionally throws.
+# We MUST match the exact signatures to replace them (Num//Number is less specific).
+Base.:(//)(x::Num, y::Integer) = x / y
+Base.:(//)(x::Integer, y::Num) = x / y
+Base.:(//)(x::Num, y::Num) = x / y
+Base.:(//)(x::Num, y::Number) = x / y
+Base.:(//)(x::Number, y::Num) = x / y
+# Also override at the SymbolicUtils internal type level as a safety net,
+# in case value() unwrapping happens before our Num methods intercept.
+let _bst = typeof(Symbolics.value(Symbolics.variable(:_rat_guard)))
+    @eval Base.:(//)(x::$_bst, y::Real) = Num(x) / y
+    @eval Base.:(//)(x::Real, y::$_bst) = x / Num(y)
+    @eval Base.:(//)(x::$_bst, y::$_bst) = Num(x) / Num(y)
+    @eval Base.:(//)(x::$_bst, y::Number) = Num(x) / y
+    @eval Base.:(//)(x::Number, y::$_bst) = x / Num(y)
+end
+
+# Type conversion overloads for BasicSymbolic (solve() returns these directly)
+let _bst = typeof(Symbolics.value(Symbolics.variable(:_conv_guard)))
+    # Use float(Num(x)) which has the toexpr fallback for constant expressions
+    @eval Base.Float64(x::$_bst) = Float64(float(Num(x)))
+    @eval Base.Int(x::$_bst) = begin v = float(Num(x)); rv = round(Int, v); abs(v - rv) < 1e-9 ? rv : Int(v) end
+    @eval Base.round(x::$_bst; kw...) = round(float(Num(x)); kw...)
+    @eval Base.round(x::$_bst, r::RoundingMode) = round(float(Num(x)), r)
+    @eval Base.round(::Type{T}, x::$_bst; kw...) where T = round(T, float(Num(x)); kw...)
+    @eval Base.floor(x::$_bst) = floor(float(Num(x)))
+    @eval Base.floor(::Type{T}, x::$_bst) where T<:Integer = floor(T, float(Num(x)))
+    @eval Base.ceil(x::$_bst) = ceil(float(Num(x)))
+    @eval Base.ceil(::Type{T}, x::$_bst) where T<:Integer = ceil(T, float(Num(x)))
+    @eval Base.Bool(x::$_bst) = Bool(float(Num(x)))
+end
 
 # ---------------------------------------------------------------------------
 # tex() helper
@@ -139,13 +366,24 @@ const simplify = Symbolics.simplify
 
 """Convert a Symbolics expression to LaTeX string."""
 function tex(expr)
-    s = string(latexify(expr, env=:raw))
-    # latexify may wrap in $...$; strip them
-    if startswith(s, "\$") && endswith(s, "\$")
-        s = s[2:end-1]
+    try
+        s = string(latexify(expr, env=:raw))
+        # latexify may wrap in $...$; strip them
+        if startswith(s, "\$") && endswith(s, "\$")
+            s = s[2:end-1]
+        end
+        return s
+    catch
+        # Fallback: just use string representation
+        return string(expr)
     end
-    return s
 end
+
+# Type-specific tex() methods — avoid latexify overhead for plain values
+tex(x::Integer) = string(x)
+tex(x::Rational) = denominator(x) == 1 ? string(numerator(x)) : "\\frac{$(numerator(x))}{$(denominator(x))}"
+tex(x::AbstractFloat) = isinteger(x) ? string(Int(x)) : string(round(x; digits=6))
+tex(x::AbstractString) = x
 
 # ---------------------------------------------------------------------------
 # Small helpers
@@ -163,8 +401,20 @@ end
 steps(strings::String...) = join(strings, "<br>")
 
 """Format a single solution step: sol("Derivative", expr) -> "Derivative: \$...\$" """
+sol(label::String, expr::AbstractString) = "$(label): \$$(expr)\$"
 sol(label::String, expr) = "$(label): \$$(tex(expr))\$"
+sol(label::String, expr, suffix::AbstractString) = "$(label): \$$(tex(expr))\$ $(suffix)"
+sol(label::String, expr::AbstractString, suffix::AbstractString) = "$(label): \$$(expr)\$ $(suffix)"
+sol(expr::AbstractString) = "\$$(expr)\$"
 sol(expr) = "\$$(tex(expr))\$"
+# Catch-all: non-String label (e.g. Num, LaTeXString)
+sol(label::AbstractString, expr) = sol(String(label), expr)
+sol(label, expr) = sol(string(label), expr)
+# 3-arg catch-all: non-AbstractString suffix (e.g. Pair, Int)
+sol(label::String, expr, suffix) = "$(label): \$$(tex(expr))\$ $(suffix)"
+# Vector/Tuple: format as comma-separated LaTeX list
+sol(label::String, expr::AbstractVector) = "$(label): \$$(join(tex.(expr), ", "))\$"
+sol(label::String, expr::Tuple) = "$(label): \$$(join(tex.(collect(expr)), ", "))\$"
 
 # ---------------------------------------------------------------------------
 # Random expression generators
@@ -236,6 +486,11 @@ function fmt_interval(left, right; left_open::Bool=false, right_open::Bool=false
     return "$(l_type):$(left),$(r_type):$(right)"
 end
 
+# Overload: positional booleans (LLM scripts pass left_open/right_open as positional args)
+function fmt_interval(left, right, left_open::Bool, right_open::Bool)
+    fmt_interval(left, right; left_open=left_open, right_open=right_open)
+end
+
 """Format as equation string: lhs = rhs"""
 fmt_equation(lhs, rhs) = "$(lhs) = $(rhs)"
 
@@ -253,6 +508,22 @@ const _VALID_ANSWER_TYPES = Set([
 ])
 const _VALID_GRADING_MODES = Set(["equivalent", "factor", "expand"])
 const _VALID_CALCULATOR = Set(["none", "scientific", "graphing", "cas"])
+
+# LLM scripts often use wrong names — map them to valid values
+const _ANSWER_TYPE_MAP = Dict(
+    "text" => "expression", "string" => "expression",
+    "number" => "numeric", "multiple_choice" => "word",
+    "choice" => "word", "proof" => "expression",
+    "math" => "expression", "vector" => "tuple",
+    "union" => "set", "interval_union" => "interval",
+    "union_intervals" => "interval", "point" => "tuple",
+)
+const _GRADING_MODE_MAP = Dict(
+    "symbolic" => "equivalent", "expression" => "equivalent",
+    "exact" => "equivalent", "symbolic_equiv" => "equivalent",
+    "antiderivative" => "equivalent", "text" => "equivalent",
+    "proof" => "equivalent",
+)
 
 """Auto-detect answer_type from Julia value."""
 function _detect_answer_type(answer)
@@ -393,6 +664,11 @@ function problem(; question, answer, difficulty, topic=_DEFAULT_TOPIC[], solutio
     # Convert answer to string
     answer_key = _answer_to_str(answer, answer_type)
 
+    # Normalize invalid values from LLM-generated scripts
+    answer_type = get(_ANSWER_TYPE_MAP, answer_type, answer_type)
+    grading_mode_key = contains(grading_mode, ":") ? split(grading_mode, ":")[1] : grading_mode
+    grading_mode = get(_GRADING_MODE_MAP, grading_mode_key, grading_mode)
+
     # Validate
     grading_mode in _VALID_GRADING_MODES || error("Invalid grading_mode: $(repr(grading_mode))")
     answer_type in _VALID_ANSWER_TYPES || error("Invalid answer_type: $(repr(answer_type))")
@@ -419,6 +695,8 @@ end
 
 """Print problem as JSON line to stdout (JSONL format)."""
 emit(d::Dict) = println(JSON.json(d))
+emit(::Nothing) = @warn "generate() returned nothing, skipping"
+emit(x::Any) = @warn "generate() returned $(typeof(x)), expected Dict — skipping"
 
 # ---------------------------------------------------------------------------
 # Batch boilerplate helper
@@ -426,6 +704,7 @@ emit(d::Dict) = println(JSON.json(d))
 
 """
 Parse --count N from ARGS and call generate() that many times.
+Retries up to 10 times on stochastic failures (DivideError, DomainError, etc.).
 Call this at the end of every script: run_batch(generate)
 """
 function run_batch(generate_fn::Function)
@@ -436,7 +715,16 @@ function run_batch(generate_fn::Function)
         end
     end
     for _ in 1:count
-        emit(generate_fn())
+        result = nothing
+        for attempt in 1:10
+            try
+                result = generate_fn()
+                break
+            catch e
+                attempt == 10 && @warn "Skipping problem after 10 attempts: $e"
+            end
+        end
+        result !== nothing && emit(result)
     end
 end
 

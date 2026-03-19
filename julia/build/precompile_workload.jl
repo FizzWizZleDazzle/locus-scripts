@@ -42,4 +42,17 @@ rand_factorable(x)
 rand_poly(x, 3)
 sol("test", x^2)
 
+# Exercise new ProblemUtils functions
+factor(12)
+isprime(7)
+tex(3//4)
+tex(42)
+tex(3.14)
+Int(Num(3))
+Float64(Num(2.5))
+round(Num(2.7))
+floor(Int, Num(3.9))
+ceil(Int, Num(1.2))
+solve(x^2 - 4 ~ 0, x)
+
 println("Precompile workload complete")

@@ -53,6 +53,9 @@ mutable struct GraphObj
     end
 end
 
+# Overload: scripts pass a DiagramObj as first positional arg — ignore it
+GraphObj(::Any; kw...) = GraphObj(; kw...)
+
 function _next_color!(g::GraphObj)
     c = _PLOT_COLORS[mod1(g._color_idx + 1, length(_PLOT_COLORS))]
     g._color_idx += 1
