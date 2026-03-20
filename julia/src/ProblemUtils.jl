@@ -517,6 +517,8 @@ const _ANSWER_TYPE_MAP = Dict(
     "math" => "expression", "vector" => "tuple",
     "union" => "set", "interval_union" => "interval",
     "union_intervals" => "interval", "point" => "tuple",
+    "complex" => "expression", "fraction" => "expression",
+    "polynomial" => "expression",
 )
 const _GRADING_MODE_MAP = Dict(
     "symbolic" => "equivalent", "expression" => "equivalent",
