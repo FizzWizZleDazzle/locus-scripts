@@ -48,6 +48,9 @@ using .ProblemUtils
             d = randint(-8, 8)
             det = a*d - b*c
             while det == 0
+                a = randint(-8, 8)
+                b = randint(-8, 8)
+                c = randint(-8, 8)
                 d = randint(-8, 8)
                 det = a*d - b*c
             end
@@ -71,7 +74,7 @@ using .ProblemUtils
     elseif problem_type == 3
         # Compute 2x2 inverse (900-1100 ELO)
         # Pick d, b, c first, then choose a so det = 1 or -1 for clean inverse
-        d = randint(-6, 6)
+        d = nonzero(-6, 6)
         b = randint(-6, 6)
         c = randint(-6, 6)
         det = choice([1, -1, 2, -2])
@@ -117,7 +120,7 @@ using .ProblemUtils
         b2 = randint(-10, 10)
         
         # Make A with det = ±1 or ±2
-        a = randint(-5, 5)
+        a = nonzero(-5, 5)
         b = randint(-5, 5)
         c = randint(-5, 5)
         det = choice([1, -1, 2, -2])

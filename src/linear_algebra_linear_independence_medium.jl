@@ -45,8 +45,10 @@ using .ProblemUtils
         # Compute determinant
         det_val = a1 * (b2 * c3 - b3 * c2) - a2 * (b1 * c3 - b3 * c1) + a3 * (b1 * c2 - b2 * c1)
         
-        # Ensure non-zero determinant for variety
+        # Ensure non-zero determinant (re-pick all three vectors to avoid stuck loops when a,b are proportional)
         while det_val == 0
+            a1, a2, a3 = randint(-6, 6), randint(-6, 6), randint(-6, 6)
+            b1, b2, b3 = randint(-6, 6), randint(-6, 6), randint(-6, 6)
             c1, c2, c3 = randint(-6, 6), randint(-6, 6), randint(-6, 6)
             det_val = a1 * (b2 * c3 - b3 * c2) - a2 * (b1 * c3 - b3 * c1) + a3 * (b1 * c2 - b2 * c1)
         end

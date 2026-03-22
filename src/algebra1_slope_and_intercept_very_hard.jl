@@ -14,6 +14,7 @@ using .ProblemUtils
         a = choice([3, 5, 8, 12, 15, 20])
         b = choice([4, 12, 9, 16, 20, 21])
         while gcd(a, b) > 1
+            a = choice([3, 5, 8, 12, 15, 20])
             b = choice([4, 12, 9, 16, 20, 21])
         end
         

@@ -13,9 +13,6 @@ using .ProblemUtils
         :polar_curve_intersection,
         :polar_area_setup,
         :polar_distance,
-        :polar_equation_identification,
-        :polar_symmetry,
-        :rose_curve_petals,
     ])
     
     if problem_type == :polar_to_cartesian_conversion
@@ -284,26 +281,5 @@ using .ProblemUtils
             time=180,
         )
         
-    elseif problem_type == :polar_equation_identification
-        # Identify curve type from polar equation
-        curve_type = choice([:cardioid, :limacon_inner, :limacon_dimple, :lemniscate])
-        
-        if curve_type == :cardioid
-            a = abs(nonzero(-8, 8))
-            trig_fn = choice(["\\cos", "\\sin"])
-            eq = "r = $(a)(1 + $(trig_fn)(\\theta))"
-            answer = "cardioid"
-            
-            problem(
-                question="Identify the type of curve represented by the polar equation \\\$$(eq)\\\$.",
-                answer=answer,
-                difficulty=(1800, 2000),
-                answer_type="text",
-                solution=steps(                    "Identify the polar curve type from its equation",
-                    sol("Answer", answer)
-                ),
-                time=120,
-            )
-        end
     end
 end

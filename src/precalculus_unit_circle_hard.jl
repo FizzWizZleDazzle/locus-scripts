@@ -7,7 +7,7 @@ using .ProblemUtils
 @script x t θ begin
     set_topic!("precalculus/unit_circle")
     
-    problem_type = rand(1:6)
+    problem_type = rand(1:5)
     
     if problem_type == 1
         # Exact value problem with sum/difference of special angles
@@ -15,35 +15,27 @@ using .ProblemUtils
         α = choice(angles)
         β = choice(angles)
         operation = choice(["+", "-"])
-        trig_func = choice(["sin", "cos", "tan"])
+        trig_func = choice(["sin", "cos"])
         
         if operation == "+"
             if trig_func == "sin"
                 ans = sin(α + β)
                 formula = "\\sin(α + β) = \\sin α \\cos β + \\cos α \\sin β"
                 expr_str = "\\sin\\left($(tex(α)) + $(tex(β))\\right)"
-            elseif trig_func == "cos"
+            else
                 ans = cos(α + β)
                 formula = "\\cos(α + β) = \\cos α \\cos β - \\sin α \\sin β"
                 expr_str = "\\cos\\left($(tex(α)) + $(tex(β))\\right)"
-            else
-                ans = tan(α + β)
-                formula = "\\tan(α + β) = \\frac{\\tan α + \\tan β}{1 - \\tan α \\tan β}"
-                expr_str = "\\tan\\left($(tex(α)) + $(tex(β))\\right)"
             end
         else
             if trig_func == "sin"
                 ans = sin(α - β)
                 formula = "\\sin(α - β) = \\sin α \\cos β - \\cos α \\sin β"
                 expr_str = "\\sin\\left($(tex(α)) - $(tex(β))\\right)"
-            elseif trig_func == "cos"
+            else
                 ans = cos(α - β)
                 formula = "\\cos(α - β) = \\cos α \\cos β + \\sin α \\sin β"
                 expr_str = "\\cos\\left($(tex(α)) - $(tex(β))\\right)"
-            else
-                ans = tan(α - β)
-                formula = "\\tan(α - β) = \\frac{\\tan α - \\tan β}{1 + \\tan α \\tan β}"
-                expr_str = "\\tan\\left($(tex(α)) - $(tex(β))\\right)"
             end
         end
         
@@ -175,80 +167,56 @@ using .ProblemUtils
     elseif problem_type == 4
         # Evaluate sum/product involving unit circle
         # Find sin(π/12) using half-angle or difference formulas
-        target_angles = [π/12, 5π/12, 7π/12, 11π/12]
-        target = choice(target_angles)
         func = choice(["sin", "cos"])
-        
-        if target == π/12
-            if func == "sin"
-                ans = (sqrt(6) - sqrt(2)) // 4
-                problem(
-                    question="Find the exact value of \\\$\\sin\\left(\\frac{π}{12}\\right)\\\$",
-                    answer=ans,
-                    difficulty=(1950, 2100),
-                    solution=steps(
-                        "Write \\\$\\frac{π}{12} = \\frac{π}{3} - \\frac{π}{4}\\\$",
-                        "Use difference formula: \\\$\\sin(α - β) = \\sin α \\cos β - \\cos α \\sin β\\\$",
-                        "\\\$\\sin\\left(\\frac{π}{12}\\right) = \\sin\\left(\\frac{π}{3}\\right)\\cos\\left(\\frac{π}{4}\\right) - \\cos\\left(\\frac{π}{3}\\right)\\sin\\left(\\frac{π}{4}\\right)\\\$",
-                        "\\\$= \\frac{\\sqrt{3}}{2} \\cdot \\frac{\\sqrt{2}}{2} - \\frac{1}{2} \\cdot \\frac{\\sqrt{2}}{2}\\\$",
-                        sol("Answer", ans)
-                    ),
-                    time=240
-                )
-            else
-                ans = (sqrt(6) + sqrt(2)) // 4
-                problem(
-                    question="Find the exact value of \\\$\\cos\\left(\\frac{π}{12}\\right)\\\$",
-                    answer=ans,
-                    difficulty=(1950, 2100),
-                    solution=steps(
-                        "Write \\\$\\frac{π}{12} = \\frac{π}{3} - \\frac{π}{4}\\\$",
-                        "Use difference formula: \\\$\\cos(α - β) = \\cos α \\cos β + \\sin α \\sin β\\\$",
-                        "\\\$\\cos\\left(\\frac{π}{12}\\right) = \\cos\\left(\\frac{π}{3}\\right)\\cos\\left(\\frac{π}{4}\\right) + \\sin\\left(\\frac{π}{3}\\right)\\sin\\left(\\frac{π}{4}\\right)\\\$",
-                        "\\\$= \\frac{1}{2} \\cdot \\frac{\\sqrt{2}}{2} + \\frac{\\sqrt{3}}{2} \\cdot \\frac{\\sqrt{2}}{2}\\\$",
-                        sol("Answer", ans)
-                    ),
-                    time=240
-                )
-            end
-        else
-            # Use similar approach for other angles
-            ans = sin(target)
+
+        if func == "sin"
+            ans = (sqrt(6) - sqrt(2)) // 4
             problem(
-                question="Find the exact value of \\\$\\\$(func)\\left($(tex(target))\\right)\\\$",
+                question="Find the exact value of \\\$\\sin\\left(\\frac{π}{12}\\right)\\\$",
                 answer=ans,
-                difficulty=(2000, 2200),
+                difficulty=(1950, 2100),
                 solution=steps(
-                    "Express angle as sum/difference of special angles",
-                    "Apply appropriate sum/difference formula",
-                    "Substitute known values from unit circle",
+                    "Write \\\$\\frac{π}{12} = \\frac{π}{3} - \\frac{π}{4}\\\$",
+                    "Use difference formula: \\\$\\sin(α - β) = \\sin α \\cos β - \\cos α \\sin β\\\$",
+                    "\\\$\\sin\\left(\\frac{π}{12}\\right) = \\sin\\left(\\frac{π}{3}\\right)\\cos\\left(\\frac{π}{4}\\right) - \\cos\\left(\\frac{π}{3}\\right)\\sin\\left(\\frac{π}{4}\\right)\\\$",
+                    "\\\$= \\frac{\\sqrt{3}}{2} \\cdot \\frac{\\sqrt{2}}{2} - \\frac{1}{2} \\cdot \\frac{\\sqrt{2}}{2}\\\$",
                     sol("Answer", ans)
                 ),
-                time=270
+                time=240
+            )
+        else
+            ans = (sqrt(6) + sqrt(2)) // 4
+            problem(
+                question="Find the exact value of \\\$\\cos\\left(\\frac{π}{12}\\right)\\\$",
+                answer=ans,
+                difficulty=(1950, 2100),
+                solution=steps(
+                    "Write \\\$\\frac{π}{12} = \\frac{π}{3} - \\frac{π}{4}\\\$",
+                    "Use difference formula: \\\$\\cos(α - β) = \\cos α \\cos β + \\sin α \\sin β\\\$",
+                    "\\\$\\cos\\left(\\frac{π}{12}\\right) = \\cos\\left(\\frac{π}{3}\\right)\\cos\\left(\\frac{π}{4}\\right) + \\sin\\left(\\frac{π}{3}\\right)\\sin\\left(\\frac{π}{4}\\right)\\\$",
+                    "\\\$= \\frac{1}{2} \\cdot \\frac{\\sqrt{2}}{2} + \\frac{\\sqrt{3}}{2} \\cdot \\frac{\\sqrt{2}}{2}\\\$",
+                    sol("Answer", ans)
+                ),
+                time=240
             )
         end
         
     elseif problem_type == 5
         # Verify trigonometric identity with unit circle reasoning
-        k = nonzero(-4, 4)
-        identity_type = choice([1, 2, 3])
-        
-        if identity_type == 1
-            # Prove: tan(θ) + cot(θ) = sec(θ)csc(θ)
-            problem(
-                question="Verify the identity: \\\$\\tan θ + \\cot θ = \\sec θ \\csc θ\\\$",
-                answer="sec(θ)*csc(θ)",
-                difficulty=(1800, 2000),
-                grading_mode="symbolic",
-                solution=steps(
-                    "Start with left side: \\\$\\tan θ + \\cot θ = \\frac{\\sin θ}{\\cos θ} + \\frac{\\cos θ}{\\sin θ}\\\$",
-                    "Common denominator: \\\$= \\frac{\\sin^2 θ + \\cos^2 θ}{\\sin θ \\cos θ}\\\$",
-                    "Use Pythagorean identity: \\\$= \\frac{1}{\\sin θ \\cos θ}\\\$",
-                    "Simplify using trig identities",
-                    sol("Answer", "Identity verified")
-                ),
-                time=240
-            )
-        end
+        # Prove: tan(θ) + cot(θ) = sec(θ)csc(θ)
+        problem(
+            question="Verify the identity: \\\$\\tan θ + \\cot θ = \\sec θ \\csc θ\\\$",
+            answer="sec(θ)*csc(θ)",
+            difficulty=(1800, 2000),
+            grading_mode="symbolic",
+            solution=steps(
+                "Start with left side: \\\$\\tan θ + \\cot θ = \\frac{\\sin θ}{\\cos θ} + \\frac{\\cos θ}{\\sin θ}\\\$",
+                "Common denominator: \\\$= \\frac{\\sin^2 θ + \\cos^2 θ}{\\sin θ \\cos θ}\\\$",
+                "Use Pythagorean identity: \\\$= \\frac{1}{\\sin θ \\cos θ}\\\$",
+                "Simplify using trig identities",
+                sol("Answer", "Identity verified")
+            ),
+            time=240
+        )
     end
 end

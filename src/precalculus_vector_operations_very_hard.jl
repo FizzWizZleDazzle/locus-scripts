@@ -52,9 +52,10 @@ using .ProblemUtils
         a1, a2 = nonzero(-10, 10), nonzero(-10, 10)
         b1, b2 = randint(-10, 10), randint(-10, 10)
         c1, c2 = randint(-10, 10), randint(-10, 10)
-        
-        # Ensure b and c are not parallel
+
+        # Ensure b and c are not parallel (and not zero vectors)
         while b1*c2 == b2*c1
+            b1, b2 = randint(-10, 10), randint(-10, 10)
             c1, c2 = randint(-10, 10), randint(-10, 10)
         end
         
@@ -113,15 +114,13 @@ using .ProblemUtils
         # Find angle θ such that certain condition holds
         u1, u2 = nonzero(-6, 6), nonzero(-6, 6)
         v1, v2 = nonzero(-6, 6), nonzero(-6, 6)
-        
+
         dot_uv = u1*v1 + u2*v2
-        mag_u = sqrt(u1^2 + u2^2)
-        mag_v = sqrt(v1^2 + v2^2)
-        
-        # cos(θ) = (u·v)/(|u||v|)
-        cos_theta_num = dot_uv
-        cos_theta_den = mag_u * mag_v
-        
+        while dot_uv == 0
+            v1, v2 = nonzero(-6, 6), nonzero(-6, 6)
+            dot_uv = u1*v1 + u2*v2
+        end
+
         # Construct problem: find when u·v equals some multiple of magnitudes
         k = randint(2, 4)
         target = k * dot_uv
@@ -174,27 +173,27 @@ using .ProblemUtils
     else
         # Vector inequality optimization (3200-3500)
         # Find max/min of expression involving vectors
+        # Use Pythagorean pairs so |q| is an integer
+        pythagorean_pairs = [(3,4), (4,3), (5,12), (12,5), (6,8), (8,6)]
+        pair = choice(pythagorean_pairs)
+        q1 = choice([-1, 1]) * pair[1]
+        q2 = choice([-1, 1]) * pair[2]
+        mag_q = isqrt(q1^2 + q2^2)
+
         p1, p2 = randint(-8, 8), randint(-8, 8)
-        q1, q2 = nonzero(-8, 8), nonzero(-8, 8)
-        
-        # Find max value of (p + tv) · q where |v| = 1
-        # This is maximized when v is parallel to q
-        # Max = p·q + t|q|
-        
         t_val = randint(3, 10)
-        mag_q = sqrt(q1^2 + q2^2)
         dot_pq = p1*q1 + p2*q2
-        
-        max_val_squared = (dot_pq + t_val*mag_q)^2
-        
+
+        ans = dot_pq + t_val * mag_q
+
         problem(
-            question="Let p = <$(p1), $(p2)> and q = <$(q1), $(q2)>. Find the maximum of (p + $(t_val)*v) dot q where v is a unit vector.",
-            answer=round(Float64(dot_pq + t_val*mag_q), digits=2),
+            question="Let \\(\\vec{p} = \\langle $(p1), $(p2) \\rangle\\) and \\(\\vec{q} = \\langle $(q1), $(q2) \\rangle\\). Find the maximum value of \\((\\vec{p} + $(t_val)\\vec{v}) \\cdot \\vec{q}\\) where \\(\\vec{v}\\) is a unit vector.",
+            answer=ans,
             difficulty=(3200, 3500),
             solution=steps(
-                "Maximum when v is parallel to q",
-                "p.q = $(dot_pq), |q| = $(round(Float64(mag_q), digits=3))",
-                sol("Answer", round(Float64(dot_pq + t_val*mag_q), digits=2))
+                "The maximum occurs when \\(\\vec{v}\\) is parallel to \\(\\vec{q}\\)",
+                "\\(\\vec{p} \\cdot \\vec{q} = $(dot_pq)\\), \\(|\\vec{q}| = $(mag_q)\\)",
+                "Maximum = \\(\\vec{p} \\cdot \\vec{q} + $(t_val)|\\vec{q}| = $(dot_pq) + $(t_val) \\cdot $(mag_q) = $(ans)\\)"
             ),
             time=240
         )
